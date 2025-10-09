@@ -1,0 +1,13 @@
+
+/* para centralizar na tela */
+body {
+        background-color: #f8f9fa; /* Um cinza claro de fundo */
+}
+.upload-container {
+    min-height: 100vh; /* container  altura total da viewport */
+}
+.form-card {
+    max-width: 500px; /* Limita a largura máxima  */
+    width: 90%; /* Ocupa 90% */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Sombra suave*/
+}

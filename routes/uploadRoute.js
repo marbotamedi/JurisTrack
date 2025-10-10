@@ -95,5 +95,33 @@ router.post("/", upload.single("file"), async (req, res) => {
   }
 });
 
+
+// rota publicações
+router.get("/publicacoes", async (req, res) => {
+  try {
+    // Busca todos os dados da tabela 'upload_Documentos'
+    // .select() sem argumentos seleciona todas as colunas
+    // .order() para ordenar por 'data_upload' de forma descendente (mais recente primeiro)
+    const { data: documentos, error } = await supabase
+      .from("upload_Documentos")
+      .select("*")
+      .order('data_upload', { ascending: false }); // Exemplo de ordenação
+
+    if (error) {
+      console.error("Erro ao buscar documentos no Supabase:", error);
+      return res.status(500).json({ 
+        error: "Erro ao buscar a lista de documentos." 
+      });
+    }
+
+    // Retorna a lista de documentos em formato JSON
+    res.status(200).json(documentos);
+
+  } catch (error) {
+    console.error("Erro ao listar publicações:", error);
+    res.status(500).json({ error: "Erro interno do servidor." });
+  }
+});
+
 export default router;
 

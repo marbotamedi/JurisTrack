@@ -1,3 +1,11 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    /* Cuidado: Isso pode remover bordas úteis de inputs, por exemplo. */
+    border: 0; 
+}
+
 
 /* para centralizar na tela */
 body {
@@ -10,4 +18,18 @@ body {
     max-width: 500px; /* Limita a largura máxima  */
     width: 90%; /* Ocupa 90% */
     box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Sombra suave*/
+    margin: auto; /* Centraliza horizontalmente */
 }
+
+.card.mb-4 {
+    margin-top: 20px; /* Espaço superior */
+    margin-bottom: 20px; /* Espaço inferior */
+}
+
+/* fonte men*/
+#tablesPublicacoes.table th,
+#tablesPublicacoes.table td {
+    font-size: 0.85rem !important;
+    padding: 0.3rem; 
+}
+

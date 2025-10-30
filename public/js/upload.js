@@ -38,7 +38,7 @@ form.addEventListener("submit", async (e) => {
     }
   } catch (error) {
     messageDiv.textContent =
-      "Extensão não suportada (JPEG, PNG, GIF, PDF)  ou arquivo muito grande (Acima de 5MB).";
+      "Extensão não suportada (JPEG, PNG, GIF, PDF)  ou arquivo muito grande (Acima de 5MB ou 10MB).";
     /*messageDiv.textContent = 'Erro de Rede ou Servidor Inacessível.';*/
     messageDiv.style.color = "darkred";
     console.error("Erro de Rede:", error);
@@ -157,13 +157,10 @@ async function carregarResultadoModal(nome_arquivo) {
     resultados.forEach((resultado) => {
       // Cria uma nova linha para CADA resultado
       const tr = document.createElement("tr");
-      const dataMovimentacaoFormatada = resultado.nova_movimentacao
-        ? formatarDataBR_SoData_UTC(resultado.nova_movimentacao)
-        : "Não Informado";
 
       const dataPublicacaoFormatada = resultado.data_publicacao
         ? formatarDataBR_SoData_UTC(resultado.data_publicacao)
-        : formatarDataBR_SoData_UTC(resultado.nova_movimentacao);
+        : "Não Informado";
 
       const datavencimentoFormatada = resultado.data_vencimento_calculada
         ? formatarDataBR_SoData_UTC(resultado.data_vencimento_calculada)
@@ -171,7 +168,6 @@ async function carregarResultadoModal(nome_arquivo) {
 
       tr.innerHTML = `
         <td>${resultado.numero_processo || "Não Informado"}</td>
-        <td>${dataMovimentacaoFormatada}</td> 
         <td>${dataPublicacaoFormatada}</td>
         <td>${resultado.prazo_entrega || "Não Informado"}</td>
         <td>${datavencimentoFormatada}</td>

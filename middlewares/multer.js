@@ -18,10 +18,8 @@ const upload = multer({
   fileFilter: (req, file, cb) => {
     //
     if (ALLOWED_MIME_TYPES.includes(file.mimetype)) {
-      
       cb(null, true);
     } else {
-      
       cb(
         new Error(
           "Tipo de arquivo inválido. Apenas imagens (JPEG, PNG, GIF, PDF) são permitidas."
@@ -32,7 +30,7 @@ const upload = multer({
   },
   // tamanho de arquivo (Ex: 5MB)
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5 MB em bytes
+    fileSize: 12 * 1024 * 1024, // 5 MB em bytes
   },
 });
 

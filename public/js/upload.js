@@ -62,9 +62,8 @@ async function carregarTabela() {
     dados.forEach((publicacao) => {
       const formattedDate = formatarDataBR(publicacao.data_upload);
 
-      // =======================================================
-      //           INÍCIO: LÓGICA DO BOTÃO DE STATUS
-      // =======================================================
+      //INÍCIO: LÓGICA DO BOTÃO DE STATUS
+
       let statusHtml;
 
       if (publicacao.status === "processado") {
@@ -85,9 +84,8 @@ async function carregarTabela() {
           publicacao.status || "erro"
         }</span>`;
       }
-      // =======================================================
-      //             FIM: LÓGICA DO BOTÃO DE STATUS
-      // =======================================================
+
+      // FIM: LÓGICA DO BOTÃO DE STATUS
 
       const tr = document.createElement("tr");
       tr.innerHTML = `
@@ -113,9 +111,7 @@ async function carregarTabela() {
   }
 }
 
-// =======================================================
-//           INÍCIO: JAVASCRIPT DO MODAL (MODIFICADO)
-// =======================================================
+// INÍCIO DO MODAL
 
 async function carregarResultadoModal(nome_arquivo) {
   const tbody = document.querySelector("#tablesResultado tbody");
@@ -129,10 +125,10 @@ async function carregarResultadoModal(nome_arquivo) {
 
   try {
     // 2. Busca o resultado específico usando o nome
-    const response = await fetch(`/upload/resultado/${nome_arquivo}`);
+    const response = await fetch(`/resultado/${nome_arquivo}`);
 
     if (!response.ok) {
-      const erro = await response.json(); // Tenta ler a mensagem de erro do backend
+      const erro = await response.json();
       if (response.status === 404) {
         throw new Error(erro.error || "Resultado não encontrado.");
       }
@@ -141,35 +137,52 @@ async function carregarResultadoModal(nome_arquivo) {
       );
     }
 
-    // MUDANÇA: Renomeado para 'resultados' (plural)
-    const resultados = await response.json(); // Recebe o ARRAY
+    const resultados = await response.json();
 
     // 3. Limpa a tabela
     tbody.innerHTML = "";
 
-    // MUDANÇA: Adiciona verificação de array vazio (caso o backend falhe em dar 404)
     if (!resultados || resultados.length === 0) {
       tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">Nenhum resultado encontrado para este arquivo.</td></tr>`;
       return;
     }
 
-    // MUDANÇA: Faz um loop (forEach) no array de resultados
     resultados.forEach((resultado) => {
-      // Cria uma nova linha para CADA resultado
       const tr = document.createElement("tr");
 
       const dataPublicacaoFormatada = resultado.data_publicacao
         ? formatarDataBR_SoData_UTC(resultado.data_publicacao)
         : "Não Informado";
 
+      // *** ESTES SÃO OS VALORES QUE QUEREMOS ***
       const datavencimentoFormatada = resultado.data_vencimento_calculada
         ? formatarDataBR_SoData_UTC(resultado.data_vencimento_calculada)
         : "Não Informado";
 
+      const prazoEntrega = resultado.prazo_entrega || "Não Informado";
+
+      const numeroProcesso = resultado.numero_processo || "Não Informado";
+      let numeroProcessoHtml = numeroProcesso;
+
+      if (numeroProcesso !== "Não Informado" && numeroProcesso !== "N/A") {
+        // *** ESTA É A LINHA MAIS IMPORTANTE ***
+
+        numeroProcessoHtml = `<a href="#" 
+                                class="link-primary fw-bold text-decoration-underline link-processo" 
+                                data-processo-numero="${numeroProcesso}"
+                                data-prazo="${prazoEntrega}"
+                                data-limite="${datavencimentoFormatada}">
+                                ${numeroProcesso}
+                             </a>`;
+      }
+
+      console.log(resultado); // O log que mostra os dados corretos
+
+      // Apenas usamos as variáveis aqui
       tr.innerHTML = `
-        <td>${resultado.numero_processo || "Não Informado"}</td>
+        <td>${numeroProcessoHtml}</td>
         <td>${dataPublicacaoFormatada}</td>
-        <td>${resultado.prazo_entrega || "Não Informado"}</td>
+        <td>${prazoEntrega}</td> 
         <td>${datavencimentoFormatada}</td>
       `;
 
@@ -181,9 +194,6 @@ async function carregarResultadoModal(nome_arquivo) {
   }
 }
 
-// =======================================================
-// LISTENER DO MODAL (Sem alteração, mas incluído)
-// =======================================================
 const resultadoModal = document.getElementById("resultadoModal");
 if (resultadoModal) {
   // 'show.bs.modal' é o evento que dispara QUANDO o modal VAI ABRIR
@@ -216,9 +226,114 @@ if (resultadoModal) {
   });
 }
 
-// =======================================================
-// CHAMADA INICIAL
-// =======================================================
-// Carrega a tabela principal quando a página é aberta
+//    Publicações > Detalhes do Processo (Modal Aninhado)
+
+resultadoModal.addEventListener("click", async function (event) {
+  // 1. Verifica se o que foi clicado é o link que queremos
+  const link = event.target.closest(".link-processo");
+
+  // Se não for o link, não faz nada
+  if (!link) {
+    return;
+  }
+
+  // 2. Impede o link de navegar (comportamento padrão do <a>)
+  event.preventDefault();
+
+  // 3. Pega o número do processo que guardamos no data-attribute
+  const numeroProcesso = link.getAttribute("data-processo-numero");
+  const prazo = link.getAttribute("data-prazo");
+  const dataLimite = link.getAttribute("data-limite");
+
+  if (!numeroProcesso) {
+    console.error(
+      "Não foi possível encontrar o 'data-processo-numero' no link."
+    );
+    return;
+  }
+
+  // 4. Pega a instância do modal ATUAL (o primeiro)
+  const primeiroModal = bootstrap.Modal.getInstance(resultadoModal);
+
+  // 5. Prepara o NOVO modal (#detalhesProcessoModal)
+  const detalhesModalElement = document.getElementById("detalhesProcessoModal");
+  // Se 'detalhesModalElement' for nulo, o HTML está errado.
+  if (!detalhesModalElement) {
+    console.error(
+      "ERRO: O elemento #detalhesProcessoModal não foi encontrado no HTML."
+    );
+    return;
+  }
+  const detalhesModal =
+    bootstrap.Modal.getOrCreateInstance(detalhesModalElement);
+
+  const tbody = detalhesModalElement.querySelector(
+    "#tableDetalhesProcesso tbody"
+  );
+  const tituloProcesso = detalhesModalElement.querySelector(
+    "#numeroProcessoDetalhe"
+  );
+  const prazoDetalhe = detalhesModalElement.querySelector("#prazoDetalhe");
+  const dataLimiteDetalhe =
+    detalhesModalElement.querySelector("#dataLimiteDetalhe");
+
+  // 6. Mostra "Carregando..."
+  tituloProcesso.textContent = numeroProcesso;
+  prazoDetalhe.textContent = prazo || "N/A";
+  dataLimiteDetalhe.textContent = dataLimite || "N/A";
+  tbody.innerHTML = `<tr><td colspan="2" class="text-center">Carregando histórico...</td></tr>`;
+
+  // 7. ESCONDE o primeiro modal
+  if (primeiroModal) {
+    primeiroModal.hide();
+  }
+
+  // 8. MOSTRA o novo modal
+  // Isso deve acontecer DEPOIS de esconder o primeiro.
+  detalhesModal.show();
+
+  // 9. Busca os dados na API que criamos
+  try {
+    const response = await fetch(`/publicacoes/processo/${numeroProcesso}`);
+
+    if (!response.ok) {
+      const erro = await response.json();
+      throw new Error(
+        erro.error || `Erro ${response.status} ao buscar publicações.`
+      );
+    }
+
+    const publicacoes = await response.json();
+
+    // 10. Limpa a tabela e preenche com os dados
+    tbody.innerHTML = "";
+
+    if (publicacoes.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="2" class="text-center text-muted">Nenhuma publicação encontrada para este processo.</td></tr>`;
+    } else {
+      // Formata as datas (a função já existe no seu formatarData.js)
+      const formatadorData =
+        window.formatarDataBR_SoData_UTC || formatarDataBR_SoData_UTC;
+
+      publicacoes.forEach((pub) => {
+        const tr = document.createElement("tr");
+        const dataFormatada = pub.data_publicacao
+          ? formatadorData(pub.data_publicacao)
+          : "N/A";
+
+        tr.innerHTML = `
+                    <td>${dataFormatada}</td>
+                    <td class="texto-publicacao">${
+                      pub.texto_integral || "Texto não disponível"
+                    }</td>
+                `;
+        tbody.appendChild(tr);
+      });
+    }
+  } catch (error) {
+    console.error("Erro ao buscar detalhes do processo:", error);
+    tbody.innerHTML = `<tr><td colspan="2" class="text-center text-danger">Falha ao carregar histórico: ${error.message}</td></tr>`;
+  }
+});
+
 carregarTabela();
-// Removido o 's;' extra que estava no seu arquivo anterior

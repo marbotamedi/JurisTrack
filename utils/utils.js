@@ -4,6 +4,7 @@ import moment from 'moment-timezone';
 // URL Webhook N8N
 const N8N_WEBHOOK_URL = "https://agendamentoai-n8n.mapkkt.easypanel.host/webhook/processar/";
 
+
 /**
  * Gera um nome de arquivo seguro, normalizado, minúsculo e hifenizado.
  * @param {string} originalname - O nome original do arquivo (req.file.originalname).

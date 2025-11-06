@@ -66,3 +66,14 @@ body {
     padding: 0.4rem;    /* Espaçamento interno das células */
     vertical-align: middle;
 }
+
+
+/* ESTILO PARA A CÉLULA DE TEXTO DO NOVO MODAL
+  (Usamos a classe 'texto-publicacao' que definimos no JS) 
+*/
+.texto-publicacao {
+    white-space: pre-wrap;   /* Respeita quebras de linha e espaços do texto original */
+    word-break: break-word;  /* Quebra palavras muito longas para não estourar a tabela */
+    max-width: 600px;        /* Define uma largura máxima (ajuste se necessário) */
+    font-size: 0.8rem;       /* Fonte um pouco menor para caber mais texto */
+}

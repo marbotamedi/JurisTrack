@@ -3,6 +3,7 @@ import { formatarDataBR_SoData_UTC } from "/js/formatarData.js";
 
 const form = document.getElementById("uploadForm");
 const messageDiv = document.getElementById("message");
+let isNavigatingToModal2 = false;
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -149,7 +150,7 @@ async function carregarResultadoModal(nome_arquivo) {
 
     resultados.forEach((resultado) => {
       const tr = document.createElement("tr");
-
+      console.log("Processando resultado:", resultado); // Log para depuração
       const dataPublicacaoFormatada = resultado.data_publicacao
         ? formatarDataBR_SoData_UTC(resultado.data_publicacao)
         : "Não Informado";
@@ -201,27 +202,37 @@ if (resultadoModal) {
     // Pega o botão que acionou o modal
     const button = event.relatedTarget;
 
-    // MUDANÇA: Lendo 'data-nome-arquivo'
-    const nomeArquivo = button.getAttribute("data-nome-arquivo");
+    // VERIFICA SE O BOTÃO EXISTE (se não for null)
+    if (button) {
+      // MUDANÇA: Lendo 'data-nome-arquivo'
+      const nomeArquivo = button.getAttribute("data-nome-arquivo");
 
-    if (nomeArquivo) {
-      // Chama a nova função para carregar os dados DESTE NOME
-      carregarResultadoModal(nomeArquivo);
-    } else {
-      // MUDANÇA: Mensagem de erro atualizada
-      const tbody = document.querySelector("#tablesResultado tbody");
-      if (tbody) {
-        tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Erro: Nome do arquivo não foi encontrado.</td></tr>`;
+      if (nomeArquivo) {
+        // Chama a nova função para carregar os dados DESTE NOME
+        carregarResultadoModal(nomeArquivo);
+      } else {
+        // MUDANÇA: Mensagem de erro atualizada
+        const tbody = document.querySelector("#tablesResultado tbody");
+        if (tbody) {
+          tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Erro: Nome do arquivo não foi encontrado.</td></tr>`;
+        }
       }
+    } else {
+      console.error("Erro: O botão que acionou o modal é null.");
     }
   });
 
   // BÔNUS: Limpa a tabela do modal quando ele é fechado
   // Isso evita que o dado antigo apareça rapidamente antes do novo carregar
   resultadoModal.addEventListener("hidden.bs.modal", function (event) {
-    const tbody = document.querySelector("#tablesResultado tbody");
-    if (tbody) {
-      tbody.innerHTML = ""; // Limpa o conteúdo
+    if (isNavigatingToModal2) {
+      isNavigatingToModal2 = false;
+      return; // Não limpa se estamos indo para o segundo modal
+    } else {
+      const tbody = document.querySelector("#tablesResultado tbody");
+      if (tbody) {
+        tbody.innerHTML = ""; // Limpa o conteúdo
+      }
     }
   });
 }
@@ -236,6 +247,8 @@ resultadoModal.addEventListener("click", async function (event) {
   if (!link) {
     return;
   }
+
+  isNavigatingToModal2 = true;
 
   // 2. Impede o link de navegar (comportamento padrão do <a>)
   event.preventDefault();
@@ -336,4 +349,38 @@ resultadoModal.addEventListener("click", async function (event) {
   }
 });
 
+// Pega o botão "Voltar"
+const btnVoltarResultados = document.getElementById("btnVoltarParaResultados");
+
+if (btnVoltarResultados) {
+  // Adiciona o evento de clique
+  btnVoltarResultados.addEventListener("click", function () {
+    // Pega os elementos dos dois modais
+    const modalResultadosEl = document.getElementById("resultadoModal");
+    const modalDetalhesEl = document.getElementById("detalhesProcessoModal");
+
+    if (modalResultadosEl && modalDetalhesEl) {
+      // Pega as instâncias de modal do Bootstrap
+      // Usamos .getInstance() para o modal que ESTÁ ABERTO
+      const instanciaModalDetalhes =
+        bootstrap.Modal.getInstance(modalDetalhesEl);
+
+      // Usamos .getOrCreateInstance() para o modal que queremos ABRIR
+      const instanciaModalResultados =
+        bootstrap.Modal.getOrCreateInstance(modalResultadosEl);
+
+      // 1. Esconde o modal atual (Detalhes)
+      if (instanciaModalDetalhes) {
+        instanciaModalDetalhes.hide();
+      }
+
+      // 2. Mostra o modal anterior (Resultados)
+      instanciaModalResultados.show();
+    } else {
+      console.error(
+        "Não foi possível encontrar os elementos dos modais para a ação 'Voltar'."
+      );
+    }
+  });
+}
 carregarTabela();

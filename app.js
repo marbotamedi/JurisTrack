@@ -3,6 +3,7 @@ import env from 'dotenv';
 import uploadRoute from './routes/uploadRoute.js';
 import n8nRoute from "./routes/n8nRoute.js";
 import modalRoute from "./routes/modalRoute.js";
+import modelosRoute from "./routes/modelosPeticao.js";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 import path from "path";
@@ -24,11 +25,16 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/upload", uploadRoute);
 app.use("/n8n", n8nRoute);
 app.use("/", modalRoute);
+app.use("/modelos", modelosRoute);
 
 /* Rota padrão */
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "html", "upload.html"));
+});
+
+app.get("/gerenciarPeticao", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "html", "gerenciarPeticao.html"));
 });
 
 app.listen(PORT, () => {

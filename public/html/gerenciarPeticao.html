@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gerenciador de Modelos de Petição</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    />
+    <!-- Você pode querer um CSS dedicado para esta página -->
+    <!-- <link rel="stylesheet" href="/css/modelos.css"> -->
+    <style>
+      /* Estilo simples para o body, similar ao seu upload.html */
+      body {
+        background-color: #f8f9fa;
+        padding-top: 20px;
+      }
+      .container {
+        max-width: 1200px;
+      }
+      .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      /* Ajuste para o textarea */
+      #formConteudo {
+        min-height: 300px;
+        font-family: monospace;
+      }
+      /* Mensagem de confirmação de exclusão */
+      #confirmDeleteBox {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        border: 1px solid #ccc;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        padding: 24px;
+        border-radius: 8px;
+        z-index: 1060; /* Acima do backdrop do modal */
+      }
+      #confirmDeleteBackdrop {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1059; /* Abaixo da caixa, acima do resto */
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container mt-5">
+      <!-- Botão de Voltar -->
+      <div class="mb-3">
+        <a href="/" class="btn btn-outline-secondary">
+          <i class="fas fa-arrow-left me-1"></i>
+          Voltar para Upload
+        </a>
+      </div>
+
+      <!-- Tabela de Modelos -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <span><i class="fas fa-table me-1"></i> Petições Lançadas</span>
+          <button
+            id="btnNovoModelo"
+            class="btn btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#modeloModal"
+          >
+            <i class="fas fa-plus me-1"></i> Nova Petição
+          </button>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table id="tabelaModelos" class="table table-bordered table-hover">
+              <thead>
+                <tr>
+                  <th>Título</th>
+                  <th>Descrição</th>
+                  <th>Tags</th>
+                  <th style="width: 150px">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Conteúdo será preenchido via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal para Criar/Editar Modelo -->
+    <div
+      class="modal fade"
+      id="modeloModal"
+      tabindex="-1"
+      aria-labelledby="modeloModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modeloModalLabel">Nova Petição</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <!-- Mensagem de Erro -->
+            <div id="modalError" class="alert alert-danger" style="display: none"></div>
+            
+            <form id="formModelo">
+              <!-- ID oculto para edição -->
+              <input type="hidden" id="formModeloId" />
+
+              <div class="mb-3">
+                <label for="formTitulo" class="form-label">Título *</label>
+                <input type="text" class="form-control" id="formTitulo" required />
+              </div>
+
+              <div class="mb-3">
+                <label for="formDescricao" class="form-label">Descrição</label>
+                <input type="text" class="form-control" id="formDescricao" />
+              </div>
+
+              <div class="mb-3">
+                <label for="formTags" class="form-label">Tags</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="formTags"
+                  placeholder="Ex: civel, trabalhista, inicial"
+                />
+                <!--<div class="form-text">
+                  Separe as tags por vírgula (Ex: tag1, tag2, tag3)
+                </div>--->
+              </div>
+
+              <div class="mb-3">
+                <label for="formConteudo" class="form-label">Conteúdo *</label>
+                <textarea
+                  class="form-control"
+                  id="formConteudo"
+                  rows="15"
+                  required
+                ></textarea>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Fechar
+            </button>
+            <button type="button" class="btn btn-primary" id="btnSalvarModelo">
+              Salvar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Caixa de Confirmação de Exclusão (Customizada) -->
+    <div id="confirmDeleteBackdrop"></div>
+    <div id="confirmDeleteBox">
+      <h5 class="mb-3">Confirmar Exclusão</h5>
+      <p>Você tem certeza que deseja excluir este modelo?</p>
+      <div class="text-end">
+        <button class="btn btn-secondary" id="btnCancelDelete">Cancelar</button>
+        <button class="btn btn-danger" id="btnConfirmDelete">Excluir</button>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/modelosPeticao.js" type="module"></script>
+  </body>
+</html>

@@ -7,6 +7,14 @@ const modalError = document.getElementById("modalError");
 const btnSalvarModelo = document.getElementById("btnSalvarModelo");
 const btnNovoModelo = document.getElementById("btnNovoModelo");
 
+// Seletores do Modal de Detalhes
+const detalhesModalElement = document.getElementById("detalhesModal");
+const detalhesModal = new bootstrap.Modal(detalhesModalElement);
+const detalhesTitulo = document.getElementById("detalhesTitulo");
+const detalhesDescricao = document.getElementById("detalhesDescricao");
+const detalhesTags = document.getElementById("detalhesTags");
+const detalhesConteudo = document.getElementById("detalhesConteudo");
+
 // Formulário
 const formModelo = document.getElementById("formModelo");
 const formModeloId = document.getElementById("formModeloId");
@@ -49,7 +57,7 @@ async function carregarModelos() {
   try {
     tabelaBody.innerHTML =
       '<tr><td colspan="4" class="text-center">Carregando...</td></tr>';
-    const response = await fetch("/modelos");
+    const response = await fetch("/modelos"); // Rota GET /modelos
 
     if (!response.ok) {
       throw new Error("Falha ao carregar modelos.");
@@ -77,10 +85,19 @@ async function carregarModelos() {
         <td>${modelo.descricao || "N/A"}</td>
         <td>${tagsString}</td>
         <td>
-          <button class="btn btn-sm btn-primary btn-edit" data-id="${modelo.id}" title="Editar">
+          <button class="btn btn-sm btn-success btn-details" data-id="${
+            modelo.id
+          }" title="Detalhes">
+            <i class="fas fa-info-circle"></i>
+          </button>
+          <button class="btn btn-sm btn-primary btn-edit" data-id="${
+            modelo.id
+          }" title="Editar">
             <i class="fas fa-edit"></i>
           </button>
-          <button class="btn btn-sm btn-danger btn-delete" data-id="${modelo.id}" title="Excluir">
+          <button class="btn btn-sm btn-danger btn-delete" data-id="${
+            modelo.id
+          }" title="Excluir">
             <i class="fas fa-trash"></i>
           </button>
         </td>
@@ -94,13 +111,61 @@ async function carregarModelos() {
 }
 
 /**
+ * Abre o modal de detalhes, buscando os dados completos do modelo.
+ * @param {string} id - O UUID do modelo a ser exibido.
+ */
+async function abrirModalDetalhes(id) {
+  try {
+    // Limpa o modal e mostra "Carregando"
+    detalhesTitulo.textContent = "Carregando...";
+    detalhesDescricao.textContent = "Carregando...";
+    detalhesTags.textContent = "Carregando...";
+    detalhesConteudo.textContent = "Carregando...";
+    detalhesTags.className = "badge bg-secondary"; // Reseta a classe
+    detalhesModal.show();
+
+    // Busca o modelo completo (incluindo o 'conteudo')
+    const response = await fetch(`/modelos/${id}`); // Rota GET /modelos/:id
+    if (!response.ok) {
+      throw new Error("Falha ao buscar detalhes do modelo.");
+    }
+    const modelo = await response.json();
+
+    // Preenche o modal com os dados
+    detalhesTitulo.textContent = modelo.titulo || "Sem Título";
+    detalhesDescricao.textContent = modelo.descricao || "Nenhuma descrição";
+    detalhesConteudo.textContent = modelo.conteudo || "Nenhum conteúdo";
+
+    // Formata as tags
+    const tagsString =
+      Array.isArray(modelo.tags) && modelo.tags.length > 0
+        ? modelo.tags.join(", ")
+        : "Nenhuma tag";
+
+    detalhesTags.textContent = tagsString;
+    // Remove o 'badge' se não houver tags
+    if (tagsString === "Nenhuma tag") {
+      detalhesTags.className = ""; // Remove a classe de 'badge'
+    } else {
+      detalhesTags.className = "badge bg-secondary"; // Garante que tem a classe
+    }
+  } catch (error) {
+    console.error("Erro ao abrir detalhes:", error);
+    // Mostra erro dentro do modal
+    detalhesTitulo.textContent = "Erro ao Carregar";
+    detalhesConteudo.textContent =
+      "Não foi possível carregar os dados: " + error.message;
+  }
+}
+
+/**
  * Abre o modal para edição, buscando os dados completos do modelo.
  * @param {string} id - O UUID do modelo a ser editado.
  */
 async function abrirModalEdicao(id) {
   try {
     // Busca o modelo completo (incluindo o 'conteudo')
-    const response = await fetch(`/modelos/${id}`);
+    const response = await fetch(`/modelos/${id}`); // Rota GET /modelos/:id
     if (!response.ok) {
       throw new Error("Falha ao buscar detalhes do modelo.");
     }
@@ -142,7 +207,7 @@ function abrirModalCriacao() {
  */
 async function salvarModelo() {
   const id = formModeloId.value;
-  const url = id ? `/modelos/${id}` : "/modelos";
+  const url = id ? `/modelos/${id}` : "/modelos"; // Rota PUT /modelos/:id ou POST /modelos
   const method = id ? "PUT" : "POST";
 
   const body = {
@@ -210,6 +275,7 @@ async function deletarModelo() {
 
   try {
     const response = await fetch(`/modelos/${deleteId}`, {
+      // Rota DELETE /modelos/:id
       method: "DELETE",
     });
 
@@ -239,13 +305,17 @@ btnNovoModelo.addEventListener("click", abrirModalCriacao);
 // Botão "Salvar" dentro do modal
 btnSalvarModelo.addEventListener("click", salvarModelo);
 
-// Gerenciamento de cliques na tabela (para botões de Editar e Excluir)
+// Gerenciamento de cliques na tabela (para botões de Detalhes, Editar e Excluir)
 tabelaBody.addEventListener("click", (e) => {
   const button = e.target.closest("button"); // Pega o botão clicado
 
   if (!button) return; // Sai se não clicou em um botão
 
   const id = button.dataset.id; // Pega o data-id do botão
+
+  if (button.classList.contains("btn-details")) {
+    abrirModalDetalhes(id);
+  }
 
   if (button.classList.contains("btn-edit")) {
     abrirModalEdicao(id);

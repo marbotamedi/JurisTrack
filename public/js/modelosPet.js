@@ -134,7 +134,7 @@ async function abrirModalDetalhes(id) {
     // Preenche o modal com os dados
     detalhesTitulo.textContent = modelo.titulo || "Sem Título";
     detalhesDescricao.textContent = modelo.descricao || "Nenhuma descrição";
-    detalhesConteudo.textContent = modelo.conteudo || "Nenhum conteúdo";
+    detalhesConteudo.innerHTML = modelo.conteudo || "Nenhum conteúdo";
 
     // Formata as tags
     const tagsString =
@@ -176,7 +176,7 @@ async function abrirModalEdicao(id) {
     formModeloId.value = modelo.id;
     formTitulo.value = modelo.titulo || "";
     formDescricao.value = modelo.descricao || "";
-    formConteudo.value = modelo.conteudo || "";
+    tinymce.get("formConteudo").setContent(modelo.conteudo || "");
     formTags.value =
       Array.isArray(modelo.tags) && modelo.tags.length > 0
         ? modelo.tags.join(", ")
@@ -210,11 +210,13 @@ async function salvarModelo() {
   const url = id ? `/modelos/${id}` : "/modelos"; // Rota PUT /modelos/:id ou POST /modelos
   const method = id ? "PUT" : "POST";
 
+  const conteudoDoEditor = tinymce.get("formConteudo").getContent();
+
   const body = {
     titulo: formTitulo.value,
     descricao: formDescricao.value,
     tags: formTags.value, // O backend vai tratar a string
-    conteudo: formConteudo.value,
+    conteudo: conteudoDoEditor,
   };
 
   // Validação simples no frontend

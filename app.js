@@ -37,6 +37,10 @@ app.get("/gerenciarPeticao", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "html", "gerenciarPeticao.html"));
 });
 
+app.get("/gerarPeticao", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "html", "gerarPeticao.html"));
+});
+
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });

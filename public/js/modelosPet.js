@@ -21,7 +21,8 @@ const formModeloId = document.getElementById("formModeloId");
 const formTitulo = document.getElementById("formTitulo");
 const formDescricao = document.getElementById("formDescricao");
 const formTags = document.getElementById("formTags");
-const formConteudo = document.getElementById("formConteudo");
+const formConteudo = document.getElementById("formConteudo"); // textarea
+const painelVariaveis = document.getElementById("painelVariaveis"); // Novo seletor
 
 // Confirmação de Exclusão
 const confirmDeleteBox = document.getElementById("confirmDeleteBox");
@@ -33,6 +34,54 @@ const btnConfirmDelete = document.getElementById("btnConfirmDelete");
 let deleteId = null;
 
 // --- Funções ---
+
+/**
+ * Cria o painel de variáveis estáticas para Drag and Drop.
+ */
+function criarPainelVariaveis() {
+    // Estas são variáveis estáticas que o usuário pode arrastar para o modelo.
+    const variaveisPadrao = [
+        "NUMERO_PROCESSO",
+        "VARA",
+        "COMARCA", // Adicionado conforme sua solicitação
+        "DATA_PUBLICACAO",
+        "PRAZO",
+        "DATA_LIMITE",
+        "TEXTO_PUBLICACAO" 
+    ];
+
+    if (!painelVariaveis) {
+        console.warn("Elemento 'painelVariaveis' não encontrado. Verifique o gerenciarPeticao.html.");
+        return; 
+    }
+
+    painelVariaveis.innerHTML = '<h6 class="mb-3">Variáveis do Processo (Arrastar para o Conteúdo):</h6>';
+
+    variaveisPadrao.forEach(key => {
+        const variavelTemplate = `{{${key}}}`;
+
+        const div = document.createElement("div");
+        div.className = "alert alert-info p-2 mb-2 data-item";
+        div.setAttribute("draggable", true); 
+        div.dataset.key = key; 
+
+        div.innerHTML = `
+            <strong class="d-block text-dark">${key}</strong>
+            <span class="text-muted small">${variavelTemplate}</span>
+        `;
+
+        // Lógica DRAG START: Envia a variável de template formatada
+        div.addEventListener("dragstart", (e) => {
+            // Envia a variável de template em JSON para ser lida no DROP
+            e.dataTransfer.setData("text/plain", JSON.stringify({ 
+                templateVar: variavelTemplate 
+            })); 
+            e.dataTransfer.effectAllowed = "copy";
+        });
+
+        painelVariaveis.appendChild(div);
+    });
+}
 
 /**
  * Mostra a mensagem de erro no modal.
@@ -176,6 +225,7 @@ async function abrirModalEdicao(id) {
     formModeloId.value = modelo.id;
     formTitulo.value = modelo.titulo || "";
     formDescricao.value = modelo.descricao || "";
+    // O TinyMCE deve estar inicializado antes de chamar getContent/setContent
     tinymce.get("formConteudo").setContent(modelo.conteudo || "");
     formTags.value =
       Array.isArray(modelo.tags) && modelo.tags.length > 0
@@ -198,6 +248,11 @@ function abrirModalCriacao() {
   modalTitle.textContent = "Novo Modelo";
   formModelo.reset(); // Limpa o formulário
   formModeloId.value = ""; // Garante que o ID está vazio
+  // Limpa o TinyMCE
+  // Garante que o TinyMCE está pronto
+  if (tinymce.get("formConteudo")) {
+    tinymce.get("formConteudo").setContent(""); 
+  }
   hideModalError();
   modeloModal.show();
 }
@@ -298,8 +353,11 @@ async function deletarModelo() {
 
 // --- Event Listeners ---
 
-// Carrega os modelos ao iniciar a página
-document.addEventListener("DOMContentLoaded", carregarModelos);
+// Carrega os modelos e o painel de variáveis ao iniciar a página
+document.addEventListener("DOMContentLoaded", () => {
+    carregarModelos();
+    criarPainelVariaveis(); // Inicializa o painel de variáveis
+});
 
 // Botão "Novo Modelo"
 btnNovoModelo.addEventListener("click", abrirModalCriacao);

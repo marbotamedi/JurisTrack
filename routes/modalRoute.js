@@ -70,6 +70,8 @@ router.get("/resultado/:nome", async (req, res) => {
 
       // Monta o objeto que o frontend espera
       resultadosCalculados.push({
+        publicacaoId: pub.id,
+
         numero_processo: processo?.numero || "N/A",
         nova_movimentação: andamento?.data_evento || null,
         data_publicacao: pub.data_publicacao,
@@ -86,7 +88,6 @@ router.get("/resultado/:nome", async (req, res) => {
     return res.status(500).json({ error: "Erro interno ao buscar resultado." });
   }
 });
-
 
 //   ROTA MODAL 2: (HISTÓRICO DO PROCESSO)
 
@@ -130,5 +131,72 @@ router.get("/publicacoes/processo/:numero", async (req, res) => {
   }
 });
 
+/**
+ * @route GET /process-data/:publicacaoId
+ * @desc Busca todos os dados consolidados de um processo para o gerador de petição.
+ */
+router.get("/process-data/:pubId", async (req, res) => {
+  const { pubId } = req.params;
 
+  try {
+    // 1. Usamos a mágica do Supabase para buscar a Publicação e seus "filhos"
+    //    (Processos, Prazo, Andamento) de uma vez só.
+    const { data: publicacao, error } = await supabase
+      .from("Publicacao")
+      .select(
+        `
+        data_publicacao,
+        texto_integral,
+        Processos ( numero ), 
+        Prazo ( dias, data_inicio, data_limite ),
+        Andamento ( descricao, data_evento, TipoAndamento ( descricao ) )
+      `
+      )
+      .eq("id", pubId)
+      .order("data_evento", { foreignTable: "Andamento", ascending: false }) // Pega o andamento mais recente
+      .single();
+
+    if (error) throw error;
+    if (!publicacao) {
+      return res.status(404).json({ error: "Publicação não encontrada." });
+    }
+
+    // 2. Montamos um objeto "plano" (flat object) para facilitar o uso no frontend.
+    //    Isso transforma { Processos: { numero: "123" } } em { numero_processo: "123" }
+
+    const ultimoAndamento = publicacao.Andamento[0] || {};
+    const tipoAndamento = ultimoAndamento.TipoAndamento || {};
+
+    const flatData = {
+      // Da Publicacao
+      data_publicacao: publicacao.data_publicacao,
+      texto_integral_publicacao: publicacao.texto_integral,
+
+      // Do Processo
+      numero_processo: publicacao.Processos?.numero || null,
+
+      // Do Prazo (assumindo 1 prazo por publicação)
+      prazo_dias: publicacao.Prazo[0]?.dias || null,
+      prazo_data_inicio: publicacao.Prazo[0]?.data_inicio || null,
+      prazo_data_limite: publicacao.Prazo[0]?.data_limite || null,
+
+      // Do Último Andamento
+      ultimo_andamento_desc: ultimoAndamento.descricao || null,
+      ultimo_andamento_data: ultimoAndamento.data_evento || null,
+      ultimo_andamento_tipo: tipoAndamento.descricao || null,
+    };
+
+    // Remove chaves nulas para limpar
+    Object.keys(flatData).forEach((key) => {
+      if (flatData[key] === null) {
+        delete flatData[key];
+      }
+    });
+
+    res.status(200).json(flatData);
+  } catch (error) {
+    console.error("Erro ao buscar dados do processo:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
 export default router;

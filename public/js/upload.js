@@ -179,12 +179,33 @@ async function carregarResultadoModal(nome_arquivo) {
 
       console.log(resultado); // O log que mostra os dados corretos
 
-      // Apenas usamos as variáveis aqui
+      // 1. Pega o publicacaoId que DEVE vir da sua API (Graças ao Passo 2)
+      const publicacaoId = resultado.publicacaoId;
+
+      if (!publicacaoId) {
+        console.error(
+          "publicacaoId não foi encontrado no objeto 'resultado'. Verifique sua API em modalRoute.js"
+        );
+      }
+
+      // 2. Cria o link dinâmico para a página de gerar petição
+      const linkGerarPeticao = `/gerarPeticao?publicacaoId=${publicacaoId}`;
+
+      // 3. Adiciona a nova célula <td> com o link
       tr.innerHTML = `
         <td>${numeroProcessoHtml}</td>
         <td>${dataPublicacaoFormatada}</td>
         <td>${prazoEntrega}</td> 
         <td>${datavencimentoFormatada}</td>
+        
+        <td class="text-center">
+          <a href="${linkGerarPeticao}" 
+             class="btn btn-success btn-sm" 
+             target="_blank" 
+             title="Gerar Petição para este processo">
+            <i class="fas fa-gavel"></i>
+          </a>
+        </td>
       `;
 
       tbody.appendChild(tr);

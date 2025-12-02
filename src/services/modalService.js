@@ -2,10 +2,8 @@ import supabase from "../config/supabase.js";
 
 /**
  * Busca o resultado do processamento baseado no nome do arquivo.
- * Realiza buscas em cascata (Upload -> Publicacoes -> Processo/Prazo/Andamento).
  */
 export const getProcessingResult = async (fileName) => {
-  // 1. Achar o uploadId a partir do nome_arquivo
   const { data: uploadDoc, error: uploadError } = await supabase
     .from("upload_Documentos")
     .select("id")
@@ -18,51 +16,45 @@ export const getProcessingResult = async (fileName) => {
 
   const uploadId = uploadDoc.id;
 
-  // 2. Buscar as Publicações ligadas a esse uploadId
   const { data: publicacoes, error: pubError } = await supabase
     .from("Publicacao")
-    .select("id, data_publicacao, processoId")
-    .eq("uploadId", uploadId);
+    .select("id, data_publicacao, processoid")
+    .eq("uploadid", uploadId);
 
   if (pubError) {
     throw new Error(`Erro ao buscar publicações: ${pubError.message}`);
   }
 
   if (!publicacoes || publicacoes.length === 0) {
-    return []; // Retorna array vazio se não achar nada, controller decide se é erro 404 ou apenas vazio
+    return [];
   }
 
-  // 3. Para cada publicação, buscar seus dados relacionados
   const resultadosCalculados = [];
 
   for (const pub of publicacoes) {
-    // Busca o Processo
     const { data: processo } = await supabase
-      .from("Processos")
-      .select("numero")
-      .eq("id", pub.processoId)
+      .from("processos")
+      .select("numprocesso")
+      .eq("idprocesso", pub.processoid)
       .single();
 
-    // Busca o Prazo
     const { data: prazo } = await supabase
       .from("Prazo")
       .select("dias, data_limite")
-      .eq("publicacaoId", pub.id)
+      .eq("publicacaoid", pub.id)
       .single();
 
-    // Busca o Andamento mais recente
     const { data: andamento } = await supabase
       .from("Andamento")
       .select("data_evento")
-      .eq("publicacaoId", pub.id)
+      .eq("publicacaoid", pub.id)
       .order("data_evento", { ascending: false })
       .limit(1)
       .single();
 
-    // Monta o objeto final
     resultadosCalculados.push({
       publicacaoId: pub.id,
-      numero_processo: processo?.numero || "N/A",
+      numero_processo: processo?.numprocesso || "N/A",
       nova_movimentação: andamento?.data_evento || null,
       data_publicacao: pub.data_publicacao,
       prazo_entrega: prazo?.dias || 0,
@@ -73,26 +65,21 @@ export const getProcessingResult = async (fileName) => {
   return resultadosCalculados;
 };
 
-/**
- * Busca o histórico de publicações de um processo pelo número.
- */
 export const getProcessHistory = async (numeroProcesso) => {
-  // 1. Achar o ID do processo
   const { data: processo, error: processoError } = await supabase
-    .from("Processos")
-    .select("id")
-    .eq("numero", numeroProcesso)
+    .from("processos")
+    .select("idprocesso")
+    .eq("numprocesso", numeroProcesso)
     .single();
 
   if (processoError || !processo) {
     throw new Error("Processo não encontrado.");
   }
 
-  // 2. Buscar todas as publicações
   const { data: publicacoes, error: pubError } = await supabase
     .from("Publicacao")
     .select("data_publicacao, texto_integral")
-    .eq("processoId", processo.id)
+    .eq("processoid", processo.idprocesso)
     .order("data_publicacao", { ascending: false });
 
   if (pubError) throw pubError;
@@ -101,50 +88,74 @@ export const getProcessHistory = async (numeroProcesso) => {
 };
 
 /**
- * Busca todos os dados consolidados de uma publicação (para gerar a petição).
- * Realiza o "Flattening" (achatamento) dos dados aninhados.
+ * Busca TODOS os dados consolidados para preenchimento de petição.
+ * Realiza JOINs com Tabelas Auxiliares (Cidades, Varas, etc).
  */
 export const getProcessFullData = async (pubId) => {
-  const { data: publicacao, error } = await supabase
+  // Query principal com JOINs (!inner garante integridade, mas pode usar left join se dados forem opcionais)
+  // Usaremos left joins implícitos aqui (sem !inner nas tabelas filhas) para evitar erro se faltar uma comarca
+  const { data, error } = await supabase
     .from("Publicacao")
-    .select(
-      `
+    .select(`
       data_publicacao,
       texto_integral,
-      Processos ( numero ), 
+      processos!inner (
+        numprocesso,
+        pasta,
+        datainicial,
+        datasaida,
+        obs,
+        cidades ( descricao, estados (uf) ),
+        comarcas ( descricao ),
+        tribunais ( descricao ),
+        varas ( descricao ),
+        instancias ( descricao )
+      ),
       Prazo ( dias, data_inicio, data_limite ),
-      Andamento ( descricao, data_evento, TipoAndamento ( descricao ) )
-    `
-    )
+      Andamento ( descricao, data_evento )
+    `)
     .eq("id", pubId)
     .order("data_evento", { foreignTable: "Andamento", ascending: false })
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
-  if (!publicacao) return null;
+  if (!data) return null;
 
-  // Lógica de Achatamento (Flattening)
-  const ultimoAndamento = publicacao.Andamento?.[0] || {};
-  const tipoAndamento = ultimoAndamento.TipoAndamento || {};
+  // Pegamos o último andamento (ordenado na query)
+  const andamento = data.Andamento?.[0];
+  const proc = data.processos;
 
-  const flatData = {
-    data_publicacao: publicacao.data_publicacao,
-    texto_integral_publicacao: publicacao.texto_integral,
-    numero_processo: publicacao.Processos?.numero || null,
-    prazo_dias: publicacao.Prazo?.[0]?.dias || null,
-    prazo_data_inicio: publicacao.Prazo?.[0]?.data_inicio || null,
-    prazo_data_limite: publicacao.Prazo?.[0]?.data_limite || null,
-    ultimo_andamento_desc: ultimoAndamento.descricao || null,
-    ultimo_andamento_data: ultimoAndamento.data_evento || null,
-    ultimo_andamento_tipo: tipoAndamento.descricao || null,
+  // Montagem do objeto "Flattened" (Achatado) para facilitar o Replace no Frontend
+  // As chaves aqui DEVEM ser iguais às usadas nos {{Templates}}
+  const result = {
+    // --- Dados da Publicação ---
+    data_publicacao: data.data_publicacao,
+    texto_integral: data.texto_integral,
+
+    // --- Dados do Processo ---
+    NumProcesso: proc?.numprocesso,
+    Pasta: proc?.pasta,
+    DataInicial: proc?.datainicial,
+    DataSaida: proc?.datasaida,
+    Obs: proc?.obs,
+
+    // --- Dados de Localização e Juízo (Extraídos dos Joins) ---
+    // Verifica se os objetos existem antes de acessar .descricao
+    Cidade_Descricao: proc?.cidades?.descricao,
+    uf: proc?.cidades?.estado?.uf,
+    Comarca_Descricao: proc?.comarcas?.descricao,
+    Tribunal_Descricao: proc?.tribunais?.descricao,
+    Vara_Descricao: proc?.varas?.descricao,
+    Instancia_Descricao: proc?.instancias?.descricao,
+
+    // --- Prazos ---
+    dias: data.Prazo?.[0]?.dias,
+    data_limite: data.Prazo?.[0]?.data_limite,
+
+    // --- Andamento ---
+    Ultimo_Andamento: andamento?.descricao,
+    Data_Andamento: andamento?.data_evento
   };
 
-  // Remove chaves nulas
-  Object.keys(flatData).forEach((key) => {
-    if (flatData[key] === null) {
-      delete flatData[key];
-    }
-  });
-
-  return flatData;
+  return result;
 };

@@ -1,11 +1,16 @@
-// --- Seletores de Elementos ---
-const tabelaBody = document.querySelector("#tabelaModelos tbody");
-const modeloModalElement = document.getElementById("modeloModal");
-const modeloModal = new bootstrap.Modal(modeloModalElement);
-const modalTitle = document.getElementById("modeloModalLabel");
-const modalError = document.getElementById("modalError");
-const btnSalvarModelo = document.getElementById("btnSalvarModelo");
+// --- Seletores de Elementos de Estrutura ---
+const sectionLista = document.getElementById("section-lista");
+const sectionFormulario = document.getElementById("section-formulario");
+const tituloFormulario = document.getElementById("tituloFormulario");
+const formError = document.getElementById("formError");
+
+// Botões de Navegação
 const btnNovoModelo = document.getElementById("btnNovoModelo");
+const btnVoltarLista = document.getElementById("btnVoltarLista");
+const btnSalvarModelo = document.getElementById("btnSalvarModelo");
+
+// Tabela
+const tabelaBody = document.querySelector("#tabelaModelos tbody");
 
 // Seletores do Modal de Detalhes
 const detalhesModalElement = document.getElementById("detalhesModal");
@@ -21,8 +26,13 @@ const formModeloId = document.getElementById("formModeloId");
 const formTitulo = document.getElementById("formTitulo");
 const formDescricao = document.getElementById("formDescricao");
 const formTags = document.getElementById("formTags");
-const formConteudo = document.getElementById("formConteudo"); // textarea
-const painelVariaveis = document.getElementById("painelVariaveis"); // Novo seletor
+// formConteudo é manipulado via TinyMCE
+
+// Painel de Variáveis e Select
+const painelVariaveis = document.getElementById("painelVariaveis");
+const selectCategoriaVariaveis = document.getElementById(
+  "selectCategoriaVariaveis"
+);
 
 // Confirmação de Exclusão
 const confirmDeleteBox = document.getElementById("confirmDeleteBox");
@@ -33,87 +43,133 @@ const btnConfirmDelete = document.getElementById("btnConfirmDelete");
 // Variável para guardar o ID ao deletar
 let deleteId = null;
 
-// --- Funções ---
+// --- Configuração das Variáveis (Baseado no Schema SQL) ---
+/* ATENÇÃO: O Backend deve retornar o JSON com estas chaves exatas.
+   Para colunas repetidas como 'Descricao', use ALIAS no SQL (ex: SELECT c.Descricao AS Cidade_Descricao FROM ...)
+*/
+const mapaVariaveis = {
+  processo: [
+    { label: "Número do Processo", value: "{{NumProcesso}}" }, // Tabela: processos
+    { label: "Pasta", value: "{{Pasta}}" }, // Tabela: processos
+    { label: "Data Inicial", value: "{{DataInicial}}" }, // Tabela: processos
+    { label: "Data Saída", value: "{{DataSaida}}" }, // Tabela: processos
+    { label: "Observações", value: "{{Obs}}" }, // Tabela: processos
+  ],
+  partes: [
+    { label: "Cliente/Papel", value: "{{Cliente_Descricao}}" }, // Tabela: sj_papelcliente (Alias sugerido)
+    { label: "Parte Contrária", value: "{{Oposto}}" }, // Tabela: sj_papelcliente
+  ],
+  local: [
+    { label: "Cidade", value: "{{Cidade_Descricao}}" }, // Tabela: cidades (Alias sugerido)
+    { label: "UF (Estado)", value: "{{uf}}" }, // Tabela: estados
+    { label: "Comarca", value: "{{Comarca_Descricao}}" }, // Tabela: comarcas (Alias sugerido)
+    { label: "Tribunal", value: "{{Tribunal_Descricao}}" }, // Tabela: tribunais (Alias sugerido)
+    { label: "Vara", value: "{{Vara_Descricao}}" }, // Tabela: varas (Alias sugerido)
+    { label: "Instância", value: "{{Instancia_Descricao}}" }, // Tabela: instancias (Alias sugerido)
+  ],
+  datas: [
+    { label: "Data Publicação", value: "{{data_publicacao}}" }, // Tabela: Publicacao
+    { label: "Texto Publicação", value: "{{texto_integral}}" }, // Tabela: Publicacao
+    { label: "Prazo (Dias)", value: "{{dias}}" }, // Tabela: Prazo
+    { label: "Data Limite", value: "{{data_limite}}" }, // Tabela: Prazo
+    { label: "Feriado", value: "{{Feriado_Descricao}}" }, // Tabela: Feriado (Alias sugerido)
+  ],
+};
+
+// --- Funções de Navegação e UI ---
+
+function mostrarLista() {
+  sectionFormulario.style.display = "none";
+  sectionLista.style.display = "block";
+
+  // Recarrega a lista para garantir dados atualizados
+  carregarModelos();
+}
+
+function mostrarFormulario() {
+  sectionLista.style.display = "none";
+  sectionFormulario.style.display = "block";
+  hideError();
+}
+
+function showError(message) {
+  formError.textContent = message;
+  formError.style.display = "block";
+  // Rola até o erro
+  formError.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function hideError() {
+  formError.style.display = "none";
+}
 
 /**
- * Cria o painel de variáveis estáticas para Drag and Drop.
+ * Renderiza as variáveis no painel lateral.
  */
-function criarPainelVariaveis() {
-    // Estas são variáveis estáticas que o usuário pode arrastar para o modelo.
-    const variaveisPadrao = [
-        "NUMERO_PROCESSO",
-        "VARA",
-        "COMARCA", // Adicionado conforme sua solicitação
-        "DATA_PUBLICACAO",
-        "PRAZO",
-        "DATA_LIMITE",
-        "TEXTO_PUBLICACAO" 
-    ];
+function renderizarVariaveis() {
+  if (!painelVariaveis) return;
 
-    if (!painelVariaveis) {
-        console.warn("Elemento 'painelVariaveis' não encontrado. Verifique o gerenciarPeticao.html.");
-        return; 
-    }
+  const categoriaSelecionada = selectCategoriaVariaveis.value;
+  painelVariaveis.innerHTML = "";
 
-    painelVariaveis.innerHTML = '<h6 class="mb-3">Variáveis do Processo (Arrastar para o Conteúdo):</h6>';
+  let variaveisParaMostrar = [];
 
-    variaveisPadrao.forEach(key => {
-        const variavelTemplate = `{{${key}}}`;
+  if (categoriaSelecionada === "todos") {
+    Object.values(mapaVariaveis).forEach((lista) => {
+      variaveisParaMostrar = [...variaveisParaMostrar, ...lista];
+    });
+  } else if (mapaVariaveis[categoriaSelecionada]) {
+    variaveisParaMostrar = mapaVariaveis[categoriaSelecionada];
+  }
 
-        const div = document.createElement("div");
-        div.className = "alert alert-info p-2 mb-2 data-item";
-        div.setAttribute("draggable", true); 
-        div.dataset.key = key; 
+  if (variaveisParaMostrar.length === 0) {
+    painelVariaveis.innerHTML =
+      '<span class="text-muted small">Nenhuma variável encontrada.</span>';
+    return;
+  }
 
-        div.innerHTML = `
-            <strong class="d-block text-dark">${key}</strong>
-            <span class="text-muted small">${variavelTemplate}</span>
+  variaveisParaMostrar.forEach((item) => {
+    const div = document.createElement("div");
+    div.className = "var-item p-2 rounded d-flex flex-column align-items-start";
+    div.setAttribute("draggable", true);
+    div.title = "Arraste para o editor";
+    div.style.cursor = "grab";
+    div.style.border = "1px solid #dee2e6";
+    div.style.marginBottom = "5px";
+    div.style.backgroundColor = "#fff";
+
+    div.innerHTML = `
+            <strong class="text-primary" style="font-size: 0.8rem;">${item.label}</strong>
+            <code class="text-dark bg-light px-1 mt-1 rounded" style="font-size: 0.7rem;">${item.value}</code>
         `;
 
-        // Lógica DRAG START: Envia a variável de template formatada
-        div.addEventListener("dragstart", (e) => {
-            // Envia a variável de template em JSON para ser lida no DROP
-            e.dataTransfer.setData("text/plain", JSON.stringify({ 
-                templateVar: variavelTemplate 
-            })); 
-            e.dataTransfer.effectAllowed = "copy";
-        });
-
-        painelVariaveis.appendChild(div);
+    div.addEventListener("dragstart", (e) => {
+      e.dataTransfer.setData(
+        "text/plain",
+        JSON.stringify({
+          templateVar: item.value,
+        })
+      );
+      e.dataTransfer.effectAllowed = "copy";
     });
+
+    painelVariaveis.appendChild(div);
+  });
 }
 
 /**
- * Mostra a mensagem de erro no modal.
- * @param {string} message - A mensagem de erro.
- */
-function showModalError(message) {
-  modalError.textContent = message;
-  modalError.style.display = "block";
-}
-
-/**
- * Esconde a mensagem de erro no modal.
- */
-function hideModalError() {
-  modalError.style.display = "none";
-}
-
-/**
- * Carrega e exibe todos os modelos na tabela.
+ * Carrega a tabela de modelos.
  */
 async function carregarModelos() {
   try {
     tabelaBody.innerHTML =
       '<tr><td colspan="4" class="text-center">Carregando...</td></tr>';
-    const response = await fetch("/modelos"); // Rota GET /modelos
+    const response = await fetch("/modelos");
 
-    if (!response.ok) {
-      throw new Error("Falha ao carregar modelos.");
-    }
+    if (!response.ok) throw new Error("Falha ao carregar modelos.");
 
     const modelos = await response.json();
-    tabelaBody.innerHTML = ""; // Limpa a tabela
+    tabelaBody.innerHTML = "";
 
     if (modelos.length === 0) {
       tabelaBody.innerHTML =
@@ -122,7 +178,6 @@ async function carregarModelos() {
     }
 
     modelos.forEach((modelo) => {
-      // Converte o array de tags em string, ou mostra 'N/A'
       const tagsString =
         Array.isArray(modelo.tags) && modelo.tags.length > 0
           ? modelo.tags.join(", ")
@@ -155,114 +210,87 @@ async function carregarModelos() {
     });
   } catch (error) {
     console.error("Erro ao carregar modelos:", error);
-    tabelaBody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Erro ao carregar dados: ${error.message}</td></tr>`;
+    tabelaBody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Erro: ${error.message}</td></tr>`;
   }
 }
 
 /**
- * Abre o modal de detalhes, buscando os dados completos do modelo.
- * @param {string} id - O UUID do modelo a ser exibido.
+ * Inicia a criação de um novo modelo (Reseta e mostra Form).
  */
-async function abrirModalDetalhes(id) {
-  try {
-    // Limpa o modal e mostra "Carregando"
-    detalhesTitulo.textContent = "Carregando...";
-    detalhesDescricao.textContent = "Carregando...";
-    detalhesTags.textContent = "Carregando...";
-    detalhesConteudo.textContent = "Carregando...";
-    detalhesTags.className = "badge bg-secondary"; // Reseta a classe
-    detalhesModal.show();
+function iniciarCriacao() {
+  tituloFormulario.textContent = "Nova Petição";
+  formModelo.reset();
+  formModeloId.value = "";
 
-    // Busca o modelo completo (incluindo o 'conteudo')
-    const response = await fetch(`/modelos/${id}`); // Rota GET /modelos/:id
-    if (!response.ok) {
-      throw new Error("Falha ao buscar detalhes do modelo.");
-    }
+  if (tinymce.get("formConteudo")) {
+    tinymce.get("formConteudo").setContent("");
+  }
+
+  selectCategoriaVariaveis.value = "todos";
+  renderizarVariaveis();
+
+  mostrarFormulario();
+}
+
+/**
+ * Inicia a edição (Busca dados e mostra Form).
+ */
+async function iniciarEdicao(id) {
+  try {
+    const response = await fetch(`/modelos/${id}`);
+    if (!response.ok) throw new Error("Erro ao buscar modelo.");
     const modelo = await response.json();
 
-    // Preenche o modal com os dados
+    tituloFormulario.textContent = "Editar Petição";
+    formModeloId.value = modelo.id;
+    formTitulo.value = modelo.titulo || "";
+    formDescricao.value = modelo.descricao || "";
+    formTags.value = Array.isArray(modelo.tags) ? modelo.tags.join(", ") : "";
+
+    if (tinymce.get("formConteudo")) {
+      tinymce.get("formConteudo").setContent(modelo.conteudo || "");
+    }
+
+    selectCategoriaVariaveis.value = "todos";
+    renderizarVariaveis();
+
+    mostrarFormulario();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+async function abrirModalDetalhes(id) {
+  try {
+    detalhesTitulo.textContent = "Carregando...";
+    detalhesDescricao.textContent = "...";
+    detalhesTags.textContent = "...";
+    detalhesConteudo.textContent = "...";
+    detalhesModal.show();
+
+    const response = await fetch(`/modelos/${id}`);
+    if (!response.ok) throw new Error("Falha ao buscar detalhes.");
+    const modelo = await response.json();
+
     detalhesTitulo.textContent = modelo.titulo || "Sem Título";
     detalhesDescricao.textContent = modelo.descricao || "Nenhuma descrição";
     detalhesConteudo.innerHTML = modelo.conteudo || "Nenhum conteúdo";
 
-    // Formata as tags
-    const tagsString =
-      Array.isArray(modelo.tags) && modelo.tags.length > 0
-        ? modelo.tags.join(", ")
-        : "Nenhuma tag";
-
+    const tagsString = Array.isArray(modelo.tags)
+      ? modelo.tags.join(", ")
+      : "N/A";
     detalhesTags.textContent = tagsString;
-    // Remove o 'badge' se não houver tags
-    if (tagsString === "Nenhuma tag") {
-      detalhesTags.className = ""; // Remove a classe de 'badge'
-    } else {
-      detalhesTags.className = "badge bg-secondary"; // Garante que tem a classe
-    }
   } catch (error) {
-    console.error("Erro ao abrir detalhes:", error);
-    // Mostra erro dentro do modal
-    detalhesTitulo.textContent = "Erro ao Carregar";
-    detalhesConteudo.textContent =
-      "Não foi possível carregar os dados: " + error.message;
+    detalhesConteudo.textContent = error.message;
   }
 }
 
 /**
- * Abre o modal para edição, buscando os dados completos do modelo.
- * @param {string} id - O UUID do modelo a ser editado.
- */
-async function abrirModalEdicao(id) {
-  try {
-    // Busca o modelo completo (incluindo o 'conteudo')
-    const response = await fetch(`/modelos/${id}`); // Rota GET /modelos/:id
-    if (!response.ok) {
-      throw new Error("Falha ao buscar detalhes do modelo.");
-    }
-    const modelo = await response.json();
-
-    // Preenche o formulário
-    modalTitle.textContent = "Editar Modelo";
-    formModeloId.value = modelo.id;
-    formTitulo.value = modelo.titulo || "";
-    formDescricao.value = modelo.descricao || "";
-    // O TinyMCE deve estar inicializado antes de chamar getContent/setContent
-    tinymce.get("formConteudo").setContent(modelo.conteudo || "");
-    formTags.value =
-      Array.isArray(modelo.tags) && modelo.tags.length > 0
-        ? modelo.tags.join(", ")
-        : "";
-
-    hideModalError();
-    modeloModal.show();
-  } catch (error) {
-    console.error("Erro ao abrir edição:", error);
-    // Idealmente, mostraria isso para o usuário
-    alert("Não foi possível carregar os dados para edição: " + error.message);
-  }
-}
-
-/**
- * Abre o modal para criação (limpa o formulário).
- */
-function abrirModalCriacao() {
-  modalTitle.textContent = "Novo Modelo";
-  formModelo.reset(); // Limpa o formulário
-  formModeloId.value = ""; // Garante que o ID está vazio
-  // Limpa o TinyMCE
-  // Garante que o TinyMCE está pronto
-  if (tinymce.get("formConteudo")) {
-    tinymce.get("formConteudo").setContent(""); 
-  }
-  hideModalError();
-  modeloModal.show();
-}
-
-/**
- * Salva o modelo (criação ou atualização).
+ * Salva o modelo.
  */
 async function salvarModelo() {
   const id = formModeloId.value;
-  const url = id ? `/modelos/${id}` : "/modelos"; // Rota PUT /modelos/:id ou POST /modelos
+  const url = id ? `/modelos/${id}` : "/modelos";
   const method = id ? "PUT" : "POST";
 
   const conteudoDoEditor = tinymce.get("formConteudo").getContent();
@@ -270,123 +298,94 @@ async function salvarModelo() {
   const body = {
     titulo: formTitulo.value,
     descricao: formDescricao.value,
-    tags: formTags.value, // O backend vai tratar a string
+    tags: formTags.value,
     conteudo: conteudoDoEditor,
   };
 
-  // Validação simples no frontend
   if (!body.titulo || !body.conteudo) {
-    showModalError("Título e Conteúdo são obrigatórios.");
+    showError("Título e Conteúdo são obrigatórios.");
     return;
   }
 
-  hideModalError();
+  hideError();
 
   try {
     const response = await fetch(url, {
       method: method,
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
 
     const result = await response.json();
 
-    if (!response.ok) {
-      throw new Error(result.error || "Erro desconhecido ao salvar.");
-    }
+    if (!response.ok) throw new Error(result.error || "Erro ao salvar.");
 
-    modeloModal.hide(); // Fecha o modal
-    carregarModelos(); // Atualiza a tabela
+    // Sucesso: volta para a lista
+    mostrarLista();
   } catch (error) {
     console.error("Erro ao salvar:", error);
-    showModalError(error.message);
+    showError(error.message);
   }
 }
 
-/**
- * Mostra a confirmação de exclusão.
- * @param {string} id - O ID do modelo a ser deletado.
- */
+// Exclusão
 function showDeleteConfirmation(id) {
-  deleteId = id; // Armazena o ID
+  deleteId = id;
   confirmDeleteBox.style.display = "block";
   confirmDeleteBackdrop.style.display = "block";
 }
 
-/**
- * Esconde a confirmação de exclusão.
- */
 function hideDeleteConfirmation() {
   deleteId = null;
   confirmDeleteBox.style.display = "none";
   confirmDeleteBackdrop.style.display = "none";
 }
 
-/**
- * Executa a exclusão do modelo.
- */
 async function deletarModelo() {
   if (!deleteId) return;
 
   try {
-    const response = await fetch(`/modelos/${deleteId}`, {
-      // Rota DELETE /modelos/:id
-      method: "DELETE",
-    });
-
-    if (!response.ok) {
-      const result = await response.json();
-      throw new Error(result.error || "Falha ao deletar.");
-    }
+    const response = await fetch(`/modelos/${deleteId}`, { method: "DELETE" });
+    if (!response.ok) throw new Error("Falha ao deletar.");
 
     hideDeleteConfirmation();
-    carregarModelos(); // Atualiza a tabela
+    carregarModelos();
   } catch (error) {
-    console.error("Erro ao deletar:", error);
-    // Mostra erro para o usuário (substitua por um modal de erro se preferir)
-    alert("Erro ao excluir modelo: " + error.message);
+    alert("Erro ao excluir: " + error.message);
     hideDeleteConfirmation();
   }
 }
 
 // --- Event Listeners ---
 
-// Carrega os modelos e o painel de variáveis ao iniciar a página
 document.addEventListener("DOMContentLoaded", () => {
-    carregarModelos();
-    criarPainelVariaveis(); // Inicializa o painel de variáveis
+  mostrarLista(); // Garante que começa na lista
+  renderizarVariaveis();
 });
 
-// Botão "Novo Modelo"
-btnNovoModelo.addEventListener("click", abrirModalCriacao);
+selectCategoriaVariaveis.addEventListener("change", renderizarVariaveis);
 
-// Botão "Salvar" dentro do modal
+// Navegação
+btnNovoModelo.addEventListener("click", iniciarCriacao);
+btnVoltarLista.addEventListener("click", mostrarLista);
 btnSalvarModelo.addEventListener("click", salvarModelo);
 
-// Gerenciamento de cliques na tabela (para botões de Detalhes, Editar e Excluir)
+// Tabela Actions
 tabelaBody.addEventListener("click", (e) => {
-  const button = e.target.closest("button"); // Pega o botão clicado
+  const button = e.target.closest("button");
+  if (!button) return;
 
-  if (!button) return; // Sai se não clicou em um botão
-
-  const id = button.dataset.id; // Pega o data-id do botão
+  const id = button.dataset.id;
 
   if (button.classList.contains("btn-details")) {
     abrirModalDetalhes(id);
-  }
-
-  if (button.classList.contains("btn-edit")) {
-    abrirModalEdicao(id);
-  }
-
-  if (button.classList.contains("btn-delete")) {
+  } else if (button.classList.contains("btn-edit")) {
+    iniciarEdicao(id);
+  } else if (button.classList.contains("btn-delete")) {
     showDeleteConfirmation(id);
   }
 });
 
-// Botões da caixa de confirmação de exclusão
 btnCancelDelete.addEventListener("click", hideDeleteConfirmation);
 btnConfirmDelete.addEventListener("click", deletarModelo);
 confirmDeleteBackdrop.addEventListener("click", hideDeleteConfirmation);

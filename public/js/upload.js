@@ -189,9 +189,15 @@ async function carregarResultadoModal(nome_arquivo) {
       }
 
       // 2. Cria o link dinâmico para a página de gerar petição
-      const linkGerarPeticao = `/gerarPeticao?publicacaoId=${publicacaoId}`;
+      /*const linkGerarPeticao = `/gerarPeticao?publicacaoId=${publicacaoId}`;*/
+      // Adicione o nome do arquivo como parâmetro na URL para saber para onde voltar
+      // Use encodeURIComponent para garantir que espaços e acentos não quebrem o link
+      const linkGerarPeticao = `/gerarPeticao?publicacaoId=${publicacaoId}&voltarPara=${encodeURIComponent(
+        nome_arquivo
+      )}`;
 
-      // 3. Adiciona a nova célula <td> com o link
+      // 3. Adiciona a nova célula <td> com o
+      // Isso fará o navegador carregar a nova página na mesma aba, "fechando" o modal e a tela atual.
       tr.innerHTML = `
         <td>${numeroProcessoHtml}</td>
         <td>${dataPublicacaoFormatada}</td>
@@ -201,8 +207,8 @@ async function carregarResultadoModal(nome_arquivo) {
         <td class="text-center">
           <a href="${linkGerarPeticao}" 
              class="btn btn-success btn-sm" 
-             target="_blank" 
-             title="Gerar Petição para este processo">
+             <!---target="_blank" ---->
+             <title="Gerar Petição para este processo">
             <i class="fas fa-gavel"></i>
           </a>
         </td>
@@ -216,192 +222,138 @@ async function carregarResultadoModal(nome_arquivo) {
   }
 }
 
+// --- Event Listeners do Modal Principal ---
 const resultadoModal = document.getElementById("resultadoModal");
 if (resultadoModal) {
-  // 'show.bs.modal' é o evento que dispara QUANDO o modal VAI ABRIR
   resultadoModal.addEventListener("show.bs.modal", function (event) {
-    // Pega o botão que acionou o modal
     const button = event.relatedTarget;
-
-    // VERIFICA SE O BOTÃO EXISTE (se não for null)
     if (button) {
-      // MUDANÇA: Lendo 'data-nome-arquivo'
       const nomeArquivo = button.getAttribute("data-nome-arquivo");
-
       if (nomeArquivo) {
-        // Chama a nova função para carregar os dados DESTE NOME
         carregarResultadoModal(nomeArquivo);
-      } else {
-        // MUDANÇA: Mensagem de erro atualizada
-        const tbody = document.querySelector("#tablesResultado tbody");
-        if (tbody) {
-          tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Erro: Nome do arquivo não foi encontrado.</td></tr>`;
-        }
       }
-    } else {
-      console.error("Erro: O botão que acionou o modal é null.");
     }
   });
 
-  // BÔNUS: Limpa a tabela do modal quando ele é fechado
-  // Isso evita que o dado antigo apareça rapidamente antes do novo carregar
   resultadoModal.addEventListener("hidden.bs.modal", function (event) {
     if (isNavigatingToModal2) {
       isNavigatingToModal2 = false;
-      return; // Não limpa se estamos indo para o segundo modal
+      return;
     } else {
       const tbody = document.querySelector("#tablesResultado tbody");
-      if (tbody) {
-        tbody.innerHTML = ""; // Limpa o conteúdo
+      if (tbody) tbody.innerHTML = "";
+    }
+  });
+
+  // Lógica para clicar no número do processo (Modal Aninhado)
+  resultadoModal.addEventListener("click", async function (event) {
+    const link = event.target.closest(".link-processo");
+    if (!link) return;
+
+    isNavigatingToModal2 = true;
+    event.preventDefault();
+
+    const numeroProcesso = link.getAttribute("data-processo-numero");
+    const prazo = link.getAttribute("data-prazo");
+    const dataLimite = link.getAttribute("data-limite");
+
+    const primeiroModal = bootstrap.Modal.getInstance(resultadoModal);
+    const detalhesModalElement = document.getElementById(
+      "detalhesProcessoModal"
+    );
+    const detalhesModal =
+      bootstrap.Modal.getOrCreateInstance(detalhesModalElement);
+
+    const tbody = detalhesModalElement.querySelector(
+      "#tableDetalhesProcesso tbody"
+    );
+    const tituloProcesso = detalhesModalElement.querySelector(
+      "#numeroProcessoDetalhe"
+    );
+
+    document.getElementById("prazoDetalhe").textContent = prazo || "N/A";
+    document.getElementById("dataLimiteDetalhe").textContent =
+      dataLimite || "N/A";
+
+    tituloProcesso.textContent = numeroProcesso;
+    tbody.innerHTML = `<tr><td colspan="2" class="text-center">Carregando histórico...</td></tr>`;
+
+    if (primeiroModal) primeiroModal.hide();
+    detalhesModal.show();
+
+    try {
+      const response = await fetch(`/publicacoes/processo/${numeroProcesso}`);
+      if (!response.ok) throw new Error("Erro ao buscar histórico.");
+
+      const publicacoes = await response.json();
+      tbody.innerHTML = "";
+
+      if (publicacoes.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="2" class="text-center text-muted">Nenhuma publicação.</td></tr>`;
+      } else {
+        const formatadorData =
+          window.formatarDataBR_SoData_UTC || formatarDataBR_SoData_UTC;
+        publicacoes.forEach((pub) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+             <td>${
+               pub.data_publicacao ? formatadorData(pub.data_publicacao) : "N/A"
+             }</td>
+             <td class="texto-publicacao">${
+               pub.texto_integral || "Texto indisponível"
+             }</td>
+          `;
+          tbody.appendChild(tr);
+        });
       }
+    } catch (error) {
+      tbody.innerHTML = `<tr><td colspan="2" class="text-center text-danger">${error.message}</td></tr>`;
     }
   });
 }
 
-//    Publicações > Detalhes do Processo (Modal Aninhado)
-
-resultadoModal.addEventListener("click", async function (event) {
-  // 1. Verifica se o que foi clicado é o link que queremos
-  const link = event.target.closest(".link-processo");
-
-  // Se não for o link, não faz nada
-  if (!link) {
-    return;
-  }
-
-  isNavigatingToModal2 = true;
-
-  // 2. Impede o link de navegar (comportamento padrão do <a>)
-  event.preventDefault();
-
-  // 3. Pega o número do processo que guardamos no data-attribute
-  const numeroProcesso = link.getAttribute("data-processo-numero");
-  const prazo = link.getAttribute("data-prazo");
-  const dataLimite = link.getAttribute("data-limite");
-
-  if (!numeroProcesso) {
-    console.error(
-      "Não foi possível encontrar o 'data-processo-numero' no link."
-    );
-    return;
-  }
-
-  // 4. Pega a instância do modal ATUAL (o primeiro)
-  const primeiroModal = bootstrap.Modal.getInstance(resultadoModal);
-
-  // 5. Prepara o NOVO modal (#detalhesProcessoModal)
-  const detalhesModalElement = document.getElementById("detalhesProcessoModal");
-  // Se 'detalhesModalElement' for nulo, o HTML está errado.
-  if (!detalhesModalElement) {
-    console.error(
-      "ERRO: O elemento #detalhesProcessoModal não foi encontrado no HTML."
-    );
-    return;
-  }
-  const detalhesModal =
-    bootstrap.Modal.getOrCreateInstance(detalhesModalElement);
-
-  const tbody = detalhesModalElement.querySelector(
-    "#tableDetalhesProcesso tbody"
-  );
-  const tituloProcesso = detalhesModalElement.querySelector(
-    "#numeroProcessoDetalhe"
-  );
-  const prazoDetalhe = detalhesModalElement.querySelector("#prazoDetalhe");
-  const dataLimiteDetalhe =
-    detalhesModalElement.querySelector("#dataLimiteDetalhe");
-
-  // 6. Mostra "Carregando..."
-  tituloProcesso.textContent = numeroProcesso;
-  prazoDetalhe.textContent = prazo || "N/A";
-  dataLimiteDetalhe.textContent = dataLimite || "N/A";
-  tbody.innerHTML = `<tr><td colspan="2" class="text-center">Carregando histórico...</td></tr>`;
-
-  // 7. ESCONDE o primeiro modal
-  if (primeiroModal) {
-    primeiroModal.hide();
-  }
-
-  // 8. MOSTRA o novo modal
-  // Isso deve acontecer DEPOIS de esconder o primeiro.
-  detalhesModal.show();
-
-  // 9. Busca os dados na API que criamos
-  try {
-    const response = await fetch(`/publicacoes/processo/${numeroProcesso}`);
-
-    if (!response.ok) {
-      const erro = await response.json();
-      throw new Error(
-        erro.error || `Erro ${response.status} ao buscar publicações.`
-      );
-    }
-
-    const publicacoes = await response.json();
-
-    // 10. Limpa a tabela e preenche com os dados
-    tbody.innerHTML = "";
-
-    if (publicacoes.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="2" class="text-center text-muted">Nenhuma publicação encontrada para este processo.</td></tr>`;
-    } else {
-      // Formata as datas (a função já existe no seu formatarData.js)
-      const formatadorData =
-        window.formatarDataBR_SoData_UTC || formatarDataBR_SoData_UTC;
-
-      publicacoes.forEach((pub) => {
-        const tr = document.createElement("tr");
-        const dataFormatada = pub.data_publicacao
-          ? formatadorData(pub.data_publicacao)
-          : "N/A";
-
-        tr.innerHTML = `
-                    <td>${dataFormatada}</td>
-                    <td class="texto-publicacao">${
-                      pub.texto_integral || "Texto não disponível"
-                    }</td>
-                `;
-        tbody.appendChild(tr);
-      });
-    }
-  } catch (error) {
-    console.error("Erro ao buscar detalhes do processo:", error);
-    tbody.innerHTML = `<tr><td colspan="2" class="text-center text-danger">Falha ao carregar histórico: ${error.message}</td></tr>`;
-  }
-});
-
-// Pega o botão "Voltar"
+// Botão Voltar do Modal Detalhes
 const btnVoltarResultados = document.getElementById("btnVoltarParaResultados");
-
 if (btnVoltarResultados) {
-  // Adiciona o evento de clique
   btnVoltarResultados.addEventListener("click", function () {
-    // Pega os elementos dos dois modais
     const modalResultadosEl = document.getElementById("resultadoModal");
     const modalDetalhesEl = document.getElementById("detalhesProcessoModal");
 
     if (modalResultadosEl && modalDetalhesEl) {
-      // Pega as instâncias de modal do Bootstrap
-      // Usamos .getInstance() para o modal que ESTÁ ABERTO
       const instanciaModalDetalhes =
         bootstrap.Modal.getInstance(modalDetalhesEl);
-
-      // Usamos .getOrCreateInstance() para o modal que queremos ABRIR
       const instanciaModalResultados =
         bootstrap.Modal.getOrCreateInstance(modalResultadosEl);
 
-      // 1. Esconde o modal atual (Detalhes)
-      if (instanciaModalDetalhes) {
-        instanciaModalDetalhes.hide();
-      }
-
-      // 2. Mostra o modal anterior (Resultados)
+      if (instanciaModalDetalhes) instanciaModalDetalhes.hide();
       instanciaModalResultados.show();
-    } else {
-      console.error(
-        "Não foi possível encontrar os elementos dos modais para a ação 'Voltar'."
-      );
     }
   });
 }
-carregarTabela();
+
+// [NOVO] Inicialização e Auto-Reabertura do Modal ao Voltar da Petição
+
+document.addEventListener("DOMContentLoaded", () => {
+  carregarTabela();
+
+  // Verifica se a URL tem ?reabrirModal=NOME_DO_ARQUIVO
+  const params = new URLSearchParams(window.location.search);
+  const arquivoParaReabrir = params.get("reabrirModal");
+
+  if (arquivoParaReabrir) {
+    // Delay pequeno para garantir que o DOM/Bootstrap carregou
+    setTimeout(() => {
+      const modalEl = document.getElementById("resultadoModal");
+      if (modalEl) {
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+
+        // Carrega os dados específicos daquele arquivo
+        carregarResultadoModal(arquivoParaReabrir);
+
+        // Limpa a URL para evitar abrir de novo no F5
+        window.history.replaceState({}, document.title, "/");
+      }
+    }, 500);
+  }
+});

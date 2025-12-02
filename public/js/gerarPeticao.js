@@ -1,34 +1,36 @@
 // --- Seletores de Elementos ---
 const selectModelo = document.getElementById("selectModelo");
-const divPainelDeDados = document.getElementById("painelDeDados");
-const pPainelCarregando = document.getElementById("painelDadosCarregando");
-
-// BOTÕES
 const btnSalvarDocumento = document.getElementById("btnSalvarDocumento");
 const btnImprimirDocumento = document.getElementById("btnImprimirDocumento");
 
 // --- Variáveis Globais ---
-let conteudoTemplate = "";
 let dadosProcessoGlobal = {};
 let publicacaoId = null;
 
+// --- Inicialização ---
 document.addEventListener("DOMContentLoaded", async () => {
-  console.log(">>> VERSÃO NOVA CARREGADA: ARIAL 14PX FORÇADO <<<"); // Se ler isso no F12, funcionou
   inicializarTinyMCE();
-  await carregarContextoDoProcesso();
-  carregarModelosDropdown();
+  await carregarContextoDoProcesso(); // 1. Baixa dados do processo para memória
+  carregarModelosDropdown(); // 2. Carrega lista de modelos
+  configurarBotaoVoltar(); // 3. Ajusta link de voltar
 });
 
+function configurarBotaoVoltar() {
+  const params = new URLSearchParams(window.location.search);
+  const arquivoParaVoltar = params.get("voltarPara");
+  const btnVoltar = document.querySelector('a[href="/"]');
+  if (btnVoltar && arquivoParaVoltar) {
+    btnVoltar.href = `/?reabrirModal=${encodeURIComponent(arquivoParaVoltar)}`;
+  }
+}
+
 /**
- * Configura e inicia o editor TinyMCE com FORÇA BRUTA (Arial 14px)
+ * Configura TinyMCE (Arial 14px forçado para visualização padrão ABNT/Jurídica)
  */
 function inicializarTinyMCE() {
   tinymce.init({
     selector: "#resultadoFinal",
     language: "pt_BR",
-
-    // --- CONFIGURAÇÃO VISUAL NUCLEAR ---
-    // O asterisco (*) obriga TODOS os elementos a usarem Arial 14px
     content_style: `
       * { 
         font-family: Arial, Helvetica, sans-serif !important;
@@ -37,231 +39,140 @@ function inicializarTinyMCE() {
       }
       body { 
         margin: 20px !important;
-        line-height: 1.3 !important; 
+        line-height: 1.5 !important; 
       }
-      p { 
-        margin-bottom: 10px !important; 
-        margin-top: 0 !important; 
-        padding: 0 !important;
-      }
-      /* Esconde tags de código se sobrarem */
-      pre { 
-        white-space: pre-wrap !important;
-        background: transparent !important;
-        border: none !important;
-        padding: 0 !important;
-      }
+      p { margin-bottom: 10px !important; }
     `,
-
-    paste_as_text: true,
+    paste_as_text: true, // Evita colar formatação externa suja
     forced_root_block: "p",
-
     plugins:
       "anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount",
     toolbar:
-      "undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table | align lineheight | numlist bullist indent outdent | emoticons charmap | removeformat",
-
-    height: 500,
+      "undo redo | blocks fontfamily fontsize | bold italic underline | align lineheight | numlist bullist indent outdent | removeformat",
+    height: 650,
     menubar: false,
-
-    setup: function (editor) {
-      editor.on("init", function () {
-        configurarDropInteligente(editor);
-      });
-    },
   });
 }
 
-function configurarDropInteligente(editor) {
-  editor.on("dragover", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    e.dataTransfer.dropEffect = "copy";
-  });
-
-  editor.on("drop", (e) => {
-    const rawJson = e.dataTransfer.getData("application/x-juristrack");
-
-    if (rawJson) {
-      e.preventDefault();
-      e.stopPropagation();
-
-      try {
-        const data = JSON.parse(rawJson);
-        const chaveArrastada = data.key;
-        const valor = data.value;
-
-        if (!valor) return false;
-
-        const substituiu = substituirVariavelSobCursor(editor, valor);
-
-        if (!substituiu && chaveArrastada) {
-          const conteudoAtual = editor.getContent();
-          const regexGlobal = new RegExp(`{{\\s*${chaveArrastada}\\s*}}`, "gi");
-
-          if (regexGlobal.test(conteudoAtual)) {
-            const novoConteudo = conteudoAtual.replace(regexGlobal, valor);
-            editor.setContent(novoConteudo);
-          } else {
-            editor.execCommand("mceInsertContent", false, valor);
-          }
-        } else if (!substituiu) {
-          editor.execCommand("mceInsertContent", false, valor);
-        }
-      } catch (err) {
-        console.error("Erro Drop:", err);
-      }
-      return false;
-    }
-  });
-}
-
-function substituirVariavelSobCursor(editor, novoValor) {
-  const rng = editor.selection.getRng();
-  if (!rng || !rng.commonAncestorContainer) return false;
-
-  let node = rng.commonAncestorContainer;
-  if (node.nodeType !== 3) return false;
-
-  const textoCompleto = node.nodeValue;
-  if (!textoCompleto) return false;
-
-  const cursorOffset = rng.startOffset;
-  const regexVariavel = /{{\s*[\w-]+\s*}}/g;
-  let match;
-
-  while ((match = regexVariavel.exec(textoCompleto)) !== null) {
-    const inicio = match.index;
-    const fim = regexVariavel.lastIndex;
-
-    if (cursorOffset >= inicio && cursorOffset <= fim) {
-      const novoRange = document.createRange();
-      novoRange.setStart(node, inicio);
-      novoRange.setEnd(node, fim);
-      editor.selection.setRng(novoRange);
-      editor.insertContent(novoValor);
-      return true;
-    }
-  }
-  return false;
-}
-
+/**
+ * Busca os dados do processo via API e guarda em dadosProcessoGlobal.
+ * Não renderiza nada na tela, apenas prepara os dados para o replace silencioso.
+ */
 async function carregarContextoDoProcesso() {
   const urlParams = new URLSearchParams(window.location.search);
   publicacaoId = urlParams.get("publicacaoId");
 
-  if (!publicacaoId) {
-    pPainelCarregando.textContent = "Modo manual.";
-    return;
-  }
+  if (!publicacaoId) return;
 
   try {
     const response = await fetch(`/process-data/${publicacaoId}`);
-    if (!response.ok) throw new Error("Erro API");
+    if (!response.ok) throw new Error("Erro ao buscar dados do processo");
+
     dadosProcessoGlobal = await response.json();
 
-    if (Object.keys(dadosProcessoGlobal).length > 0) {
-      renderizarPainelDados(dadosProcessoGlobal);
-    } else {
-      pPainelCarregando.textContent = "Sem dados.";
-    }
+    // Tratamento de Datas: Converte YYYY-MM-DD para DD/MM/YYYY
+    Object.keys(dadosProcessoGlobal).forEach((key) => {
+      const val = dadosProcessoGlobal[key];
+      if (typeof val === "string" && /^\d{4}-\d{2}-\d{2}/.test(val)) {
+        dadosProcessoGlobal[key] = formatarDataParaBr(val);
+      }
+    });
+
+    console.log("Dados do processo prontos para uso:", dadosProcessoGlobal);
   } catch (error) {
     console.error(error);
+    alert("Aviso: Não foi possível carregar os dados automáticos do processo.");
   }
 }
 
-function renderizarPainelDados(data) {
-  pPainelCarregando.style.display = "none";
-  divPainelDeDados.innerHTML =
-    '<h6 class="mb-3 text-muted">Arraste para editar:</h6>';
-
-  Object.entries(data).forEach(([key, value]) => {
-    const label = key
-      .replace(/_/g, " ")
-      .replace(/\b\w/g, (l) => l.toUpperCase());
-    const div = document.createElement("div");
-    div.className = "alert alert-secondary p-2 mb-2 data-item";
-    div.setAttribute("draggable", true);
-    div.style.cursor = "grab";
-
-    div.innerHTML = `
-      <strong class="d-block text-dark">${label}</strong>
-      <span class="badge bg-light text-dark border mb-1" style="font-size:0.7em">{{${key.toUpperCase()}}}</span>
-      <div class="text-muted small text-truncate">${value}</div>
-    `;
-
-    div.addEventListener("dragstart", (e) => {
-      e.dataTransfer.setData("text/plain", " ");
-      e.dataTransfer.setData(
-        "application/x-juristrack",
-        JSON.stringify({ key, value })
-      );
-      e.dataTransfer.effectAllowed = "copy";
-    });
-
-    divPainelDeDados.appendChild(div);
-  });
+function formatarDataParaBr(dataString) {
+  if (!dataString) return "";
+  const dataParte = dataString.split("T")[0];
+  const partes = dataParte.split("-");
+  if (partes.length === 3) {
+    const [ano, mes, dia] = partes;
+    return `${dia}/${mes}/${ano}`;
+  }
+  return dataString;
 }
 
+/**
+ * Preenche o select com os modelos do banco.
+ */
 async function carregarModelosDropdown() {
   try {
     const r = await fetch("/modelos");
     const m = await r.json();
-    selectModelo.innerHTML = '<option value="">-- Selecione --</option>';
+
+    selectModelo.innerHTML =
+      '<option value="">-- Selecione um modelo --</option>';
+
     m.forEach((mod) => {
       const opt = document.createElement("option");
       opt.value = mod.id;
       opt.textContent = mod.titulo;
       selectModelo.appendChild(opt);
     });
+
+    // Se vier ID na URL (ex: vindo de uma tela de "usar este modelo")
+    const urlParams = new URLSearchParams(window.location.search);
+    const modeloIdFromUrl = urlParams.get("modeloId");
+    if (modeloIdFromUrl) {
+      selectModelo.value = modeloIdFromUrl;
+      buscarModeloCompleto(modeloIdFromUrl);
+    }
   } catch (e) {
     console.error(e);
   }
 }
 
+/**
+ * Busca o conteúdo do modelo e aplica o REPLACE automático.
+ */
 async function buscarModeloCompleto(id) {
   const editor = tinymce.get("resultadoFinal");
   if (!editor || !id) return;
 
   try {
-    editor.setProgressState(true);
+    editor.setProgressState(true); // Mostra loader do TinyMCE
+
     const response = await fetch(`/modelos/${id}`);
     const modelo = await response.json();
     let texto = modelo.conteudo || "";
 
-    // --- LIMPEZA AGRESSIVA DO HTML ---
-    // 1. Substitui quebras de linha do banco por <br> se não tiver HTML
+    // 1. Limpeza básica de quebras de linha antigas
     if (!texto.includes("<p") && !texto.includes("<div")) {
       texto = texto.replace(/\n/g, "<br>");
     }
 
-    // 2. Remove formatações conflitantes
-    texto = texto.replace(/<\/?pre[^>]*>/gi, ""); // Remove tags de código
-    texto = texto.replace(/<\/?span[^>]*>/gi, ""); // Remove spans
-    texto = texto.replace(/font-family:[^;]+;/gi, ""); // Remove fontes inline
-    texto = texto.replace(/font-size:[^;]+;/gi, ""); // Remove tamanhos inline
-
-    if (dadosProcessoGlobal) {
+    // 2. Substituição Automática (Case Insensitive)
+    // Itera sobre as chaves retornadas pelo backend (ex: NumProcesso, Cidade_Descricao)
+    if (dadosProcessoGlobal && Object.keys(dadosProcessoGlobal).length > 0) {
       Object.entries(dadosProcessoGlobal).forEach(([key, valor]) => {
         if (valor) {
+          // Cria regex global e insensível a maiúsculas: {{ chave }} ou {{chave}}
           const regex = new RegExp(`{{\\s*${key}\\s*}}`, "gi");
           texto = texto.replace(regex, valor);
         }
       });
     }
 
+    // Define o conteúdo final no editor
     editor.setContent(texto);
-    editor.execCommand("RemoveFormat"); // Última tentativa de limpar visualmente
     editor.setProgressState(false);
   } catch (error) {
     console.error(error);
     editor.setProgressState(false);
+    alert("Erro ao carregar e preencher o modelo.");
   }
 }
 
+// Gatilho de mudança do select
 selectModelo.addEventListener("change", () =>
   buscarModeloCompleto(selectModelo.value)
 );
+
+// --- Botões Salvar/Imprimir ---
 
 if (btnImprimirDocumento) {
   btnImprimirDocumento.addEventListener("click", () => {
@@ -279,11 +190,16 @@ if (btnSalvarDocumento) {
   btnSalvarDocumento.addEventListener("click", async () => {
     const editor = tinymce.get("resultadoFinal");
     const conteudo = editor.getContent();
-    if (!conteudo.trim()) return alert("Vazio");
+
+    if (!conteudo || conteudo.trim() === "") {
+      return alert("O documento está vazio.");
+    }
 
     try {
-      btnSalvarDocumento.innerHTML = "Salvando...";
+      btnSalvarDocumento.innerHTML =
+        '<i class="fas fa-spinner fa-spin"></i> Salvando...';
       btnSalvarDocumento.disabled = true;
+
       const res = await fetch("/peticoes-finalizadas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -292,14 +208,16 @@ if (btnSalvarDocumento) {
           conteudo_final: conteudo,
         }),
       });
-      if (!res.ok) throw new Error("Erro");
-      alert("Salvo!");
+
+      if (!res.ok) throw new Error("Erro ao salvar.");
+
+      alert("Petição salva com sucesso!");
     } catch (e) {
       alert(e.message);
     } finally {
       btnSalvarDocumento.disabled = false;
       btnSalvarDocumento.innerHTML =
-        '<i class="fas fa-save"></i> Salvar no Supabase';
+        '<i class="fas fa-save me-1"></i> Salvar no Supabase';
     }
   });
 }

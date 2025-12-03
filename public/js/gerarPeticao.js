@@ -186,6 +186,7 @@ if (btnImprimirDocumento) {
   });
 }
 
+
 if (btnSalvarDocumento) {
   btnSalvarDocumento.addEventListener("click", async () => {
     const editor = tinymce.get("resultadoFinal");
@@ -195,17 +196,28 @@ if (btnSalvarDocumento) {
       return alert("O documento está vazio.");
     }
 
+    // Pega o elemento <select>
+    const select = document.getElementById("selectModelo");
+    // Pega o texto da opção selecionada (ex: "Pedido de Dilação de Prazo")
+    // Se nada estiver selecionado, envia string vazia ou nulo
+    const modeloTexto =
+      select.selectedIndex >= 0
+        ? select.options[select.selectedIndex].text
+        : null;
+
     try {
       btnSalvarDocumento.innerHTML =
         '<i class="fas fa-spinner fa-spin"></i> Salvando...';
       btnSalvarDocumento.disabled = true;
 
+      // Chama a rota que criamos
       const res = await fetch("/peticoes-finalizadas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           publicacao_id: publicacaoId,
           conteudo_final: conteudo,
+          modelo_utilizado: modeloTexto, // <--- ENVIANDO O NOME AGORA
         }),
       });
 

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Histórico de Petições</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body { background-color: #f8f9fa; padding-top: 20px; }
+        .tox-tinymce { border: 1px solid #ced4da !important; }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <a href="/" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i> Voltar</a>
+            <h4 class="text-secondary"><i class="fas fa-history me-2"></i>Histórico de Petições</h4>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="tabelaHistorico">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Data/Hora</th>
+                                <th>Processo</th>
+                                <th>Modelo Utilizado</th>
+                                <th class="text-center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="4" class="text-center p-3">Carregando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editorModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Visualizar / Editar Petição</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="editPublicacaoId">
+                    <input type="hidden" id="editModeloNome">
+                    
+                    <textarea id="editorConteudo"></textarea>
+                </div>
+                <div class="modal-footer justify-content-between">
+                    <div>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-dark" id="btnImprimir">
+                            <i class="fas fa-print me-1"></i> Imprimir
+                        </button>
+                        <button type="button" class="btn btn-primary" id="btnSalvarNovaVersao">
+                            <i class="fas fa-save me-1"></i> Salvar Alteração
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.tiny.cloud/1/1m09uoqqoizka5fkvrogwkfp5zbhmcjh7qra3g1s9hj9x4rh/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+    <script src="/js/historicoPeticoes.js" type="module"></script>
+</body>
+</html>

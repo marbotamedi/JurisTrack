@@ -47,6 +47,7 @@ let deleteId = null;
 /* ATENÇÃO: O Backend deve retornar o JSON com estas chaves exatas.
    Para colunas repetidas como 'Descricao', use ALIAS no SQL (ex: SELECT c.Descricao AS Cidade_Descricao FROM ...)
 */
+
 const mapaVariaveis = {
   processo: [
     { label: "Número do Processo", value: "{{NumProcesso}}" }, // Tabela: processos
@@ -55,27 +56,26 @@ const mapaVariaveis = {
     { label: "Data Saída", value: "{{DataSaida}}" }, // Tabela: processos
     { label: "Observações", value: "{{Obs}}" }, // Tabela: processos
   ],
-  partes: [
-    { label: "Cliente/Papel", value: "{{Cliente_Descricao}}" }, // Tabela: sj_papelcliente (Alias sugerido)
+  /* partes: [
+    { label: "Cliente/Papel", value: "{{Cliente}}" }, // Tabela: sj_papelcliente (Alias sugerido)
     { label: "Parte Contrária", value: "{{Oposto}}" }, // Tabela: sj_papelcliente
-  ],
+  ],*/
   local: [
-    { label: "Cidade", value: "{{Cidade_Descricao}}" }, // Tabela: cidades (Alias sugerido)
+    { label: "Cidade", value: "{{Cidade}}" }, // Tabela: cidades (Alias sugerido)
     { label: "UF (Estado)", value: "{{uf}}" }, // Tabela: estados
-    { label: "Comarca", value: "{{Comarca_Descricao}}" }, // Tabela: comarcas (Alias sugerido)
-    { label: "Tribunal", value: "{{Tribunal_Descricao}}" }, // Tabela: tribunais (Alias sugerido)
-    { label: "Vara", value: "{{Vara_Descricao}}" }, // Tabela: varas (Alias sugerido)
-    { label: "Instância", value: "{{Instancia_Descricao}}" }, // Tabela: instancias (Alias sugerido)
+    { label: "Comarca", value: "{{Comarca}}" }, // Tabela: comarcas (Alias sugerido)
+    { label: "Tribunal", value: "{{Tribunal}}" }, // Tabela: tribunais (Alias sugerido)
+    { label: "Vara", value: "{{Vara}}" }, // Tabela: varas (Alias sugerido)
+    { label: "Instância", value: "{{Instancia}}" }, // Tabela: instancias (Alias sugerido)
   ],
   datas: [
     { label: "Data Publicação", value: "{{data_publicacao}}" }, // Tabela: Publicacao
     { label: "Texto Publicação", value: "{{texto_integral}}" }, // Tabela: Publicacao
     { label: "Prazo (Dias)", value: "{{dias}}" }, // Tabela: Prazo
     { label: "Data Limite", value: "{{data_limite}}" }, // Tabela: Prazo
-    { label: "Feriado", value: "{{Feriado_Descricao}}" }, // Tabela: Feriado (Alias sugerido)
+    { label: "Data Atual", value: "{{DATA_ATUAL}}" },
   ],
 };
-
 // --- Funções de Navegação e UI ---
 
 function mostrarLista() {
@@ -140,7 +140,7 @@ function renderizarVariaveis() {
 
     div.innerHTML = `
             <strong class="text-primary" style="font-size: 0.8rem;">${item.label}</strong>
-            <code class="text-dark bg-light px-1 mt-1 rounded" style="font-size: 0.7rem;">${item.value}</code>
+            <!---<code class="text-dark bg-light px-1 mt-1 rounded" style="font-size: 0.7rem;">${item.value}</code>--->
         `;
 
     div.addEventListener("dragstart", (e) => {

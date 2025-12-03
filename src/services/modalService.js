@@ -96,7 +96,8 @@ export const getProcessFullData = async (pubId) => {
   // Usaremos left joins implícitos aqui (sem !inner nas tabelas filhas) para evitar erro se faltar uma comarca
   const { data, error } = await supabase
     .from("Publicacao")
-    .select(`
+    .select(
+      `
       data_publicacao,
       texto_integral,
       processos!inner (
@@ -113,7 +114,9 @@ export const getProcessFullData = async (pubId) => {
       ),
       Prazo ( dias, data_inicio, data_limite ),
       Andamento ( descricao, data_evento )
-    `)
+      
+    `
+    )
     .eq("id", pubId)
     .order("data_evento", { foreignTable: "Andamento", ascending: false })
     .maybeSingle();
@@ -139,14 +142,18 @@ export const getProcessFullData = async (pubId) => {
     DataSaida: proc?.datasaida,
     Obs: proc?.obs,
 
+    //---- Cliente ----//
+    /*Cliente: proc.sj_papelcliente?.descricao,
+    Oposto: proc?.sj_papelcliente?.Oposto,*/
+
     // --- Dados de Localização e Juízo (Extraídos dos Joins) ---
     // Verifica se os objetos existem antes de acessar .descricao
-    Cidade_Descricao: proc?.cidades?.descricao,
-    uf: proc?.cidades?.estado?.uf,
-    Comarca_Descricao: proc?.comarcas?.descricao,
-    Tribunal_Descricao: proc?.tribunais?.descricao,
-    Vara_Descricao: proc?.varas?.descricao,
-    Instancia_Descricao: proc?.instancias?.descricao,
+    Cidade: proc?.cidades?.descricao,
+    uf: proc?.cidades?.estados?.uf,
+    Comarca: proc?.comarcas?.descricao,
+    Tribunal: proc?.tribunais?.descricao,
+    Vara: proc?.varas?.descricao,
+    Instancia: proc?.instancias?.descricao,
 
     // --- Prazos ---
     dias: data.Prazo?.[0]?.dias,
@@ -154,7 +161,9 @@ export const getProcessFullData = async (pubId) => {
 
     // --- Andamento ---
     Ultimo_Andamento: andamento?.descricao,
-    Data_Andamento: andamento?.data_evento
+    Data_Andamento: andamento?.data_evento,
+
+    DATA_ATUAL: new Date().toLocaleDateString("pt-BR"),
   };
 
   return result;

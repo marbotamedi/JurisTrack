@@ -219,7 +219,8 @@
                             e.preventDefault();
                             // Insere a variável e um espaço
                             // O span visual ajuda a identificar que é uma variável
-                            editor.execCommand('mceInsertContent', false, `<span style="background-color: #e9ecef; border: 1px dashed #ccc; padding: 2px 5px; border-radius: 4px;">${data.templateVar}</span>&nbsp;`);
+                            /*editor.execCommand('mceInsertContent', false, `<span style="background-color: #e9ecef; border: 1px dashed #ccc; padding: 2px 5px; border-radius: 4px;">${data.templateVar}</span>&nbsp;`);*/
+                            editor.execCommand('mceInsertContent', false, data.templateVar);
                         }
                     } catch (err) {
                         // Ignora drops que não sejam JSON (ex: arrastar texto normal)

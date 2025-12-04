@@ -26,6 +26,7 @@ async function carregarHistorico() {
         if (!res.ok) throw new Error("Erro ao buscar histórico");
         
         const dados = await res.json();
+        console.log(dados);
         tbody.innerHTML = "";
 
         if (dados.length === 0) {

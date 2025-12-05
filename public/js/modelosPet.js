@@ -289,9 +289,15 @@ async function abrirModalDetalhes(id) {
  * Salva o modelo.
  */
 async function salvarModelo() {
-  const id = formModeloId.value;
+  // modelo petição (Criar ou Atualizar)
+
+  /*const id = formModeloId.value;
   const url = id ? `/modelos/${id}` : "/modelos";
-  const method = id ? "PUT" : "POST";
+  const method = id ? "PUT" : "POST";*/
+
+  // Sempre cria novo modelo
+  const url = "/modelos";
+  const method = "POST";
 
   const conteudoDoEditor = tinymce.get("formConteudo").getContent();
 

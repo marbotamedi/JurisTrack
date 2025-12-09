@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Gerenciar Processos</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body class="bg-light pt-4">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <a href="/" class="btn btn-outline-secondary"><i class="fas fa-arrow-left"></i> Voltar</a>
+            <h4>Gerenciamento de Processos</h4>
+            <button class="btn btn-primary" onclick="abrirModalCriar()">
+                <i class="fas fa-plus"></i> Novo Processo
+            </button>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0" id="tabelaProcessos">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Pasta</th>
+                            <th>Nº Processo</th>
+                            <th>Descrição</th>
+                            <th class="text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalProcesso" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitulo">Novo Processo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formProcesso">
+                        <input type="hidden" id="idProcesso">
+                        <div class="mb-3">
+                            <label>Pasta</label>
+                            <input type="text" class="form-control" id="pasta" required>
+                        </div>
+                        <div class="mb-3">
+                            <label>Número do Processo</label>
+                            <input type="text" class="form-control" id="numProcesso" required>
+                        </div>
+                        <div class="mb-3">
+                            <label>Descrição</label>
+                            <input type="text" class="form-control" id="descricao">
+                        </div>
+                        <div class="mb-3">
+                            <label>Observações</label>
+                            <textarea class="form-control" id="obs"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="salvarProcesso()">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalPeticoes" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Petições Vinculadas</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <ul class="list-group" id="listaPeticoes">
+                        </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/gerenciarProcessos.js" type="module"></script>
+</body>
+</html>

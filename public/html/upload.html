@@ -3,90 +3,153 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload de Arquivos</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-..." crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <title>Juris Track - Upload</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
     <link rel="stylesheet" href="/css/upload.css">
+
     
-<body class="d-flex align-items-center justify-content-center upload-container">
-    
-   <div class="container mt-5">
-        <div class="card p-4 form-card">
-            <h1 class="card-title text-center mb-4">Upload de Arquivos</h1>
-            <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
-                
-                <div class="mb-3">
-                    <label for="fileInput" class="form-label">Selecione um arquivo</label>
-                    <input class="form-control form-control-sm" id="fileInput" name="file" type="file" required />
+</head>
+
+<body>
+
+    <div id="wrapper">
+
+        <ul class="navbar-nav sidebar accordion" id="sidebar-wrapper">
+
+            <div class="sidebar-brand-icon sidebar-brand"><i class="fas fa-gavel"></i>Juris Track</div>
+
+            <hr class="sidebar-divider my-0">
+
+            <div class="nav-item"> <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapsePeticoes" aria-expanded="false" aria-controls="collapsePeticoes">
+                    Gerenciar Petições <i class="fas fa-angle-down"></i>
+                </a>
+                <div class="collapse" id="collapsePeticoes" aria-labelledby="headingOne" data-bs-parent="#sidebar-wrapper">
+                    <nav class="sb-sidenav-menu-nested nav">
+                        <a class="nav-link" href="/gerenciarPeticao"><i class="fas fa-fw fa-file-alt"></i>Tipos de Petições</a>
+                        <a class="nav-link" href="/gerarPeticao"><i class="fas fa-fw fa-pen-fancy"></i>Gerar Manual</a>
+                        <a class="nav-link" href="/historico"><i class="fas fa-fw fa-history"></i>Histórico</a>
+                    </nav>
                 </div>
-                
-                <div class="d-grid">
-                    <button class="btn btn-primary mt-3" type="submit">Enviar</button>
+            </div>
+
+            <div class="nav-item">
+                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseProcessos" aria-expanded="false" aria-controls="collapseProcessos">
+                    Gerenciar Processos <i class="fas fa-angle-down"></i>
+                </a>
+                <div class="collapse" id="collapseProcessos" aria-labelledby="headingTwo" data-bs-parent="#sidebar-wrapper">
+                    <nav class="sb-sidenav-menu-nested nav">
+                        <a class="nav-link" href="/gerenciarProcessos"><i class="fas fa-fw fa-file-alt"></i>Tipos de Processos</a>
+                    </nav>
                 </div>
-            </form>
-            
-            <div id="message" class="mt-3 text-center"></div>
-        </div>
-        <div class="d-flex justify-content-center mb-3" style="padding-top: 15px;">
-        <a href="/gerenciarPeticao" class="btn btn-outline-primary">
-          <i class="fas fa-file-alt me-1"></i> Gerenciar Tipo de Petições
-        </a>
-        <a href="/gerarPeticao" class="btn btn-outline-success ms-2">
-          <i class="fas fa-gavel me-1"></i> Gerar Petições Manual
-        </a>
-        <a href="/historico" class="btn btn-outline-secondary ms-2">
-          <i class="fa fa-history me-1"></i> Histórico de Petições
-        </a>
-      </div>
-        <!-- Tabela -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <i class="fas fa-table me-1"></i>
-                    Publicações Recentes  
             </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table id="tablesPublicacoes" class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Nome Arquivo</th>
-                                <th>URL Pública</th>
-                                <th>Data do Upload</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>   
+        </ul>
+
+        <div id="page-content-wrapper">
+
+            <div class="container-fluid">
+
+                <div class="row">
+                    <div class="col-xl-12 col-lg-12">
+                        
+                        <div class="card shadow mb-4 form-card">
+                            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                <h6 class="m-0 font-weight-bold text-primary">Novo Upload</h6>
+                            </div>
+                            <div class="card-body">
+                                <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
+                                    <div class="mb-3">
+                                        <label for="fileInput" class="form-label">Selecione um arquivo PDF ou Imagem</label>
+                                        <input class="form-control" id="fileInput" name="file" type="file" required />
+                                    </div>
+                                    <div class="d-grid gap-2 col-6 mx-auto">
+                                        <button class="btn btn-primary" type="submit">
+                                            <i class="fas fa-cloud-upload-alt me-2"></i> Enviar Arquivo
+                                        </button>
+                                    </div>
+                                </form>
+                                <div id="message" class="mt-3 text-center"></div>
+                            </div>
+                        </div>
+
+                        <div class="card shadow mb-4">
+                            <div class="card-header py-3">
+                                <h6 class="m-0 font-weight-bold text-primary">
+                                    <i class="fas fa-table me-1"></i> Publicações Recentes
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table id="tablesPublicacoes" class="table table-bordered table-striped" width="100%" cellspacing="0">
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Nome Arquivo</th>
+                                                <th>URL Pública</th>
+                                                <th>Data do Upload</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
             </div>
+            <footer class="sticky-footer bg-white mt-auto py-3">
+                <div class="container my-auto">
+                    <div class="copyright text-center my-auto">
+                        <span>Copyright &copy; Juris Track 2025</span>
+                    </div>
+                </div>
+            </footer>
+
         </div>
-        
     </div>
-    <div class="modal fade" id="resultadoModal" tabindex="-1" aria-labelledby="resultadoModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg"> <div class="modal-content">
+
+    <div class="modal fade" id="logoutModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="resultadoModalLabel">Resultado do Processamento</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h5 class="modal-title">Pronto para sair?</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">Selecione "Sair" abaixo se deseja encerrar a sessão.</div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <a class="btn btn-primary" href="login.html">Sair</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="resultadoModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg"> 
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Resultado do Processamento</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <!---<div id="modalResultadoConteudo"></div>--->
-                    <div class="card-body">
-                <div class="table-responsive">
-                    <table id="tablesResultado" class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Numero do Processo</th>
-                                <th>Data da Publicação</th>
-                                <th>Prazo</th>
-                                <th>Data Limite</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>   
-            </div>
+                    <div class="table-responsive">
+                        <table id="tablesResultado" class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Numero do Processo</th>
+                                    <th>Data da Publicação</th>
+                                    <th>Prazo</th>
+                                    <th>Data Limite</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>   
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
@@ -95,12 +158,12 @@
         </div>
     </div>
 
-   <div class="modal fade" id="detalhesProcessoModal" tabindex="-1" aria-labelledby="detalhesProcessoModalLabel" aria-hidden="true">
+    <div class="modal fade" id="detalhesProcessoModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-scrollable"> 
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="detalhesProcessoModalLabel">Histórico do Processo</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h5 class="modal-title">Histórico do Processo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <h6 class="mb-3">Processo: <span id="numeroProcessoDetalhe" class="fw-bold text-primary">...</span></h6>
@@ -109,14 +172,13 @@
                     
                     <div class="table-responsive">
                         <table id="tableDetalhesProcesso" class="table table-bordered table-striped">
-                            <thead>
+                            <thead class="table-light">
                                 <tr>
                                     <th style="width: 150px;">Data da Publicação</th>
                                     <th>Texto da Publicação</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                            </tbody>
+                            <tbody></tbody>
                         </table>
                     </div>
                 </div>
@@ -130,14 +192,13 @@
         </div>
     </div>
 
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById("sidebarToggleTop").addEventListener("click", function() {
+            document.getElementById("wrapper").classList.toggle("toggled");
+        });
+    </script>
     <script src="/js/upload.js" type="module"></script>
-    
-
-    
-
 
 </body>
 </html>
-

@@ -1,5 +1,6 @@
 import supabase from "../config/supabase.js";
 import { generateSafeFilename, getCurrentSaoPauloTimestamp, notifyN8NWebhook } from "../utils/utils.js";
+import { despacharEvento } from "./eventoService.js";
 
 const Bucket_Name = "teste";
 
@@ -41,7 +42,8 @@ export const uploadFileToStorage = async (file) => {
 
   // 4. Webhook
   if (insertData && insertData.length > 0) {
-    notifyN8NWebhook(insertData[0].id);
+    // O motor cuida do resto (logs e chamar N8N)
+    despacharEvento("UPLOAD_REALIZADO", { uploadId: insertData[0].id });
   }
 
   return { fileName, publicUrl: publicUrlData.publicUrl };

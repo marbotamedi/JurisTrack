@@ -1,4 +1,5 @@
 import supabase from "../config/supabase.js";
+import { registrarLog } from "./logService.js"; // Importe o log
 
 // Listar todos os processos
 export const getAllProcessos = async () => {
@@ -23,7 +24,7 @@ export const getProcessoById = async (id) => {
   return data;
 };
 
-// Criar novo processo
+// Criar novo processo (Com Log)
 export const createProcesso = async (dados) => {
   // dados deve conter chaves compatíveis com o banco (ex: numprocesso, pasta...)
   const { data, error } = await supabase
@@ -33,6 +34,13 @@ export const createProcesso = async (dados) => {
     .single();
 
   if (error) throw new Error(error.message);
+  // --- LOG DE AUDITORIA ---
+  await registrarLog(
+    "CRIAR_PROCESSO",
+    `Processo criado: ${dados.numprocesso || "Sem Número"}`,
+    { id_novo: data.IdProcesso || data.idprocesso } // Grava o ID gerado no meta-dados
+  );
+
   return data;
 };
 
@@ -46,10 +54,16 @@ export const updateProcesso = async (id, dados) => {
     .single();
 
   if (error) throw new Error(error.message);
+  // --- LOG DE AUDITORIA ---
+  await registrarLog(
+    "ATUALIZAR_PROCESSO",
+    `Processo atualizado (ID: ${id})`,
+    { dados_novos: dados } // Grava quais campos foram mexidos
+  );
   return data;
 };
 
-// Deletar processo
+// Deletar processo (Com Log)
 export const deleteProcesso = async (id) => {
   const { error } = await supabase
     .from("processos")
@@ -57,6 +71,12 @@ export const deleteProcesso = async (id) => {
     .eq("idprocesso", id);
 
   if (error) throw new Error(error.message);
+  // --- LOG DE AUDITORIA ---
+  await registrarLog(
+    "DELETAR_PROCESSO",
+    `Processo removido permanentemente (ID: ${id})`,
+    { id_removido: id }
+  );
   return { message: "Processo deletado com sucesso." };
 };
 

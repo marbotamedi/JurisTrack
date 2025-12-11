@@ -252,7 +252,7 @@ if (resultadoModal) {
 
     isNavigatingToModal2 = true;
     event.preventDefault();
-
+F
     const numeroProcesso = link.getAttribute("data-processo-numero");
     const prazo = link.getAttribute("data-prazo");
     const dataLimite = link.getAttribute("data-limite");

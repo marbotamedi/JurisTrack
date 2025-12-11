@@ -31,7 +31,7 @@ body {
 #tablesPublicacoes.table th,
 #tablesPublicacoes.table td {
     font-size: 0.85rem !important;
-    padding: 0.3rem; 
+    padding: 0.2rem; 
 }
 
 @media (max-width: 576px) {
@@ -186,6 +186,8 @@ hr.sidebar-divider {
     transform: scale(1.02); /* Leve "zoom" para dar destaque */
 }
 
+
+
 /* Responsividade da Sidebar */
 @media (max-width: 768px) {
     #sidebar-wrapper {
@@ -193,5 +195,28 @@ hr.sidebar-divider {
     }
     #wrapper.toggled #sidebar-wrapper {
         margin-left: 0;
+    }
+}
+
+
+/* Centraliza o card da tabela e limita a largura */
+.card-tabela-centralizada {
+    max-width: 90%; /* Ou use um valor fixo como 800px se preferir */
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Garante que a tabela fique compacta e com fonte ajustada */
+#tablesPublicacoes.table-sm th,
+#tablesPublicacoes.table-sm td {
+    padding: 0.5rem; /* Reduz o espaço interno das células */
+    font-size: 0.85rem; /* Mantém a fonte pequena e legível */
+    vertical-align: middle; /* Centraliza o texto verticalmente */
+}
+
+/* Ajuste específico para telas grandes (PC) */
+@media (min-width: 992px) {
+    .card-tabela-centralizada {
+        max-width: 800px; /* Define um tamanho máximo fixo em telas grandes */
     }
 }

@@ -92,7 +92,7 @@ async function carregarTabela() {
       tr.innerHTML = `
             <td>${publicacao.id}</td>
             <td>${publicacao.nome_arquivo}</td>
-            <td><a href="${publicacao.url_publica}" target="_blank">${publicacao.url_publica}</a></td>
+            <!---<td><a href="${publicacao.url_publica}" target="_blank">${publicacao.url_publica}</a></td>---->
             <td>${formattedDate}</td>
             <td>${statusHtml}</td> `;
 

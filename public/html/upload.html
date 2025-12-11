@@ -40,7 +40,7 @@
                 </a>
                 <div class="collapse" id="collapseProcessos" aria-labelledby="headingTwo" data-bs-parent="#sidebar-wrapper">
                     <nav class="sb-sidenav-menu-nested nav">
-                        <a class="nav-link" href="/gerenciarProcessos"><i class="fas fa-fw fa-file-alt"></i>Tipos de Processos</a>
+                        <a class="nav-link" href="/gerenciarProcessos"><i class="fas fa-fw fa-file-alt"></i>Processos</a>
                     </nav>
                 </div>
             </div>
@@ -73,22 +73,21 @@
                             </div>
                         </div>
 
-                        <div class="card shadow mb-4">
+                        <div class="card shadow mb-4 card-tabela-centralizada">
                             <div class="card-header py-3">
                                 <h6 class="m-0 font-weight-bold text-primary">
-                                    <i class="fas fa-table me-1"></i> Publicações Recentes
+                                    <i class="fas fa-table me-1"></i> Status de Documentos 
                                 </h6>
                             </div>
                             <div class="card-body">
                                 <div class="table-responsive">
-                                    <table id="tablesPublicacoes" class="table table-bordered table-striped" width="100%" cellspacing="0">
+                                    <table id="tablesPublicacoes" class="table table-bordered table-striped table-sm text-center" width="100%" cellspacing="0">
                                         <thead>
                                             <tr>
-                                                <th>ID</th>
-                                                <th>Nome Arquivo</th>
-                                                <th>URL Pública</th>
-                                                <th>Data do Upload</th>
-                                                <th>Status</th>
+                                                <th style="width: 10%;">ID</th> 
+                                                <th style="width: 50%;">Nome Arquivo</th>
+                                                <th style="width: 25%;">Data do Upload</th>
+                                                <th style="width: 15%;">Status</th>
                                             </tr>
                                         </thead>
                                         <tbody></tbody>

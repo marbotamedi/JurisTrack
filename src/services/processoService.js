@@ -1,4 +1,3 @@
-// src/services/processoService.js
 import supabase from "../config/supabase.js";
 
 // Listar todos os processos
@@ -17,7 +16,7 @@ export const getProcessoById = async (id) => {
   const { data, error } = await supabase
     .from("processos")
     .select("*")
-    .eq("idprocesso", id) // Note: Postgres converteu IdProcesso para idprocesso
+    .eq("idprocesso", id) // O Supabase costuma normalizar para minúsculo
     .single();
 
   if (error) throw new Error(error.message);
@@ -26,7 +25,7 @@ export const getProcessoById = async (id) => {
 
 // Criar novo processo
 export const createProcesso = async (dados) => {
-  // dados deve conter: { numprocesso, pasta, obs, datainicial, descricao ... }
+  // dados deve conter chaves compatíveis com o banco (ex: numprocesso, pasta...)
   const { data, error } = await supabase
     .from("processos")
     .insert([dados])
@@ -66,21 +65,26 @@ export const deleteProcesso = async (id) => {
  * Caminho: Historico_Peticoes -> Publicacao -> Processos
  */
 export const getPeticoesByProcesso = async (idProcesso) => {
-  // Buscamos as petições onde a Publicação vinculada pertence a este processo
-  // faz inner join entre Historico_Peticoes e Publicacao
-  const { data, error } = await supabase
+  // Primeiro, buscamos as publicações deste processo
+  const { data: publicacoes, error: errPub } = await supabase
+    .from("Publicacao")
+    .select("id")
+    .eq("processoid", idProcesso);
+
+  if (errPub) throw new Error(errPub.message);
+
+  if (!publicacoes || publicacoes.length === 0) return [];
+
+  const listaIdsPub = publicacoes.map((p) => p.id);
+
+  // Agora buscamos as petições dessas publicações
+  const { data: peticoes, error: errPet } = await supabase
     .from("Historico_Peticoes")
-    .select(`
-      id,
-      created_at,
-      modelo_utilizado,
-      Publicacao!inner (
-        processoid
-      )
-    `)
-    .eq("Publicacao.processoid", idProcesso)
+    .select("id, created_at, modelo_utilizado, publicacao_id, conteudo_html ")
+    .in("publicacao_id", listaIdsPub)
     .order("created_at", { ascending: false });
 
-  if (error) throw new Error(error.message);
-  return data;
+  if (errPet) throw new Error(errPet.message);
+
+  return peticoes;
 };

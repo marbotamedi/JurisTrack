@@ -108,3 +108,33 @@ export const getPeticoesByProcesso = async (idProcesso) => {
 
   return peticoes;
 };
+
+
+// Buscar todos os prazos (Dashboard de Prazos)
+export const getAllPrazos = async () => {
+  const { data, error } = await supabase
+    .from("Prazo")
+    .select(`
+      id,
+      dias,
+      data_limite,
+      publicacaoid,
+      Publicacao (
+        data_publicacao,
+        processos ( numprocesso )
+      )
+    `)
+    .order("data_limite", { ascending: true }); // Ordena pelo que vence primeiro
+
+  if (error) throw new Error(error.message);
+
+  // Formata para o front-end
+  return data.map(item => ({
+    prazo_id: item.id,
+    publicacao_id: item.publicacaoid,
+    num_processo: item.Publicacao?.processos?.numprocesso || "N/A",
+    data_publicacao: item.Publicacao?.data_publicacao,
+    dias: item.dias,
+    data_limite: item.data_limite
+  }));
+};

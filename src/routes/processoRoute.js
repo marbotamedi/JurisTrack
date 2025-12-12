@@ -12,4 +12,6 @@ router.delete("/:id", controller.deletar);
 // Rota especial: Pega as petições de um processo
 router.get("/:id/peticoes", controller.listarPeticoesDoProcesso);
 
+router.get("/dados/todos-prazos", controller.listarPrazos);
+
 export default router;

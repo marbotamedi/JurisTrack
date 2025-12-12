@@ -59,6 +59,10 @@ app.get("/gerenciarProcessos", (req, res) => {
   );
 });
 
+app.get("/prazos", (req, res) => {
+  res.sendFile(path.join(__dirname, "../public", "html", "prazos.html"));
+});
+
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });

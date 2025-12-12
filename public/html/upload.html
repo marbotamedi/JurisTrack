@@ -41,6 +41,7 @@
                 <div class="collapse" id="collapseProcessos" aria-labelledby="headingTwo" data-bs-parent="#sidebar-wrapper">
                     <nav class="sb-sidenav-menu-nested nav">
                         <a class="nav-link" href="/gerenciarProcessos"><i class="fas fa-fw fa-file-alt"></i>Processos</a>
+                        <a class="nav-link" href="/prazos"><i class="fas fa-fw fa-calendar-check"></i>Prazos</a>
                     </nav>
                 </div>
             </div>
@@ -108,86 +109,6 @@
                 </div>
             </footer>
 
-        </div>
-    </div>
-
-    <div class="modal fade" id="logoutModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Pronto para sair?</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">Selecione "Sair" abaixo se deseja encerrar a sessão.</div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <a class="btn btn-primary" href="login.html">Sair</a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="resultadoModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg"> 
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Resultado do Processamento</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="table-responsive">
-                        <table id="tablesResultado" class="table table-bordered">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Numero do Processo</th>
-                                    <th>Data da Publicação</th>
-                                    <th>Prazo</th>
-                                    <th>Data Limite</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>   
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="detalhesProcessoModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable"> 
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Histórico do Processo</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <h6 class="mb-3">Processo: <span id="numeroProcessoDetalhe" class="fw-bold text-primary">...</span></h6>
-                    <h6 class="mb-3">Prazo: <span id="prazoDetalhe" class="fw-bold text-primary">...</span> dias</h6>
-                    <h6 class="mb-3">Data Limite: <span id="dataLimiteDetalhe" class="fw-bold text-primary">...</span></h6>
-                    
-                    <div class="table-responsive">
-                        <table id="tableDetalhesProcesso" class="table table-bordered table-striped">
-                            <thead class="table-light">
-                                <tr>
-                                    <th style="width: 150px;">Data da Publicação</th>
-                                    <th>Texto da Publicação</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" id="btnVoltarParaResultados">
-                        <i class="fas fa-arrow-left me-1"></i> Voltar
-                    </button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-                </div>
-            </div>
         </div>
     </div>
 

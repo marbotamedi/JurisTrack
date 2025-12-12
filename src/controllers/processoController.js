@@ -61,3 +61,13 @@ export const listarPeticoesDoProcesso = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+
+export const listarPrazos = async (req, res) => {
+  try {
+    const lista = await processoService.getAllPrazos();
+    res.status(200).json(lista);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};

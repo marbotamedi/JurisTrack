@@ -1,0 +1,20 @@
+/* Ajuste para o layout com Menu Lateral */
+body { 
+    background-color: #f5f7fb; 
+    display: block; 
+}
+ /* Remove o display flex centralizado do body original */
+.main-content { background-color: #f5f7fb;
+    min-height: 100vh; 
+    width: 100%; 
+}
+.nav-link { color: #6c757d; 
+    margin-bottom: 5px; 
+}
+.nav-link:hover, .nav-link.active { 
+    color: #3b82f6; 
+    background-color: #eef2ff; border-radius: 
+    5px; font-weight: bold; }
+.nav-link i { 
+    width: 25px; 
+}

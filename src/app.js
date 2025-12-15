@@ -8,7 +8,7 @@ import n8nRoute from "./routes/n8nRoute.js";
 import modalRoute from "./routes/modalRoute.js";
 import modelosRoute from "./routes/modelosPeticao.js";
 import peticaoRoute from "./routes/peticaoRoute.js";
-import processoRoute from "./routes/processoRoute.js";
+import processoRoute from "./routes/processosRoute.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -29,12 +29,18 @@ app.use("/n8n", n8nRoute);
 app.use("/", modalRoute);
 app.use("/modelos", modelosRoute);
 app.use("/peticoes-finalizadas", peticaoRoute);
-app.use("/processos", processoRoute);
+app.use("/api/processos", processoRoute);
 
 /* Rota padrão */
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "../public", "html", "upload.html"));
+});
+
+app.get("/processos", (req, res) => {
+  res.sendFile(
+    path.join(__dirname, "../public", "html", "processos.html")
+  );
 });
 
 app.get("/gerenciarPeticao", (req, res) => {
@@ -53,15 +59,6 @@ app.get("/historico", (req, res) => {
   );
 });
 
-app.get("/gerenciarProcessos", (req, res) => {
-  res.sendFile(
-    path.join(__dirname, "../public", "html", "gerenciarProcessos.html")
-  );
-});
-
-app.get("/prazos", (req, res) => {
-  res.sendFile(path.join(__dirname, "../public", "html", "prazos.html"));
-});
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

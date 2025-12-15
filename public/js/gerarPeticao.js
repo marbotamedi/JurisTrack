@@ -51,6 +51,7 @@ function inicializarTinyMCE() {
       "undo redo | blocks fontfamily fontsize | bold italic underline | align lineheight | numlist bullist indent outdent | removeformat",
     height: 650,
     menubar: false,
+    elementpath: false,
   });
 }
 

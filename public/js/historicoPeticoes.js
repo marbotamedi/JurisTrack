@@ -12,6 +12,7 @@ function inicializarTinyMCE() {
         language: 'pt_BR',
         height: 600,
         menubar: false,
+        elementpath: false,
         plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount',
         toolbar: 'undo redo | fontfamily fontsize | bold italic underline | align lineheight | numlist bullist indent outdent | removeformat',
         content_style: `body { font-family: Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.5; }`

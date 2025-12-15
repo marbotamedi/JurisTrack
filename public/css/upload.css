@@ -2,221 +2,79 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    /* Cuidado: Isso pode remover bordas úteis de inputs, por exemplo. */
     border: 0; 
 }
 
-/* --- ESTILOS GERAIS DA PÁGINA --- */
+
+/* para centralizar na tela */
 body {
-    background-color: #f8f9fc;
-    overflow-x: hidden;
+        background-color: #f8f9fa; /* Um cinza claro de fundo */
 }
-
 .upload-container {
-    min-height: 100vh;
+    min-height: 100vh; /* container  altura total da viewport */
 }
-
 .form-card {
-    max-width: 500px;
-    width: 90%;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    margin: auto;
+    max-width: 500px; /* Limita a largura máxima  */
+    width: 90%; /* Ocupa 90% */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Sombra suave*/
+    margin: auto; /* Centraliza horizontalmente */
 }
 
 .card.mb-4 {
-    margin-top: 20px;
-    margin-bottom: 20px;
+    margin-top: 20px; /* Espaço superior */
+    margin-bottom: 20px; /* Espaço inferior */
 }
 
-/* --- ESTILOS DAS TABELAS --- */
+/* fonte men*/
 #tablesPublicacoes.table th,
 #tablesPublicacoes.table td {
     font-size: 0.85rem !important;
-    padding: 0.2rem; 
+    padding: 0.3rem; 
 }
 
+/* Adicione esta regra no final do seu upload.css */
 @media (max-width: 576px) {
+    /* Reduz a fonte do header da tabela */
     #tablesPublicacoes.table th {
-        font-size: 0.45rem !important;
-        padding: 0.1rem;
+        font-size: 0.45rem !important; /* Reduz a fonte dos títulos das colunas */
+        padding: 0.1rem; /* Reduz o padding */
     }
+
+    /* Reduz o tamanho da fonte dos dados ainda mais se necessário */
     #tablesPublicacoes.table td {
         font-size: 0.45rem !important;
         padding: 0.1rem;
+        /* Força a quebra de linha em URLs longas */
         word-break: break-all; 
     }
 }
 
-/* --- ESTILOS DOS MODAIS --- */
-#modalResultadoConteudo {
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    max-height: 60vh;
-    overflow-y: auto;
-}
 
+/* INÍCIO: ESTILO DO CORPO DO MODAL*/
+#modalResultadoConteudo {
+    white-space: pre-wrap;   /* Respeita espaços em branco e quebras de linha */
+    word-wrap: break-word;   /* Quebra palavras longas que transbordariam */
+    max-height: 60vh;        /* Altura máxima, caso o conteúdo seja gigante */
+    overflow-y: auto;        /* Adiciona scroll se o conteúdo for maior */
+    
+}
+/*  ESTILO DO CORPO DO MODAL TABELA*/
 #tablesResultado.table th,
 #tablesResultado.table td {
-    font-size: 0.8rem;
-    padding: 0.4rem;
+    font-size: 0.8rem;  /* <-- ESTE É O TAMANHO DA FONTE. Ajuste (ex: 0.75rem ou 12px) */
+    padding: 0.4rem;    /* Espaçamento interno das células */
     vertical-align: middle;
 }
 
+
+/* ESTILO PARA A CÉLULA DE TEXTO DO NOVO MODAL
+  (Usamos a classe 'texto-publicacao' que definimos no JS) 
+*/
 .texto-publicacao {
-    white-space: pre-wrap;
-    word-break: break-word;
-    max-width: 600px;
-    font-size: 0.8rem;
+    white-space: pre-wrap;   /* Respeita quebras de linha e espaços do texto original */
+    word-break: break-word;  /* Quebra palavras muito longas para não estourar a tabela */
+    max-width: 600px;        /* Define uma largura máxima (ajuste se necessário) */
+    font-size: 0.8rem;       /* Fonte um pouco menor para caber mais texto */
 }
 
-/* --- LAYOUT DO DASHBOARD (WRAPPER) --- */
-#wrapper {
-    display: flex;
-    width: 100%;
-    align-items: stretch;
-    min-height: 100vh;
-}
-
-/* Conteúdo Principal */
-#page-content-wrapper {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-}
-
-/* Footer e Topbar */
-.sticky-footer {
-    padding: 2rem 0;
-    flex-shrink: 0;
-}
-
-/* --- SIDEBAR (BARRA LATERAL AZUL) --- */
-#sidebar-wrapper {
-    min-width: 230px;
-    max-width: 230px;
-    background-image: linear-gradient(180deg, #4e73df 10%, #224abe 100%);
-    background-size: cover;
-    color: #fff;
-    transition: margin 0.25s ease-out;
-}
-
-/* 1. Logo e Título */
-.sidebar-brand {
-    height: 5rem;
-    text-decoration: none;
-    font-size: 1.2rem;
-    font-weight: 600;
-    padding: 1.5rem 1rem;
-    text-align: center;
-    text-transform: uppercase;
-    letter-spacing: .05rem;
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.sidebar-brand-icon i {
-    font-size: 2rem;
-    transform: rotate(-15deg);
-    margin-right: 15px; 
-}
-
-.sidebar-heading {
-    text-align: center; /* Centralizado também */
-    padding: 0 1rem;
-    font-weight: 800;
-    font-size: .75rem;
-    text-transform: uppercase;
-    margin-bottom: 5px;
-    margin-top: 15px;
-    color: #ffffff !important;
-    opacity: 0.8;
-}
-
-hr.sidebar-divider {
-    margin: 0 1rem 1rem;
-    border-top: 1px solid rgba(255,255,255,0.5);
-    opacity: 1;
-}
-
-/* --- ESTILOS DOS LINKS DO MENU (CORRIGIDOS) --- */
-
-/* Configuração Base para TODOS os links da Sidebar */
-#sidebar-wrapper .nav-link {
-    /* Cor e Fonte */
-    color: #ffffff !important; /* Texto Branco */
-    font-weight: 700;
-    text-decoration: none;
-    padding: 1rem;
-    
-    /* Centralização (Flexbox) */
-    display: flex !important;
-    justify-content: center !important; /* Centraliza horizontalmente */
-    align-items: center !important;     /* Centraliza verticalmente */
-    text-align: center;
-    width: 100%;
-}
-
-/* Configuração dos Ícones dentro dos links */
-#sidebar-wrapper .nav-link i {
-    color: #ffffff !important; /* Ícone Branco */
-    font-size: .95rem;
-    margin-right: 10px !important; /* Espaço entre ícone e texto */
-    margin-left: 0 !important;
-}
-
-/* --- EFEITO HOVER (FAIXA CINZA/PRATA) --- */
-/* Aplica ao link principal e aos submenus */
-#sidebar-wrapper .nav-link:hover,
-.sb-sidenav-menu-nested .nav-link:hover {
-    
-    /* Cria a faixa cinza semitransparente */
-    background-color: rgba(255, 255, 255, 0.2) !important; 
-    
-    /* Transforma em "pílula/faixa" */
-    border-radius: 10px;
-    margin: 5px 15px; /* Margem lateral cria o efeito "flutuante" */
-    width: auto;      /* Largura automática respeitando a margem */
-    
-    /* Mantém cores */
-    color: #ffffff !important;
-    
-    /* Animação suave */
-    transition: all 0.2s ease;
-    transform: scale(1.02); /* Leve "zoom" para dar destaque */
-}
-
-
-
-/* Responsividade da Sidebar */
-@media (max-width: 768px) {
-    #sidebar-wrapper {
-        margin-left: -230px;
-    }
-    #wrapper.toggled #sidebar-wrapper {
-        margin-left: 0;
-    }
-}
-
-
-/* Centraliza o card da tabela e limita a largura */
-.card-tabela-centralizada {
-    max-width: 90%; /* Ou use um valor fixo como 800px se preferir */
-    margin-left: auto;
-    margin-right: auto;
-}
-
-/* Garante que a tabela fique compacta e com fonte ajustada */
-#tablesPublicacoes.table-sm th,
-#tablesPublicacoes.table-sm td {
-    padding: 0.5rem; /* Reduz o espaço interno das células */
-    font-size: 0.85rem; /* Mantém a fonte pequena e legível */
-    vertical-align: middle; /* Centraliza o texto verticalmente */
-}
-
-/* Ajuste específico para telas grandes (PC) */
-@media (min-width: 992px) {
-    .card-tabela-centralizada {
-        max-width: 800px; /* Define um tamanho máximo fixo em telas grandes */
-    }
-}

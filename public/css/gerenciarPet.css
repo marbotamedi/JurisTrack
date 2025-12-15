@@ -1,8 +1,6 @@
-
-
-  /* ESTILOS GERAIS */
-
-   
+/* ==========================================================================
+   ESTILOS GERAIS (MANTIDOS DO ORIGINAL)
+   ========================================================================== */
 body {
     background-color: #f8f9fa;
     padding-top: 20px;
@@ -122,20 +120,4 @@ body {
     font-weight: inherit !important;
     cursor: text !important;                  /* Muda o cursor para seleção de texto */
     display: inline;                          /* Garante que flua na linha do texto */
-}
-
-
-   /*TABELA DE MODELOS (Centralizar Botões)*/
-  
-
-/* Seleciona a última célula (td) de cada linha da tabela #tabelaModelos */
-#tabelaModelos tbody td:last-child {
-    text-align: center;      /* Centraliza horizontalmente */
-    vertical-align: middle;  /* Centraliza verticalmente */
-    white-space: nowrap;     /* Impede que os botões fiquem um em cima do outro */
-}
-
-/* Opcional: Adiciona um pequeno espaço entre os botões para não ficarem colados */
-#tabelaModelos tbody td:last-child button {
-    margin: 0 4px;
 }

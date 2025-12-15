@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Processos - Juris Track</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/menu.css">
+
+</head>
+<body>
+    <div class="d-flex">
+    <div class="bg-white p-3 border-end d-flex flex-column" style="width: 250px; min-height: 100vh; position: sticky; top: 0;">
+        <h4 class="mb-4 text-dark px-2"><i class="fas fa-scale-balanced me-2"></i>Juris Track</h4>
+        
+        <nav class="nav flex-column flex-grow-1">
+            <small class="text-muted text-uppercase fw-bold mb-2 px-2" style="font-size: 0.75rem;">Principal</small>
+            
+            <a class="nav-link " href="/">
+                <i class="fas fa-cloud-upload-alt"></i> Upload / Início
+            </a>
+            <a class="nav-link active" href="/processos">
+                <i class="fas fa-gavel"></i> Processos
+            </a>
+
+            <small class="text-muted text-uppercase fw-bold mt-4 mb-2 px-2" style="font-size: 0.75rem;">Petições</small>
+            
+            <a class="nav-link" href="/gerenciarPeticao">
+                <i class="fas fa-file-contract"></i> Modelos
+            </a>
+            <a class="nav-link" href="/gerarPeticao">
+                <i class="fas fa-edit"></i> Gerador Manual
+            </a>
+            <a class="nav-link" href="/historico">
+                <i class="fas fa-history"></i> Histórico
+            </a>
+        </nav>
+        
+        <div class="mt-auto pt-3 border-top">
+             <a class="nav-link text-danger" href="#"><i class="fas fa-sign-out-alt"></i> Sair</a>
+        </div>
+    </div>
+    
+        <div class="flex-grow-1 p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2>Processos</h2>
+                    <p class="text-muted">Gerencie e pesquise processos jurídicos</p>
+                </div>
+                <button class="btn btn-primary text-red" onclick="window.location.href='/html/fichaProcesso.html'">
+                    <i class="fas fa-plus me-1"></i> Novo Processo
+                </button>
+            </div>
+
+            <div class="card card-custom p-4 mb-4">
+                <h5 class="mb-3"><i class="fas fa-search me-2"></i>Pesquisar Processos</h5>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label text-muted small">Buscar por número, assunto, autor ou réu</label>
+                        <input type="text" class="form-control" id="buscaInput" placeholder="Digite para pesquisar...">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label text-muted small">Situação</label>
+                        <select class="form-select" id="filtroSituacao">
+                            <option value="">Todas</option>
+                            <option value="Ativo">Ativo</option>
+                            <option value="Suspenso">Suspenso</option>
+                            <option value="Arquivado">Arquivado</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label text-muted small">Comarca</label>
+                        <select class="form-select" id="filtroComarca">
+                            <option value="">Todas</option>
+                            </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card card-custom p-4">
+                <h5 class="mb-3"><i class="far fa-file-alt me-2"></i>Resultados (<span id="totalResultados">0</span>)</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Número do Processo</th>
+                                <th>Assunto</th>
+                                <th>Pasta</th>
+                                <th>Comarca</th>
+                                <th>Cidade</th>
+                                <th class="text-center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaProcessosBody">
+                            <tr><td colspan="5" class="text-center text-muted">Carregando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/processoLista.js"></script>
+</body>
+</html>

@@ -9,6 +9,8 @@ import modalRoute from "./routes/modalRoute.js";
 import modelosRoute from "./routes/modelosPeticao.js";
 import peticaoRoute from "./routes/peticaoRoute.js";
 import processoRoute from "./routes/processosRoute.js";
+import locaisRoute from "./routes/locaisRoute.js";
+import auxiliarRouter from "./routes/auxiliaresRoute.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -30,6 +32,8 @@ app.use("/", modalRoute);
 app.use("/modelos", modelosRoute);
 app.use("/peticoes-finalizadas", peticaoRoute);
 app.use("/api/processos", processoRoute);
+app.use("/api/locais", locaisRoute);
+app.use("/api/auxiliares",auxiliarRouter);
 
 /* Rota padrão */
 
@@ -55,10 +59,19 @@ app.get("/gerarPeticao", (req, res) => {
 
 app.get("/historico", (req, res) => {
   res.sendFile(
-    path.join(__dirname, "../public", "html", "historicoPeticoes.html")
-  );
+    path.join(__dirname, "../public", "html", "historicoPeticoes.html"));
 });
 
+app.get("/estados", (req, res) => {
+  res.sendFile(
+    path.join(__dirname,"../public", "html", "estados.html"));
+});
+
+
+app.get("/cidades", (req, res) =>{
+  res.sendFile(
+    path.join(__dirname, "../public", "html", "cidades.html"));
+});
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

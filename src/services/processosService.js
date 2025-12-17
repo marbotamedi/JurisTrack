@@ -1,8 +1,6 @@
-// Arquivo: src/services/processosService.js
 import supabase from "../config/supabase.js";
 
 export const listarProcessos = async (filtros) => {
-  // CORREÇÃO: Tudo em minúsculo aqui dentro do select
   let query = supabase
     .from("processos")
     .select(`
@@ -15,7 +13,6 @@ export const listarProcessos = async (filtros) => {
     `);
 
   if (filtros.busca) {
-    // CORREÇÃO: Filtros também em minúsculo
     query = query.or(`numprocesso.ilike.%${filtros.busca}%,descricao.ilike.%${filtros.busca}%`);
   }
   
@@ -25,16 +22,24 @@ export const listarProcessos = async (filtros) => {
 };
 
 export const obterProcessoCompleto = async (id) => {
-  // CORREÇÃO: Tudo em minúsculo
   const { data, error } = await supabase
     .from("processos")
     .select(`
       *,
-      cidades ( idcidade, descricao, idestado ),
+      cidades ( idcidade, descricao, idestado, estados(uf) ),
       comarcas ( idcomarca, descricao ),
       tribunais ( idtribunal, descricao ),
       varas ( idvara, descricao ),
-      instancias ( idinstancia, descricao )
+      instancias ( idinstancia, descricao ),
+      decisoes ( iddecisao, descricao ),
+      Publicacao (
+        id,
+        data_publicacao,
+        texto_integral,
+        upload_Documentos ( id, nome_arquivo, url_publica ),
+        Andamento ( id, descricao, data_evento ),
+        Prazo ( id, descricao, dias, data_limite )
+      )
     `)
     .eq("idprocesso", id)
     .single();
@@ -44,31 +49,19 @@ export const obterProcessoCompleto = async (id) => {
 };
 
 export const criarProcesso = async (dados) => {
-  const { data, error } = await supabase
-  .from("processos")
-  .insert([dados])
-  .select();
-
+  const { data, error } = await supabase.from("processos").insert([dados]).select();
   if (error) throw error;
   return data;
 };
 
 export const atualizarProcesso = async (id, dados) => {
-  const { data, error } = await supabase
-  .from("processos").update(dados)
-  .eq("idprocesso", id)
-  .select();
-
+  const { data, error } = await supabase.from("processos").update(dados).eq("idprocesso", id).select();
   if (error) throw error;
   return data;
 };
 
 export const excluirProcesso = async (id) => {
-  const { error } = await supabase
-  .from("processos")
-  .delete()
-  .eq("idprocesso", id);
-  
+  const { error } = await supabase.from("processos").delete().eq("idprocesso", id);
   if (error) throw error;
   return true;
 };

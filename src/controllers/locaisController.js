@@ -24,6 +24,12 @@ export const deleteEstado = async (req, res) => {
     await locaisService.deletarEstado(req.params.id);
     res.status(204).send();
   } catch (error) {
+    // Verifica se o erro é de chave estrangeira (violates foreign key constraint)
+    if (error.message.includes("violates foreign key constraint")) {
+      return res.status(409).json({ 
+        error: "Não é possível excluir este estado pois existem cidades vinculadas a ele." 
+      });
+    }
     res.status(500).json({ error: error.message });
   }
 };
@@ -52,6 +58,12 @@ export const deleteCidade = async (req, res) => {
     await locaisService.deletarCidade(req.params.id);
     res.status(204).send();
   } catch (error) {
+    // Verifica se o erro é de chave estrangeira (violates foreign key constraint)
+    if (error.message.includes("violates foreign key constraint")) {
+      return res.status(409).json({ 
+        error: "Não é possível excluir este estado pois existem cidades vinculadas a ele." 
+      });
+    }
     res.status(500).json({ error: error.message });
   }
 };

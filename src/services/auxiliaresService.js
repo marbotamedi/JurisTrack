@@ -1,10 +1,15 @@
 import supabase from "../config/supabase.js";
 
+/**
+ * Lista registos de uma tabela auxiliar.
+ */
 export const listarTabela = async (tabela) => {
-  let query = supabase.from(tabela).select("*", { count: 'exact' });
+  let query = supabase.from(tabela).select("*");
 
-  // Joins específicos para trazer os nomes nas tabelas relacionadas
+  // AJUSTE: Joins específicos para trazer os nomes nas tabelas relacionadas
+  
   if (tabela === "tribunais") {
+    // Busca nome da Instância e Comarca
     query = supabase.from(tabela).select(`
       *,
       instancias ( descricao ),
@@ -13,16 +18,24 @@ export const listarTabela = async (tabela) => {
   }
 
   if (tabela === "varas") {
+    // Busca nome do Tribunal
     query = supabase.from(tabela).select(`
       *,
       tribunais ( descricao )
     `);
   }
 
-  // Aumenta o limite para 10.000 registros e ordena
-  const { data, error } = await query
-    .order("descricao")
-    .range(0, 9999); 
+  // Se precisar de joins para comarcas (ex: estado), adicione aqui
+  if (tabela === "comarcas") {
+     // Exemplo se comarcas tiver relação com estados
+     query = supabase
+     .from(tabela)
+     .select(
+      `*, estados ( descricao, uf )`
+    );
+  }
+
+  const { data, error } = await query.order("descricao");
 
   if (error) throw error;
   return data;
@@ -35,7 +48,6 @@ export const salvarRegisto = async (tabela, campoId, dados) => {
   const id = dados[campoId];
   
   // Garante que o ativo seja respeitado (true ou false)
-  // Se vier null/undefined, assume true.
   const payload = { 
     ...dados, 
     ativo: dados.ativo ?? true 
@@ -63,7 +75,7 @@ export const salvarRegisto = async (tabela, campoId, dados) => {
 };
 
 /**
- * Soft Delete (Exclusão Lógica).
+ * Soft Delete.
  */
 export const eliminarRegisto = async (tabela, campoId, id) => {
   const { error } = await supabase

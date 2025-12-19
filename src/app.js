@@ -73,6 +73,35 @@ app.get("/cidades", (req, res) =>{
     path.join(__dirname, "../public", "html", "cidades.html"));
 });
 
+app.get("/comarcas", (req, res) =>{
+  res.sendFile
+  (path.join(__dirname,"../public", "html", "comarcas.html"));
+});
+
+app.get("/tribunais", (req, res) =>{
+  res.sendFile(
+    (path.join(__dirname, "../public", "html", "tribunais.html"))
+  );
+});
+
+app.get("/varas", (req, res) => {
+  res.sendFile(
+    (path.join(__dirname, "../public", "html", "varas.html"))
+  );
+});
+
+app.get("/instancias", (req, res) => {
+  res.sendFile(
+    (path.join(__dirname, "../public", "html", "instancias.html"))
+  );
+});
+
+app.get("/decisoes", (req, res) =>{
+  res.sendFile(
+    (path.join(__dirname, "../public", "html", "decisoes.html"))
+  );
+});
+
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });

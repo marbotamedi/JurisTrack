@@ -1,24 +1,21 @@
 import express from "express";
-import supabase from "../config/supabase.js";
+import * as ctrl from "../controllers/auxiliaresController.js";
 
 const router = express.Router();
 
-// Função auxiliar para criar rotas de listagem simples
-const criarRotaListagem = (tabela, orderBy = "descricao") => async (req, res) => {
-  try {
-    const { data, error } = await supabase.from(tabela).select("*").order(orderBy);
-    if (error) throw error;
-    res.json(data);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
+// Configuração das tabelas auxiliares: [ROTA, TABELA_BD, CAMPO_ID]
+const configs = [
+  ["comarcas", "comarcas", "idcomarca"],
+  ["tribunais", "tribunais", "idtribunal"],
+  ["varas", "varas", "idvara"],
+  ["instancias", "instancias", "idinstancia"],
+  ["decisoes", "decisoes", "iddecisao"]
+];
 
-// Rotas para cada tabela auxiliar
-router.get("/comarcas", criarRotaListagem("comarcas"));
-router.get("/tribunais", criarRotaListagem("tribunais"));
-router.get("/varas", criarRotaListagem("varas"));
-router.get("/instancias", criarRotaListagem("instancias"));
-router.get("/decisoes", criarRotaListagem("decisoes")); // Confirme se o nome da tabela no Supabase é 'decisoes'
+configs.forEach(([rota, tabela, id]) => {
+  router.get(`/${rota}`, ctrl.listar(tabela));
+  router.post(`/${rota}`, ctrl.salvar(tabela, id));
+  router.delete(`/${rota}/:id`, ctrl.excluir(tabela, id));
+});
 
 export default router;

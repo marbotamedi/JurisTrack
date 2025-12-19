@@ -13,23 +13,28 @@ async function carregarEstados() {
     try {
         const res = await fetch(`/api/locais/estados?busca=${termo}`);
         const dados = await res.json();
-
+     
         tbody.innerHTML = "";
         dados.forEach(estado => {
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-                <td>${estado.descricao}</td>
-                <td><span class="badge bg-primary-subtle text-primary border border-primary-subtle">${estado.uf}</span></td>
-                <td class="text-end">
-                    <button class="btn btn-sm btn-outline-secondary me-1" onclick="editar('${estado.idestado}', '${estado.descricao}', '${estado.uf}')">
-                        <i class="fas fa-pen"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="deletar('${estado.idestado}')">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
-            `;
-            tbody.appendChild(tr);
+        const tr = document.createElement("tr");
+        
+        // Define o HTML do status de forma clara
+        const statusHtml = estado.ativo 
+            ? '<span class="badge bg-success">Ativo</span>' 
+            : '<span class="badge bg-danger">Inativo</span>';
+
+        tr.innerHTML = `
+            <td>${estado.descricao}</td>
+            <td><span class="badge bg-primary-subtle text-primary border border-primary-subtle">${estado.uf}</span></td>
+            <td>${statusHtml}</td>
+            <td class="text-end">
+                <button class="btn btn-sm btn-outline-secondary me-1" 
+                    onclick="editar('${estado.idestado}', '${estado.descricao}', '${estado.uf}', ${estado.ativo})">
+                    <i class="fas fa-pen"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
         });
     } catch (error) {
         console.error(error);
@@ -44,25 +49,31 @@ function limparFormulario() {
     document.getElementById("uf").value = "";
 }
 
-window.editar = function(id, nome, uf) {
-    // CORREÇÃO: IDs corrigidos para PascalCase conforme o HTML
+// Atualize a função editar
+// public/js/estados.js -> Função editar()
+
+window.editar = function(id, nome, uf, status) {
     document.getElementById("IdEstado").value = id;
     document.getElementById("Descricao").value = nome;
     document.getElementById("uf").value = uf;
+    
+    // Garante que o valor seja tratado como booleano
+    // Se status for a string "true", vira true. Se for o booleano true, permanece true.
+    const isActive = (String(status) === 'true');
+    
+    document.getElementById("Ativo").checked = isActive;
+    
     new bootstrap.Modal(document.getElementById("modalEstado")).show();
 };
 
+// Atualize a função salvar
 window.salvar = async function() {
-    // CORREÇÃO: IDs corrigidos para PascalCase conforme o HTML
-    const id = document.getElementById("IdEstado").value;
-    
     const body = {
-        idestado: id || null,
-        // CORREÇÃO: Enviando chave 'descricao' minúscula para o backend, mas lendo do ID 'Descricao' maiúsculo
+        idestado: document.getElementById("IdEstado").value || null,
         descricao: document.getElementById("Descricao").value,
-        uf: document.getElementById("uf").value.toUpperCase()
+        uf: document.getElementById("uf").value.toUpperCase(),
+        ativo: document.getElementById("Ativo").checked // Envia o valor
     };
-
     try {
         const res = await fetch("/api/locais/estados", {
             method: "POST",

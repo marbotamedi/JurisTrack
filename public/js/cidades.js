@@ -4,73 +4,85 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 const buscaInput = document.getElementById("buscaInput");
-buscaInput.addEventListener("keyup", (e) => {
-    if(e.key === "Enter") carregarCidades();
-});
+if (buscaInput) {
+    buscaInput.addEventListener("keyup", (e) => {
+        if(e.key === "Enter") carregarCidades();
+    });
+}
 
+// Função para listar as cidades na tabela
 async function carregarCidades() {
-    const termo = buscaInput.value;
+    const termo = buscaInput ? buscaInput.value : "";
     const tbody = document.getElementById("tabelaCorpo");
-    tbody.innerHTML = '<tr><td colspan="3" class="text-center">Carregando...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4" class="text-center">Carregando...</td></tr>';
 
     try {
         const res = await fetch(`/api/locais/cidades?busca=${termo}`);
         const dados = await res.json();
 
         tbody.innerHTML = "";
+        
+        if (dados.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Nenhuma cidade encontrada.</td></tr>';
+            return;
+        }
+
         dados.forEach(cidade => {
             const nomeEstado = cidade.estados ? cidade.estados.descricao : "-";
             const ufEstado = cidade.estados ? cidade.estados.uf : "-";
+            
+            // Lógica visual do Badge
+            const statusHtml = cidade.ativo 
+            ? '<span class="badge bg-success">Ativo</span>' 
+            : '<span class="badge bg-danger">Inativo</span>';
 
             const tr = document.createElement("tr");
             tr.innerHTML = `
                 <td>${cidade.descricao}</td>
-                <td>
-                    ${nomeEstado}
-                </td>
-                <td>
-                    <span class="badge bg-light text-dark border me-1">${ufEstado}</span>                   
-                </td>
+                <td>${nomeEstado}</td>
+                <td><span class="badge bg-light text-dark border me-1">${ufEstado}</span></td>
+                <td>${statusHtml}</td>
                 <td class="text-end">
-                    <button class="btn btn-sm btn-outline-secondary me-1" onclick="editar('${cidade.idcidade}', '${cidade.descricao}', '${cidade.idestado}')">
+                    <button class="btn btn-sm btn-outline-secondary me-1" 
+                        onclick="editar('${cidade.idcidade}', '${cidade.descricao}', '${cidade.idestado}', ${cidade.ativo})">
                         <i class="fas fa-pen"></i>
                     </button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="deletar('${cidade.idcidade}')">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
+                    </td>
             `;
             tbody.appendChild(tr);
         });
     } catch (error) {
         console.error(error);
-        alert("Erro ao carregar cidades");
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Erro ao carregar dados.</td></tr>';
     }
 }
 
+// Carrega o Select de Estados dentro do Modal
 async function carregarComboEstados() {
     try {
         const res = await fetch("/api/locais/estados");
         const estados = await res.json();
         const select = document.getElementById("IdEstado");
-        const selectUF = document.getElementById("idUF");
+        const selectUF = document.getElementById("idUF"); // Se existir campo UF na tela
         
         // Limpa e preenche
-        select.innerHTML = '<option value="">Selecione...</option>';
-        if(selectUF) selectUF.innerHTML = '<option value="">Selecione...</option>';
+        if (select) select.innerHTML = '<option value="">Selecione...</option>';
+        if (selectUF) selectUF.innerHTML = '<option value="">Selecione...</option>';
         
         estados.forEach(est => {
             // Preenche Combo de Estado
-            const opt = document.createElement("option");
-            opt.value = est.idestado;
-            opt.textContent = `${est.descricao}`;
-            select.appendChild(opt);
+            if (select) {
+                const opt = document.createElement("option");
+                opt.value = est.idestado;
+                opt.textContent = est.descricao;
+                select.appendChild(opt);
+            }
 
-            // Preenche Combo de UF (se existir na tela)
-            if(selectUF) {
+            // Preenche Combo de UF (se existir na tela para visualização)
+            if (selectUF) {
                 const optUf = document.createElement("option");
-                optUf.value = est.idestado;
-                optUf.textContent = `${est.uf}`;
+                optUf.value = est.idestado; // Mantém mesmo ID para sincronia
+                optUf.textContent = est.uf;
                 selectUF.appendChild(optUf);
             }
         });
@@ -79,36 +91,58 @@ async function carregarComboEstados() {
     }
 }
 
+// [NOVO] Função para abrir o modal de criação (Botão "Nova Cidade")
 window.abrirModal = function() {
     document.getElementById("IdCidade").value = "";
     document.getElementById("Descricao").value = "";
     document.getElementById("IdEstado").value = "";
-    if(document.getElementById("idUF")) document.getElementById("idUF").value = "";
     
+    // Define como Ativo por padrão ao criar novo
+    const checkAtivo = document.getElementById("Ativo");
+    if (checkAtivo) checkAtivo.checked = true;
+
+    // Se houver campo de UF, reseta também
+    if(document.getElementById("idUF")) document.getElementById("idUF").value = "";
+
     new bootstrap.Modal(document.getElementById("modalCidade")).show();
 };
 
-window.editar = function(id, nome, idestado) {
+// Função para abrir o modal de edição
+window.editar = function(id, nome, idestado, status) {
     document.getElementById("IdCidade").value = id;
     document.getElementById("Descricao").value = nome;
     document.getElementById("IdEstado").value = idestado;
     
-    // Sincroniza UF se existir
-    if(document.getElementById("idUF")) document.getElementById("idUF").value = idestado;
-
+    // Sincroniza o campo UF se existir
+    if(document.getElementById("idUF")) {
+        document.getElementById("idUF").value = idestado;
+    }
+    
+    // Converte status para booleano corretamente e marca o checkbox
+    const isActive = (String(status) === 'true');
+    const checkAtivo = document.getElementById("Ativo");
+    if (checkAtivo) checkAtivo.checked = isActive;
+    
+    // CORREÇÃO: Chama o modal correto "modalCidade"
     new bootstrap.Modal(document.getElementById("modalCidade")).show();
 };
 
+// Salvar (Criar ou Editar)
 window.salvar = async function() {
     const id = document.getElementById("IdCidade").value;
+    const descricao = document.getElementById("Descricao").value;
+    const idestado = document.getElementById("IdEstado").value;
+    const checkAtivo = document.getElementById("Ativo");
+
+    if (!descricao) return alert("Preencha o nome da cidade.");
+    if (!idestado) return alert("Selecione um Estado.");
+
     const body = {
         idcidade: id || null,
-        // CORREÇÃO: A chave deve ser 'descricao' (minúsculo) para o backend aceitar
-        descricao: document.getElementById("Descricao").value,
-        idestado: document.getElementById("IdEstado").value
+        descricao: descricao,
+        idestado: idestado,
+        ativo: checkAtivo ? checkAtivo.checked : true // Padrão true se não houver checkbox
     };
-
-    if(!body.idestado) return alert("Selecione um Estado");
 
     try {
         const res = await fetch("/api/locais/cidades", {
@@ -118,22 +152,34 @@ window.salvar = async function() {
         });
         
         if (res.ok) {
-            bootstrap.Modal.getInstance(document.getElementById("modalCidade")).hide();
+            // Fecha o modal corretamente
+            const modalEl = document.getElementById("modalCidade");
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+            
             carregarCidades();
         } else {
-            alert("Erro ao salvar");
+            const erro = await res.json();
+            alert("Erro ao salvar: " + (erro.error || "Desconhecido"));
         }
     } catch (error) {
         console.error(error);
+        alert("Erro de conexão.");
     }
 };
 
+// Deletar
 window.deletar = async function(id) {
     if(!confirm("Deseja realmente excluir esta cidade?")) return;
     try {
-        await fetch(`/api/locais/cidades/${id}`, { method: "DELETE" });
-        carregarCidades();
+        const res = await fetch(`/api/locais/cidades/${id}`, { method: "DELETE" });
+        if (res.ok) {
+            carregarCidades();
+        } else {
+            alert("Erro ao deletar. Verifique se não há processos vinculados.");
+        }
     } catch (error) {
+        console.error(error);
         alert("Erro ao deletar");
     }
 };

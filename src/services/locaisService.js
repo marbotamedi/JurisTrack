@@ -15,10 +15,16 @@ export const listarEstados = async (busca) => {
 };
 
 export const salvarEstado = async (dados) => {
+  const payload = { 
+    descricao: dados.descricao, 
+    uf: dados.uf,
+    ativo: dados.ativo ?? true // Adicione esta linha
+  };
+
   if (dados.idestado) {
     const { data, error } = await supabase
       .from("estados")
-      .update({ descricao: dados.descricao, uf: dados.uf })
+      .update(payload)
       .eq("idestado", dados.idestado)
       .select();
     if (error) throw error;
@@ -26,7 +32,7 @@ export const salvarEstado = async (dados) => {
   } else {
     const { data, error } = await supabase
       .from("estados")
-      .insert([{ descricao: dados.descricao, uf: dados.uf }])
+      .insert([payload])
       .select();
     if (error) throw error;
     return data;
@@ -52,6 +58,7 @@ export const listarCidades = async (busca) => {
       idcidade,
       descricao,
       idestado,
+      ativo,
       estados ( uf, descricao )
     `)
     .order("descricao");
@@ -83,10 +90,16 @@ export const listarCidades = async (busca) => {
 };
 
 export const salvarCidade = async (dados) => {
+  const payload = { 
+    descricao: dados.descricao, 
+    idestado: dados.idestado,
+    ativo: dados.ativo ?? true // Adicione esta linha
+  };
+
   if (dados.idcidade) {
     const { data, error } = await supabase
       .from("cidades")
-      .update({ descricao: dados.descricao, idestado: dados.idestado })
+      .update(payload)
       .eq("idcidade", dados.idcidade)
       .select();
     if (error) throw error;
@@ -94,7 +107,7 @@ export const salvarCidade = async (dados) => {
   } else {
     const { data, error } = await supabase
       .from("cidades")
-      .insert([{ descricao: dados.descricao, idestado: dados.idestado }])
+      .insert([payload])
       .select();
     if (error) throw error;
     return data;

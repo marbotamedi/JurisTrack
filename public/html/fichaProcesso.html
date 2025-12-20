@@ -2,8 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ficha do Processo - Juris Track</title>
+    <title>Ficha do Processo - JurisTrack</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/ficha.css">
@@ -11,198 +10,279 @@
 </head>
 <body>
     <div class="d-flex">
-    <div class="bg-white p-3 border-end d-flex flex-column" style="width: 250px; min-height: 100vh; position: sticky; top: 0;">
-        <h4 class="mb-4 text-dark px-2"><i class="fas fa-scale-balanced me-2"></i>Juris Track</h4>
-        
-        <nav class="nav flex-column flex-grow-1">
-            <small class="text-muted text-uppercase fw-bold mb-2 px-2" style="font-size: 0.75rem;">Principal</small>
-            
-            <a class="nav-link" href="/">
-                <i class="fas fa-cloud-upload-alt"></i> Upload / Início
-            </a>
-            <a class="nav-link active" href="/processos">
-                <i class="fas fa-gavel"></i> Processos
-            </a>
-
-            <small class="text-muted text-uppercase fw-bold mt-4 mb-2 px-2" style="font-size: 0.75rem;">Cadastros</small>
-            
-            <a class="nav-link" href="/gerenciarPeticao">
-                <i class="fas fa-file-contract"></i> Modelos
-            </a>
-            <a class="nav-link" href="/gerarPeticao">
-                <i class="fas fa-edit"></i> Gerador Manual
-            </a>
-            <a class="nav-link" href="/historico">
-                <i class="fas fa-history"></i> Histórico
-            </a>
-            <a class="nav-link" href="/cidades">
-                <i class="fas fa-city"></i> Cidades
-            </a>
-            <a class="nav-link" href="/estados">
-                <i class="fas  fa-map-marker-alt"></i> Estados
-            </a>
-            <a class="nav-link" href="/comarcas">
-                <i class="fas fa-map-signs"></i> Comarcas
-            </a>
-            <a class="nav-link" href="/tribunais">
-                <i class="fas fa-landmark"></i> Tribunais
-            </a>
-            <a class="nav-link" href="/varas">
-                <i class="fas fa-balance-scale"></i> Varas
-            </a>
-            <a class="nav-link" href="/instancias">
-                <i class="fas fa-layer-group"></i> Instâncias
-            </a>
-            <!---- <a class="nav-link" href="/decisoes">
-                <i class="fas fa-gavel"></i> Decisões
-            </a>--->
-        </nav>
-        
-        <div class="mt-auto pt-3 border-top">
-             <a class="nav-link text-danger" href="#"><i class="fas fa-sign-out-alt"></i> Sair</a>
+        <div class="bg-white p-3 border-end d-flex flex-column" style="width: 250px; min-height: 100vh; position: sticky; top: 0;">
+            <h4 class="mb-4 text-dark px-2"><i class="fas fa-scale-balanced me-2"></i>Juris Track</h4>
+            <nav class="nav flex-column flex-grow-1">
+                <a class="nav-link" href="/processos"><i class="fas fa-arrow-left"></i> Voltar à Lista</a>
+            </nav>
         </div>
-    </div>
     
-        <div class="container-fluid p-4">
-            <div class="card card-custom mb-3">
+        <div class="flex-grow-1 p-4 bg-light">
+            <div class="card border-0 shadow-sm mb-3">
                 <div class="card-body d-flex justify-content-between align-items-center">
-                    <div class="d-flex align-items-center">
-                        <a href="/processos" class="btn btn-outline-secondary btn-sm me-3 border-0">
-                            <i class="fas fa-arrow-left me-1"></i> Voltar à Lista
-                        </a>
-                        <div>
-                            <h4 class="mb-0 fw-bold" id="headerTitulo">Novo Processo</h4>
-                            <!---<small class="text-muted" id="headerSubtitulo">Preencha os dados abaixo</small>--->
-                        </div>
+                    <div>
+                        <a href="/processos" class="text-decoration-none text-secondary mb-1 d-block"><i class="fas fa-arrow-left me-1"></i> Voltar à Lista</a>
+                        <h4 class="mb-0 fw-bold" id="headerTitulo">Ficha do Processo</h4>
+                        <small class="text-muted" id="headerNumProcesso">Novo Processo</small>
                     </div>
                     <div class="d-flex gap-2">
-                        <button class="btn btn-primary" onclick="salvarProcesso()">
-                            <i class="fas fa-save me-1"></i> Salvar
-                        </button>
+                        <button class="btn btn-outline-secondary" id="btnEditar"><i class="fas fa-edit me-1"></i> Editar</button>
+                        <button class="btn btn-primary bg-primary border-0" onclick="salvarProcesso()"><i class="fas fa-save me-1"></i> Salvar</button>
+                        <button class="btn btn-danger" onclick="excluirProcesso()" id="btnExcluir" style="display:none;"><i class="fas fa-trash me-1"></i> Excluir</button>
                     </div>
                 </div>
             </div>
 
-            <div class="card card-custom">
-                <div class="card-header bg-white border-bottom-0 pt-3 pb-0">
-                    <ul class="nav nav-tabs" id="processoTabs" role="tablist">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom pt-3 pb-0">
+                    <ul class="nav nav-tabs border-bottom-0" id="processoTabs" role="tablist">
                         <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-basicos"><i class="far fa-file-alt me-2"></i>Dados Básicos</button></li>
+                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-partes"><i class="fas fa-users me-2"></i>Partes</button></li>
                         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-andamentos"><i class="fas fa-history me-2"></i>Andamentos</button></li>
                         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-prazos"><i class="far fa-calendar-alt me-2"></i>Prazos</button></li>
                         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-documentos"><i class="fas fa-upload me-2"></i>Documentos</button></li>
+                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-notas"><i class="fas fa-sticky-note me-2"></i>Notas Internas</button></li>
                     </ul>
                 </div>
 
-                <div class="card-body">
-                    <div class="tab-content" id="processoTabsContent">
+                <div class="card-body p-4">
+                    <form id="formProcesso">
+                        <input type="hidden" id="IdProcesso">
                         
-                        <div class="tab-pane fade show active" id="tab-basicos">
-                            <form id="formBasico">
-                                <input type="hidden" id="IdProcesso">
-                                <div class="row g-3">
+                        <div class="tab-content" id="processoTabsContent">
+                            
+                            <div class="tab-pane fade show active" id="tab-basicos">
+                                <h6 class="text-muted fw-bold mb-3">Informações Gerais</h6>
+                                <div class="row g-3 mb-4">
                                     <div class="col-md-4">
-                                        <label class="form-label">Número do Processo</label>
+                                        <label class="form-label fw-bold">Número do Processo</label>
                                         <input type="text" class="form-control" id="NumProcesso" placeholder="0000000-00.0000.0.00.0000">
                                     </div>
-                                    <div class="col-md-8">
-                                        <label class="form-label">Pasta / Assunto</label>
-                                        <input type="text" class="form-control" id="Pasta" placeholder="Ex: Ação Civil Pública...">
-                                    </div>
-
-                                    <div class="col-md-3">
-                                        <label class="form-label">Estado (UF)</label>
-                                        <select class="form-select" id="selectEstado"><option value="">Carregando...</option></select>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold">Tipo de Ação</label>
+                                        <div class="input-group">
+                                            <select class="form-select" id="id_tipo_acao"><option value="">Selecione...</option></select>
+                                            <button class="btn btn-outline-secondary" type="button">+</button>
+                                        </div>
                                     </div>
                                     <div class="col-md-4">
-                                        <label class="form-label">Comarca</label>
-                                        <select class="form-select" id="IdComarca"><option value="">Selecione...</option></select>
-                                    </div>
-                                    <div class="col-md-5">
-                                        <label class="form-label">Cidade</label>
-                                        <select class="form-select" id="IdCidade"><option value="">Selecione o Estado primeiro</option></select>
-                                    </div>
-
-                                    <div class="col-md-5">
-                                        <label class="form-label">Tribunal</label>
-                                        <select class="form-select" id="IdTribunal"><option value="">Selecione...</option></select>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label">Vara</label>
-                                        <select class="form-select" id="IdVara"><option value="">Selecione...</option></select>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label class="form-label">Instância</label>
-                                        <select class="form-select" id="IdInstancia"><option value="">Selecione...</option></select>
-                                    </div>
-
-                                    <div class="col-md-3">
-                                        <label class="form-label">Data Inicial</label>
-                                        <input type="date" class="form-control" id="DataInicial">
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label class="form-label">Data Saída/Enc.</label>
-                                        <input type="date" class="form-control" id="DataSaida">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Decisão</label>
-                                        <select class="form-select" id="IdDecisao"><option value="">Selecione...</option></select>
-                                    </div>
-
-                                    <div class="col-12">
-                                        <label class="form-label">Observações Gerais</label>
-                                        <textarea class="form-control" id="Obs" rows="3"></textarea>
+                                        <label class="form-label fw-bold">Estado (UF)</label>
+                                        <div class="input-group">
+                                            <select class="form-select" id="selectEstado"><option value="">Selecione...</option></select>
+                                            <button class="btn btn-outline-secondary" type="button">+</button>
+                                        </div>
                                     </div>
                                 </div>
-                            </form>
-                        </div>
 
-                        <div class="tab-pane fade" id="tab-andamentos">
-                            <div class="table-responsive">
-                                <table class="table table-hover" id="tabelaAndamentos">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Data</th>
-                                            <th>Descrição</th>
-                                            <th>Origem</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody></tbody>
-                                </table>
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold">Cidade</label>
+                                        <div class="input-group">
+                                            <select class="form-select" id="IdCidade"><option value="">Selecione Estado...</option></select>
+                                            <button class="btn btn-outline-secondary" type="button">+</button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold">Comarca</label>
+                                        <div class="input-group">
+                                            <select class="form-select" id="IdComarca"><option value="">Selecione...</option></select>
+                                            <button class="btn btn-outline-secondary" type="button">+</button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold">Moeda</label>
+                                        <div class="input-group">
+                                            <select class="form-select" id="id_moeda"><option value="">R$</option></select>
+                                            <button class="btn btn-outline-secondary" type="button">+</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold">Probabilidade</label>
+                                        <div class="input-group">
+                                            <select class="form-select" id="id_probabilidade"><option value="">Selecione...</option></select>
+                                            <button class="btn btn-outline-secondary" type="button">+</button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold">Rito</label>
+                                        <div class="input-group">
+                                            <select class="form-select" id="id_rito"><option value="">Selecione...</option></select>
+                                            <button class="btn btn-outline-secondary" type="button">+</button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold">Esfera</label>
+                                        <div class="input-group">
+                                            <select class="form-select" id="id_esfera"><option value="">Selecione...</option></select>
+                                            <button class="btn btn-outline-secondary" type="button">+</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold">Fase</label>
+                                        <div class="input-group">
+                                            <select class="form-select" id="id_fase"><option value="">Selecione...</option></select>
+                                            <button class="btn btn-outline-secondary" type="button">+</button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold">Vara</label>
+                                        <div class="input-group">
+                                            <select class="form-select" id="IdVara"><option value="">Selecione...</option></select>
+                                            <button class="btn btn-outline-secondary" type="button">+</button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold">Classe Processual</label>
+                                        <input type="text" class="form-control" id="ClasseProcessual" placeholder="Ex: Ação de Cobrança">
+                                    </div>
+                                </div>
+
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold">Assunto</label>
+                                        <input type="text" class="form-control" id="Assunto" placeholder="Assunto principal">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold">Valor da Causa</label>
+                                        <input type="text" class="form-control" id="ValorCausa" placeholder="R$ 0,00">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold">Data de Distribuição</label>
+                                        <input type="date" class="form-control" id="DataDistribuicao">
+                                    </div>
+                                </div>
+
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold">Situação</label>
+                                        <select class="form-select" id="id_situacao"><option value="">Selecione...</option></select>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <label class="form-label fw-bold">Advogado Responsável</label>
+                                        <select class="form-select" id="id_advogado"><option value="">Selecione...</option></select>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="tab-pane fade" id="tab-prazos">
-                             <div class="table-responsive">
-                                <table class="table table-hover" id="tabelaPrazos">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Descrição</th>
-                                            <th>Data Limite</th>
-                                            <th>Dias</th>
-                                            <th>Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody></tbody>
-                                </table>
+                            <div class="tab-pane fade" id="tab-partes">
+                                <div class="d-flex justify-content-between mb-3">
+                                    <h6 class="fw-bold">Partes do Processo</h6>
+                                    <button type="button" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Adicionar Parte</button>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Tipo</th>
+                                                <th>Nome</th>
+                                                <th>CPF/CNPJ</th>
+                                                <th>Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tabelaPartesBody">
+                                            </tbody>
+                                    </table>
+                                </div>
+                                <div class="mt-4 p-3 bg-light rounded border">
+                                    <label class="form-label fw-bold small">Selecione as Partes (Base de Dados):</label>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label>Autor / Cliente:</label>
+                                            <select class="form-select" id="id_autor"><option value="">Selecione...</option></select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label>Réu / Parte Contrária:</label>
+                                            <select class="form-select" id="id_reu"><option value="">Selecione...</option></select>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="tab-pane fade" id="tab-documentos">
-                            <div class="table-responsive">
-                                <table class="table table-hover" id="tabelaDocumentos">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Arquivo</th>
-                                            <th>Data Publicação</th>
-                                            <th>Ação</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody></tbody>
-                                </table>
+                            <div class="tab-pane fade" id="tab-andamentos">
+                                <div class="d-flex justify-content-between mb-3">
+                                    <h6 class="fw-bold">Andamentos do Processo</h6>
+                                    <button type="button" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Novo Andamento</button>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-hover border">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Data</th>
+                                                <th>Descrição</th>
+                                                <th>Responsável</th>
+                                                <th>Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tabelaAndamentos">
+                                            <tr><td colspan="4" class="text-center text-muted">Nenhum andamento registrado</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
-                        </div>
 
-                    </div>
+                            <div class="tab-pane fade" id="tab-prazos">
+                                <div class="d-flex justify-content-between mb-3">
+                                    <h6 class="fw-bold">Prazos do Processo</h6>
+                                    <button type="button" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Novo Prazo</button>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-hover border">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Descrição</th>
+                                                <th>Vencimento</th>
+                                                <th>Responsável</th>
+                                                <th>Status</th>
+                                                <th>Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tabelaPrazos">
+                                            <tr><td colspan="5" class="text-center text-muted">Nenhum prazo cadastrado</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="tab-pane fade" id="tab-documentos">
+                                <div class="d-flex justify-content-between mb-3">
+                                    <h6 class="fw-bold">Documentos Anexos</h6>
+                                    <button type="button" class="btn btn-primary btn-sm"><i class="fas fa-upload"></i> Upload de Arquivos</button>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-hover border">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Nome do Arquivo</th>
+                                                <th>Tipo</th>
+                                                <th>Data de Upload</th>
+                                                <th>Tamanho</th>
+                                                <th>Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr><td colspan="5" class="text-center text-muted">Nenhum documento anexado</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="tab-pane fade" id="tab-notas">
+                                <h6 class="fw-bold mb-3">Notas e Observações Internas</h6>
+                                <div class="mb-3">
+                                    <label class="form-label text-muted">Anotações Livres</label>
+                                    <textarea class="form-control" id="Obs" rows="10" placeholder="Digite suas anotações internas sobre o processo..."></textarea>
+                                </div>
+                                <small class="text-muted">Estas anotações são apenas para uso interno e não aparecerão em relatórios ou documentos oficiais.</small>
+                            </div>
+
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>

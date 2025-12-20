@@ -36,62 +36,44 @@ async function carregarProcessos(termo = "") {
         }
 
         processos.forEach(p => {
-            const tr = document.createElement("tr");
-            
-            // Clique na linha abre a ficha do processo
-            tr.onclick = () => window.location.href = `/html/fichaProcesso.html?id=${p.idprocesso}`;
-            
-            // --- Lógica da Coluna Pasta/Link ---
-            let conteudoPasta;
-            const dadoPasta = p.pasta ? p.pasta.trim() : "";
+        const tr = document.createElement("tr");
+        tr.onclick = () => window.location.href = `/html/fichaProcesso.html?id=${p.idprocesso}`;
+        
+        // Tratamento seguro dos objetos (?. check se é nulo)
+        const nomeAutor = p.autor?.nome || 'não informado';
+        const nomeReu = p.reu?.nome || 'não informado';
+        const descSituacao = p.situacao?.descricao || 'não informado';
+        const nomeComarca = p.comarcas?.descricao;
+        const ufEstado = p.cidades?.estados?.uf;
 
-            if (dadoPasta !== "") {
-                // Verifica se é um Link Web (http ou https)
-                const isUrl = dadoPasta.match(/^https?:\/\//i);
-                
-                if (isUrl) {
-                    // === É UM LINK (SUPABASE/WEB) ===
-                    conteudoPasta = `
-                        <div class="d-flex align-items-center gap-2">
-                            <a href="${dadoPasta}" target="_blank" 
-                               onclick="event.stopPropagation();" 
-                               class="text-decoration-none" 
-                               title="Abrir arquivo">
-                                <i class="fas fa-file-pdf text-danger fa-lg"></i> 
-                            </a>
-                            
-                        </div>
-                    `;
-                } else {
-                    // === É UMA PASTA LOCAL ===
-                    // Escapa barras para JS
-                    const caminhoJS = dadoPasta.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-                    
-                    conteudoPasta = `
-                        <div class="d-flex align-items-center gap-2">
-                            <i class="fas fa-folder text-warning fa-lg" 
-                               style="cursor: pointer;" 
-                               title="Caminho local: ${dadoPasta}"
-                               onclick="event.stopPropagation(); copiarCaminho('${caminhoJS}')">
-                            </i>
-                            
-                        </div>
-                    `;
-                }
-            } else {
-                conteudoPasta = p.descricao || '-';
-            }
+        let textoLocal = '<span class="text-muted small">Não Informado</span>';
 
-            tr.innerHTML = `
-                <td class="fw-bold text-primary">${p.numprocesso || 'Sem número'}</td>
-                <td>${p.descricao || '-'}</td>
-                <td>${conteudoPasta}</td>
-                <td>${p.comarcas?.descricao || '-'}</td>
-                <td>${p.cidades?.descricao || '-'}</td>
-                <td class="text-center"><i class="far fa-eye text-secondary"></i></td>
-            `;
-            tbody.appendChild(tr);
-        });
+        if (nomeComarca && ufEstado) {
+            textoLocal = `${nomeComarca} / ${ufEstado}`;
+        } else if (nomeComarca) {
+            textoLocal = `${nomeComarca}`; // Só Comarca
+        } else if (ufEstado) {
+            textoLocal = `- / ${ufEstado}`; // Só UF
+        }
+        
+        let badgeClass = 'bg-secondary';
+        if (descSituacao === 'Ativo') badgeClass = 'bg-primary';
+        if (descSituacao === 'Arquivado') badgeClass = 'bg-success';
+        if (descSituacao === 'Suspenso') badgeClass = 'bg-warning text-dark';
+
+        tr.innerHTML = `
+            <td class="fw-bold text-primary" style="font-family: monospace;">${p.numprocesso || 'S/N'}</td>
+            <td>${p.assunto || 'não informado'}</td>
+            <td>${nomeAutor}</td>
+            <td>${nomeReu}</td>
+            <td class="text-center"><span class="badge ${badgeClass} rounded-pill">${descSituacao}</span></td>
+            <td>${textoLocal}</td>
+            <td class="text-end">
+                <button class="btn btn-sm btn-outline-secondary border-0"><i class="far fa-eye"></i></button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
 
     } catch (error) {
         console.error(error);

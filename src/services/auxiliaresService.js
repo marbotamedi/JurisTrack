@@ -1,16 +1,16 @@
 import supabase from "../config/supabase.js";
 
-/**
- * Lista registos de uma tabela auxiliar.
- */
 export const listarTabela = async (tabela) => {
-  let query = supabase.from(tabela).select("*");
+  let query = supabase
+  .from(tabela)
+  .select("*", 
+    { count: 'exact' });
 
-  // AJUSTE: Joins específicos para trazer os nomes nas tabelas relacionadas
-  
+  // Joins específicos para trazer os nomes nas tabelas relacionadas
   if (tabela === "tribunais") {
-    // Busca nome da Instância e Comarca
-    query = supabase.from(tabela).select(`
+    query = supabase
+    .from(tabela)
+    .select(`
       *,
       instancias ( descricao ),
       comarcas ( descricao )
@@ -18,8 +18,9 @@ export const listarTabela = async (tabela) => {
   }
 
   if (tabela === "varas") {
-    // Busca nome do Tribunal
-    query = supabase.from(tabela).select(`
+    query = supabase
+    .from(tabela)
+    .select(`
       *,
       tribunais ( descricao )
     `);
@@ -35,7 +36,18 @@ export const listarTabela = async (tabela) => {
     );
   }
 
-  const { data, error } = await query.order("descricao");
+  // Se precisar de joins para pessoas , adicione aqui
+  let colunaOrdenacao = "descricao";
+
+  // Se for pessoas, ordena por 'nome'
+  if (tabela === "pessoas") {
+    colunaOrdenacao = "nome";
+  }
+
+  // Executa a query com a ordenação correta e limite alto
+  const { data, error } = await query
+    .order(colunaOrdenacao, { ascending: true })
+    .range(0, 9999);
 
   if (error) throw error;
   return data;
@@ -48,6 +60,7 @@ export const salvarRegisto = async (tabela, campoId, dados) => {
   const id = dados[campoId];
   
   // Garante que o ativo seja respeitado (true ou false)
+  // Se vier null/undefined, assume true.
   const payload = { 
     ...dados, 
     ativo: dados.ativo ?? true 
@@ -75,7 +88,7 @@ export const salvarRegisto = async (tabela, campoId, dados) => {
 };
 
 /**
- * Soft Delete.
+ * Soft Delete (Exclusão Lógica).
  */
 export const eliminarRegisto = async (tabela, campoId, id) => {
   const { error } = await supabase

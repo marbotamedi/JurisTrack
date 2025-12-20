@@ -11,6 +11,7 @@ import peticaoRoute from "./routes/peticaoRoute.js";
 import processoRoute from "./routes/processosRoute.js";
 import locaisRoute from "./routes/locaisRoute.js";
 import auxiliarRouter from "./routes/auxiliaresRoute.js";
+import pessoasRoute from "./routes/pessoasRoute.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -34,6 +35,7 @@ app.use("/peticoes-finalizadas", peticaoRoute);
 app.use("/api/processos", processoRoute);
 app.use("/api/locais", locaisRoute);
 app.use("/api/auxiliares",auxiliarRouter);
+app.use("/api/pessoas", pessoasRoute);
 
 /* Rota padrão */
 
@@ -56,6 +58,7 @@ app.get("/gerenciarPeticao", (req, res) => {
 app.get("/gerarPeticao", (req, res) => {
   res.sendFile(path.join(__dirname, "../public", "html", "gerarPeticao.html"));
 });
+
 
 app.get("/historico", (req, res) => {
   res.sendFile(
@@ -101,6 +104,50 @@ app.get("/decisoes", (req, res) =>{
     (path.join(__dirname, "../public", "html", "decisoes.html"))
   );
 });
+
+
+app.get("/esferas", (req, res) =>{
+  res.sendFile(
+    (path.join(__dirname, "../public","html", "esferas.html"))
+  );
+});
+
+app.get("/fases", (req, res) =>{
+  res.sendFile(
+    (path.join(__dirname, "../public","html", "fases.html"))
+  );
+});
+
+app.get("/moedas", (req, res) =>{
+  res.sendFile(
+    (path.join(__dirname, "../public","html", "moedas.html"))
+  );
+});
+
+app.get("/pessoas", (req, res) =>{
+  res.sendFile(
+    (path.join(__dirname, "../public","html", "pessoas.html"))
+  );
+});
+
+app.get("/ritos", (req, res) =>{
+  res.sendFile(
+    (path.join(__dirname, "../public","html", "ritos.html"))
+  );
+});
+
+app.get("/situacoes", (req, res) =>{
+  res.sendFile(
+    (path.join(__dirname, "../public","html", "situacoes.html"))
+  );
+});
+
+app.get("/tipoAcao", (req, res) =>{
+  res.sendFile(
+    (path.join(__dirname, "../public","html", "tipoAcao.html"))
+  );
+});
+
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

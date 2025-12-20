@@ -9,7 +9,15 @@ const configs = [
   ["tribunais", "tribunais", "idtribunal"],
   ["varas", "varas", "idvara"],
   ["instancias", "instancias", "idinstancia"],
-  ["decisoes", "decisoes", "iddecisao"]
+  ["decisoes", "decisoes", "iddecisao"],
+  ["tipos_acao", "tipos_acao", "idtipoacao"],
+  ["ritos", "ritos", "idrito"],
+  ["esferas", "esferas", "idesfera"],
+  ["fases", "fases", "idfase"],
+  ["situacoes", "situacoes", "idsituacao"],
+  ["probabilidades", "probabilidades", "idprobilidade"],
+  ["moedas", "moedas", "idmoeda"],
+  ["pessoas", "pessoas", "idpessoa"]
 ];
 
 configs.forEach(([rota, tabela, id]) => {

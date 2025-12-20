@@ -16,7 +16,8 @@ export const buscarPorId = async (req, res) => {
     const processo = await processosService.obterProcessoCompleto(id);
     res.status(200).json(processo);
   } catch (error) {
-    res.status(404).json({ error: error.message });
+     console.error("ERRO REAL NO TERMINAL:", error); // <--- Adicione isso para ver no VS Code
+    res.status(500).json({ error: error.message }); // Mude para 500 para diferenciar
   }
 };
 

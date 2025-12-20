@@ -1,75 +1,86 @@
 import supabase from "../config/supabase.js";
 
-export const listarTabela = async (tabela) => {
-  let query = supabase.from(tabela).select("*", { count: 'exact' });
+export const listarProcessos = async (filtros) => {
+  let query = supabase
+  .from("processos")
+  .select(`
+    idprocesso,
+    numprocesso,
+    assunto,
+    situacao:situacoes ( descricao ),
+    cidades ( descricao, estados ( uf ) ),
+    comarcas ( descricao ),
+    autor:pessoas!fk_processos_autor ( nome ),
+    reu:pessoas!fk_processos_reu ( nome )
+  `)
+  .is("deleted_at", null);
 
-  // Joins específicos para trazer os nomes nas tabelas relacionadas
-  if (tabela === "tribunais") {
-    query = supabase.from(tabela).select(`
-      *,
-      instancias ( descricao ),
-      comarcas ( descricao )
-    `);
+  if (filtros.busca) {
+    query = query.or(`numprocesso.ilike.%${filtros.busca}%,assunto.ilike.%${filtros.busca}%`);
   }
-
-  if (tabela === "varas") {
-    query = supabase.from(tabela).select(`
-      *,
-      tribunais ( descricao )
-    `);
+  
+  const { data, error } = await query;
+  
+  if (error) {
+    console.error("Erro ao listar processos:", error);
+    throw error;
   }
+  
+  return data;
+};
 
-  // Aumenta o limite para 10.000 registros e ordena
-  const { data, error } = await query
-    .order("descricao")
-    .range(0, 9999); 
+export const obterProcessoCompleto = async (id) => {
+  const { data, error } = await supabase
+    .from("processos")
+    .select(`
+      *,
+      cidades ( idcidade, descricao, idestado ),
+      comarcas ( idcomarca, descricao ),
+      varas ( idvara, descricao ),
+      
+      tipo_acao:tipos_acao ( idtipoacao, descricao ), 
+      rito:ritos ( idrito, descricao ),
+      esfera:esferas ( idesfera, descricao ),
+      fase:fases ( idfase, descricao ),
+      situacao:situacoes ( idsituacao, descricao ),
+      
+      probabilidade:probabilidades ( idprobilidade, descricao ), 
+      
+      moeda:moedas ( idmoeda, descricao ),
 
+      autor:pessoas!fk_processos_autor ( idpessoa, nome, cpf_cnpj ),
+      reu:pessoas!fk_processos_reu ( idpessoa, nome, cpf_cnpj ),
+      advogado:pessoas!fk_processos_advogado ( idpessoa, nome )
+    `)
+    .eq("idprocesso", id)
+    .single();
+
+  if (error) {
+    console.error("Erro ao buscar ficha do processo:", error);
+    throw error;
+  }
+  return data;
+};
+
+export const criarProcesso = async (dados) => {
+  const { data, error } = await supabase.from("processos").insert([dados]).select();
   if (error) throw error;
   return data;
 };
 
-/**
- * Cria ou atualiza um registo.
- */
-export const salvarRegisto = async (tabela, campoId, dados) => {
-  const id = dados[campoId];
-  
-  // Garante que o ativo seja respeitado (true ou false)
-  // Se vier null/undefined, assume true.
-  const payload = { 
-    ...dados, 
-    ativo: dados.ativo ?? true 
-  };
-  
-  if (id) {
-    const { data, error } = await supabase
-      .from(tabela)
-      .update(payload)
-      .eq(campoId, id)
-      .select();
-    if (error) throw error;
-    return data;
-  } else {
-    // Removemos o campo ID do payload para inserção automática
-    delete payload[campoId];
-    
-    const { data, error } = await supabase
-      .from(tabela)
-      .insert([payload])
-      .select();
-    if (error) throw error;
-    return data;
-  }
+export const atualizarProcesso = async (id, dados) => {
+  const { data, error } = await supabase.from("processos").update(dados).eq("idprocesso", id).select();
+  if (error) throw error;
+  return data;
 };
 
-/**
- * Soft Delete (Exclusão Lógica).
- */
-export const eliminarRegisto = async (tabela, campoId, id) => {
+// --- SOFT DELETE (Exclusão Lógica) ---
+export const excluirProcesso = async (id) => {
+  // Ao invés de .delete(), fazemos um update na data de exclusão
   const { error } = await supabase
-    .from(tabela)
-    .update({ ativo: false }) 
-    .eq(campoId, id);
+    .from("processos")
+    .update({ deleted_at: new Date() }) 
+    .eq("idprocesso", id);
 
   if (error) throw error;
   return true;

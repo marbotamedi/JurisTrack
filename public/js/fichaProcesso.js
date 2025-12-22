@@ -1,12 +1,16 @@
+//
+// Variável global para armazenar as publicações carregadas (para o Modal de Texto)
+let cachePublicacoes = [];
+
 document.addEventListener("DOMContentLoaded", async () => {
-    // 1. Carrega Combos Auxiliares em paralelo para performance
+    // 1. Carrega Combos Auxiliares
     await Promise.all([
         carregarSelect("/api/locais/estados", "selectEstado"),
         carregarSelect("/api/auxiliares/comarcas", "IdComarca"),
         carregarSelect("/api/auxiliares/tribunais", "IdTribunal"),
         carregarSelect("/api/auxiliares/varas", "IdVara"),
         carregarSelect("/api/auxiliares/decisoes", "IdDecisao"),
-        carregarSelect("/api/auxiliares/tipos_acao", "id_tipo_acao"), // Corrigido ID
+        carregarSelect("/api/auxiliares/tipos_acao", "id_tipo_acao"),
         carregarSelect("/api/auxiliares/ritos", "id_rito"),
         carregarSelect("/api/auxiliares/esferas", "id_esfera"),
         carregarSelect("/api/auxiliares/fases", "id_fase"),
@@ -19,22 +23,33 @@ document.addEventListener("DOMContentLoaded", async () => {
     // 2. Verifica se tem ID na URL para editar
     const params = new URLSearchParams(window.location.search);
     const id = params.get("id");
+    const modo = params.get("modo");
+
+    // Configuração do Upload ao carregar a página
+    configurarUpload();
 
     if (id) {
         document.getElementById("btnExcluir").style.display = "inline-block";
         document.getElementById("headerTitulo").textContent = "Editar Processo";
         await carregarDadosProcesso(id);
+
+        if (modo === 'leitura') {
+            bloquearEdicao();
+        }
     }
 });
 
 // Listener para mudar Cidades ao mudar Estado
-document.getElementById("selectEstado").addEventListener("change", (e) => {
-    carregarCidadesPorEstado(e.target.value);
-});
-
-// Atualiza a tabela de partes quando os selects mudam
-document.getElementById("id_autor").addEventListener("change", atualizarTabelaPartes);
-document.getElementById("id_reu").addEventListener("change", atualizarTabelaPartes);
+const selectEstado = document.getElementById("selectEstado");
+if (selectEstado) {
+    selectEstado.addEventListener("change", (e) => {
+        carregarCidadesPorEstado(e.target.value);
+    });
+}
+const selAutor = document.getElementById("id_autor");
+if (selAutor) selAutor.addEventListener("change", atualizarTabelaPartes);
+const selReu = document.getElementById("id_reu");
+if (selReu) selReu.addEventListener("change", atualizarTabelaPartes);
 
 // --- FUNÇÕES DE CARREGAMENTO ---
 
@@ -42,25 +57,20 @@ async function carregarPessoas() {
     try {
         const res = await fetch("/api/pessoas");
         const pessoas = await res.json();
-        
-        // Popula os 3 selects com a mesma lista de pessoas
         ['id_autor', 'id_reu', 'id_advogado'].forEach(elemId => {
             const select = document.getElementById(elemId);
             if(!select) return;
             select.innerHTML = '<option value="">Selecione...</option>';
             pessoas.forEach(p => {
                 const opt = document.createElement("option");
-                opt.value = p.idpessoa || p.id; // Verifica qual campo ID vem da API
+                opt.value = p.idpessoa || p.id; 
                 opt.textContent = p.nome + (p.cpf_cnpj ? ` (${p.cpf_cnpj})` : '');
-                // Guarda dados no dataset para montar a tabela sem nova requisição
                 opt.dataset.cpf = p.cpf_cnpj || '';
                 opt.dataset.nome = p.nome;
                 select.appendChild(opt);
             });
         });
-    } catch (e) {
-        console.error("Erro ao carregar pessoas", e);
-    }
+    } catch (e) { console.error("Erro ao carregar pessoas", e); }
 }
 
 async function carregarSelect(url, elementId) {
@@ -71,27 +81,24 @@ async function carregarSelect(url, elementId) {
         const lista = await res.json();
         select.innerHTML = '<option value="">Selecione...</option>';
         lista.forEach(item => {
-            // Lógica para pegar o ID correto independente do nome da tabela
-            const id = Object.values(item)[0]; // Pega o primeiro valor (geralmente o ID UUID)
+            const id = item.id || item.idvara || item.idcomarca || item.idtribunal || item.idestado || item.idcidade || item.idtipoacao || item.idrito || item.idesfera || item.idfase || item.idsituacao || item.idprobabilidade || item.idmoeda || item.iddecisao;
+            const idFinal = id || Object.values(item).find(v => typeof v !== 'object');
             const texto = item.descricao || item.nome;
-            
             const opt = document.createElement("option");
-            opt.value = id;
+            opt.value = idFinal;
             opt.textContent = texto;
             select.appendChild(opt);
         });
-    } catch (error) { console.error(`Erro ${elementId}`, error); }
+    } catch (error) { console.error(`Erro ao carregar ${elementId}`, error); }
 }
 
 async function carregarCidadesPorEstado(idEstado, cidadeId = null) {
     const sel = document.getElementById("IdCidade");
     if(!idEstado) { sel.innerHTML = '<option value="">Selecione Estado...</option>'; return; }
     try {
-        const res = await fetch(`/api/locais/cidades?idEstado=${idEstado}`); // Verifique se sua API aceita filtro por query
-        // Se a API não filtrar, filtra no front (menos performático mas funcional)
+        const res = await fetch(`/api/locais/cidades?idEstado=${idEstado}`); 
         const listaTotal = await res.json();
-        const lista = listaTotal.filter(c => c.idestado === idEstado); // Filtro manual se necessario
-        
+        const lista = listaTotal.filter(c => c.idestado === idEstado); 
         sel.innerHTML = '<option value="">Selecione...</option>';
         lista.forEach(c => {
             const opt = document.createElement("option");
@@ -100,7 +107,7 @@ async function carregarCidadesPorEstado(idEstado, cidadeId = null) {
             sel.appendChild(opt);
         });
         if(cidadeId) sel.value = cidadeId;
-    } catch(e) {}
+    } catch(e) { console.error("Erro ao carregar cidades", e); }
 }
 
 async function carregarDadosProcesso(id) {
@@ -109,25 +116,16 @@ async function carregarDadosProcesso(id) {
         if (!res.ok) throw new Error("Erro ao buscar processo");
         const proc = await res.json();
         
-
-        // Header
         document.getElementById("headerNumProcesso").textContent = proc.numprocesso || "Sem Número";
-
-        // IDs Principais
         document.getElementById("IdProcesso").value = proc.idprocesso;
         document.getElementById("NumProcesso").value = proc.numprocesso || "";
         document.getElementById("ClasseProcessual").value = proc.classe_processual || "";
         document.getElementById("Assunto").value = proc.assunto || "";
         document.getElementById("ValorCausa").value = proc.valor_causa || "";
-        document.getElementById("Obs").value = proc.obs || ""; // Notas Internas
+        document.getElementById("Obs").value = proc.obs || "";
         
-        // Helper para setar valor
-        const setVal = (eid, val) => { 
-            const el = document.getElementById(eid);
-            if(el) el.value = val || ""; 
-        };
-        
-        setVal("id_tipo_acao", proc.idtipoacao); // Note: schema usa idtipoacao (sem underscore no banco, mas checkar retorno da API)
+        const setVal = (eid, val) => { const el = document.getElementById(eid); if(el) el.value = val || ""; };
+        setVal("id_tipo_acao", proc.idtipoacao);
         setVal("id_rito", proc.idrito);
         setVal("id_esfera", proc.idesfera);
         setVal("id_fase", proc.idfase);
@@ -135,81 +133,67 @@ async function carregarDadosProcesso(id) {
         setVal("id_probabilidade", proc.idprobabilidade);
         setVal("id_moeda", proc.idmoeda);
         setVal("IdComarca", proc.idcomarca);
-        setVal("IdVara", proc.idvara);
-
-        // Pessoas
+        setVal("IdVara", proc.idvara); 
         setVal("id_autor", proc.idautor);
         setVal("id_reu", proc.idreu);
         setVal("id_advogado", proc.idadvogado);
         
-        // Atualiza tabela visual de partes
-        atualizarTabelaPartes();
+        atualizarTabelaPartes(); 
 
         if (proc.data_distribuicao) document.getElementById("DataDistribuicao").value = proc.data_distribuicao.split("T")[0];
 
-        // Estado e Cidade (Cascata)
         if (proc.cidades && proc.cidades.idestado) {
-            document.getElementById("selectEstado").value = proc.cidades.idestado;
-            await carregarCidadesPorEstado(proc.cidades.idestado, proc.idcidade);
-        } else if (proc.idcidade) {
-            // Caso tenha cidade mas o join não trouxe estado
-             setVal("IdCidade", proc.idcidade);
-        }
+            const elEstado = document.getElementById("selectEstado");
+            if(elEstado) {
+                elEstado.value = proc.cidades.idestado;
+                await carregarCidadesPorEstado(proc.cidades.idestado, proc.idcidade);
+            }
+        } else if (proc.idcidade) { setVal("IdCidade", proc.idcidade); }
+
+        cachePublicacoes = proc.Publicacao || [];
         
+        renderizarPrazos(proc.Publicacao);
+        renderizarAndamentos(proc); 
+        
+        // Carrega documentos (usando a função correta abaixo)
+        carregarDocumentosDoProcesso(id);
+
     } catch (error) {
         console.error(error);
         alert("Erro ao carregar dados do processo.");
     }
 }
 
-// Simula a Tabela de Partes usando os selects ocultos
 function atualizarTabelaPartes() {
     const tbody = document.getElementById("tabelaPartesBody");
+    if (!tbody) return;
     tbody.innerHTML = "";
-
     const addRow = (tipo, selectId) => {
         const select = document.getElementById(selectId);
         if(select && select.selectedIndex > 0) {
             const opt = select.options[select.selectedIndex];
             const nome = opt.dataset.nome || opt.text;
             const cpf = opt.dataset.cpf || "-";
-            
             const tr = document.createElement("tr");
-            tr.innerHTML = `
-                <td><span class="badge ${tipo === 'Autor' ? 'bg-primary' : 'bg-danger'}">${tipo}</span></td>
-                <td>${nome}</td>
-                <td>${cpf}</td>
-                <td>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="alert('Edição rápida indisponível')"><i class="fas fa-pen"></i></button>
-                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="document.getElementById('${selectId}').value=''; atualizarTabelaPartes();"><i class="fas fa-trash"></i></button>
-                </td>
-            `;
+            tr.innerHTML = `<td><span class="badge ${tipo === 'Autor' ? 'bg-primary' : 'bg-danger'}">${tipo}</span></td><td>${nome}</td><td>${cpf}</td><td><button type="button" class="btn btn-sm btn-outline-secondary"><i class="fas fa-pen"></i></button></td>`;
             tbody.appendChild(tr);
         }
     };
-
     addRow("Autor", "id_autor");
     addRow("Réu", "id_reu");
-    
-    if(tbody.innerHTML === "") {
-        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Nenhuma parte cadastrada</td></tr>';
-    }
+    if(tbody.innerHTML === "") tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Nenhuma parte cadastrada</td></tr>';
 }
 
 window.salvarProcesso = async function() {
     const id = document.getElementById("IdProcesso").value;
-    const val = (id) => { const el = document.getElementById(id); return el ? el.value : null; };
-
-    // Mapeamento correto com o Schema do Banco (source: 20 tabela processos)
+    const val = (eid) => { const el = document.getElementById(eid); return el ? el.value : null; };
     const body = {
         numprocesso: val("NumProcesso"),
         classe_processual: val("ClasseProcessual"),
         assunto: val("Assunto"),
         valor_causa: val("ValorCausa") ? parseFloat(val("ValorCausa").replace(",", ".")) : null,
         data_distribuicao: val("DataDistribuicao"),
-        obs: val("Obs"), // Notas Internas
-        
-        // FKs Auxiliares
+        obs: val("Obs"),
         idtipoacao: val("id_tipo_acao"),
         idrito: val("id_rito"),
         idesfera: val("id_esfera"),
@@ -220,8 +204,6 @@ window.salvarProcesso = async function() {
         idcomarca: val("IdComarca"),
         idvara: val("IdVara"),
         idcidade: val("IdCidade"),
-
-        // FKs Pessoas
         idautor: val("id_autor"),
         idreu: val("id_reu"),
         idadvogado: val("id_advogado")
@@ -239,10 +221,7 @@ window.salvarProcesso = async function() {
         if (res.ok) {
             const data = await res.json();
             alert("Processo salvo com sucesso!");
-            if(!id) {
-                // Se for novo, redireciona para edição para carregar IDs
-                window.location.href = `/html/fichaProcesso.html?id=${data[0].idprocesso}`; 
-            }
+            if(!id) window.location.href = `/html/fichaProcesso.html?id=${data[0].idprocesso}`; 
         } else {
             const err = await res.json();
             alert("Erro ao salvar: " + (err.error || "Desconhecido"));
@@ -263,3 +242,434 @@ window.excluirProcesso = async function() {
         }
     } catch(e) { console.error(e); }
 };
+
+// --- RENDERIZA PRAZOS ---
+function renderizarPrazos(listaPublicacoes) {
+    const tbody = document.getElementById("tabelaPrazos");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+    let prazosEncontrados = [];
+    if (listaPublicacoes && listaPublicacoes.length > 0) {
+        listaPublicacoes.forEach(pub => {
+            if (pub.Prazo && pub.Prazo.length > 0) {
+                pub.Prazo.forEach(prazo => {
+                    prazo.publicacaoid = pub.id; 
+                    prazosEncontrados.push(prazo);
+                });
+            }
+        });
+    }
+    if (prazosEncontrados.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Nenhum prazo cadastrado</td></tr>';
+        return;
+    }
+    prazosEncontrados.sort((a, b) => new Date(a.data_limite) - new Date(b.data_limite));
+    prazosEncontrados.forEach(p => {
+        const dataVenc = p.data_limite ? new Date(p.data_limite).toLocaleDateString('pt-BR') : 'Sem data';
+        const hoje = new Date();
+        const dataLimiteObj = p.data_limite ? new Date(p.data_limite) : null;
+        let statusBadge = '<span class="badge bg-secondary">Pendente</span>';
+        if (dataLimiteObj && dataLimiteObj < hoje) {
+            statusBadge = '<span class="badge bg-danger">Vencido</span>';
+        } else if (dataLimiteObj) {
+            statusBadge = '<span class="badge bg-warning text-dark">Em Aberto</span>';
+        }
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${p.descricao || "Prazo processual"}</td><td class="fw-bold">${dataVenc}</td><td>-</td><td>${statusBadge}</td><td class="text-end"><button type="button" class="btn btn-sm btn-outline-primary" onclick="verPublicacao('${p.publicacaoid}')"><i class="fas fa-eye"></i></button></td>`;
+        tbody.appendChild(tr);
+    });
+}
+
+// --- RENDERIZA ANDAMENTOS (Aba Unificada) ---
+function renderizarAndamentos(proc) {
+    const tabAndamentos = document.getElementById("tab-andamentos");
+    if (!tabAndamentos) return;
+
+    // 1. Injeta o HTML da Aba (Tabela + Botões + Modal Oculto)
+    tabAndamentos.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center mb-3 mt-3">
+            <h5 class="mb-0">Histórico de Movimentações</h5>
+            <div>
+                 <button type="button" class="btn btn-primary btn-sm me-2" onclick="irParaGerarPeticao()">
+                    <i class="fas fa-file-signature"></i> Nova Petição
+                </button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="abrirModalAndamento()">
+                    <i class="fas fa-plus"></i> Novo Andamento
+                </button>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Data</th>
+                        <th>Descrição</th>
+                        <th>Responsável</th>
+                        <th>Tipo</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaAndamentosBody"></tbody>
+            </table>
+        </div>
+        <div class="modal fade" id="modalNovoAndamento" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header"><h5 class="modal-title">Novo Andamento Manual</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                    <div class="modal-body">
+                        <form id="formAndamentoManual">
+                            <div class="mb-3"><label class="form-label">Data</label><input type="date" id="dataAndamentoManual" class="form-control" required></div>
+                            <div class="mb-3"><label class="form-label">Descrição</label><textarea id="descAndamentoManual" class="form-control" rows="3" required></textarea></div>
+                            <div class="mb-3"><label class="form-label">Responsável</label><select id="respAndamentoManual" class="form-select"><option value="">Selecione...</option></select></div>
+                        </form>
+                    </div>
+                    <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" onclick="salvarAndamentoManual()">Salvar</button></div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    const tbody = document.getElementById("tabelaAndamentosBody");
+    let listaEventos = [];
+
+    // 2. Coletar Automáticos (Vindos de Publicação) -> Responsável = SISTEMA
+    if (proc.Publicacao) {
+        proc.Publicacao.forEach(pub => {
+            // Andamentos vinculados à publicação
+            if (pub.Andamento) {
+                pub.Andamento.forEach(and => {
+                    listaEventos.push({
+                        data: and.data_evento || pub.data_publicacao,
+                        descricao: and.descricao || "Publicação recebida",
+                        responsavel: "Sistema",
+                        tipo: "Publicação"
+                    });
+                });
+            }
+            // Petições geradas pelo sistema
+            if (pub.Historico_Peticoes) {
+                pub.Historico_Peticoes.forEach(pet => {
+                    listaEventos.push({
+                        data: pet.created_at || pub.data_publicacao,
+                        descricao: `Petição Gerada: ${pet.modelo_utilizado || "Documento"}`,
+                        responsavel: "Sistema",
+                        tipo: "Petição"
+                    });
+                });
+            }
+        });
+    }
+
+    // 3. Coletar Manuais (Tabela Andamento na Raiz) -> Responsável = NOME DA PESSOA
+    if (proc.Andamento && Array.isArray(proc.Andamento)) {
+        proc.Andamento.forEach(and => {
+            if (and.publicacaoid) return; 
+
+            let nomeResponsavel = "Usuário";
+            if (and.responsavel && and.responsavel.nome) {
+                nomeResponsavel = and.responsavel.nome;
+            }
+            listaEventos.push({
+                data: and.data_evento || and.created_at,
+                descricao: and.descricao,
+                responsavel: nomeResponsavel,
+                tipo: "Manual"
+            });
+        });
+    }
+
+    if (listaEventos.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Nenhum andamento encontrado.</td></tr>';
+    } else {
+        listaEventos.sort((a, b) => new Date(b.data) - new Date(a.data));
+        
+        listaEventos.forEach(evt => {
+            const dataFmt = evt.data ? new Date(evt.data).toLocaleDateString('pt-BR') : "-";
+            
+            let badgeResp = `<span class="badge bg-secondary">${evt.responsavel}</span>`;
+            if (evt.responsavel !== "Sistema") {
+                badgeResp = `<span class="badge bg-info text-dark">${evt.responsavel}</span>`;
+            }
+
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${dataFmt}</td>
+                <td>${evt.descricao}</td>
+                <td>${badgeResp}</td>
+                <td><small class="text-muted">${evt.tipo}</small></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+}
+window.abrirModalAndamento = function() {
+    const selectOrigem = document.getElementById("id_advogado"); 
+    const selectDestino = document.getElementById("respAndamentoManual");
+    if (selectOrigem && selectDestino) selectDestino.innerHTML = selectOrigem.innerHTML;
+    
+    document.getElementById("dataAndamentoManual").valueAsDate = new Date();
+    const modal = new bootstrap.Modal(document.getElementById("modalNovoAndamento"));
+    modal.show();
+};
+
+window.salvarAndamentoManual = async function() {
+    const idProcesso = document.getElementById("IdProcesso").value;
+    const data = document.getElementById("dataAndamentoManual").value;
+    const desc = document.getElementById("descAndamentoManual").value;
+    const respId = document.getElementById("respAndamentoManual").value;
+
+    if (!data || !desc || !respId) { alert("Preencha todos os campos!"); return; }
+
+    const payload = { processoId: idProcesso, data_evento: data, descricao: desc, responsavelId: respId };
+
+    try {
+        const res = await fetch("/api/processos/andamento", { 
+            method: "POST", 
+            headers: { "Content-Type": "application/json" }, 
+            body: JSON.stringify(payload) 
+        });
+        if (res.ok) {
+            alert("Andamento registrado!");
+            const modal = bootstrap.Modal.getInstance(document.getElementById("modalNovoAndamento"));
+            modal.hide();
+            await carregarDadosProcesso(idProcesso); 
+        } else {
+            const err = await res.json().catch(() => ({}));
+            alert("Erro ao salvar: " + (err.error || "Desconhecido"));
+        }
+    } catch (e) { console.error(e); alert("Erro de conexão"); }
+};
+
+window.irParaGerarPeticao = function() {
+    const idProcesso = document.getElementById("IdProcesso").value;
+    if (idProcesso) {
+        let params = `idProcesso=${idProcesso}`;
+        
+        if (cachePublicacoes && cachePublicacoes.length > 0) {
+             const pubsOrdenadas = [...cachePublicacoes].sort((a, b) => {
+                 const dA = a.data_publicacao ? new Date(a.data_publicacao) : new Date(0);
+                 const dB = b.data_publicacao ? new Date(b.data_publicacao) : new Date(0);
+                 return dB - dA;
+             });
+             const ultimaPub = pubsOrdenadas[0];
+             if (ultimaPub && ultimaPub.id) {
+                 params += `&publicacaoId=${ultimaPub.id}`;
+             }
+        }
+
+        window.location.href = `/gerarPeticao?${params}`;
+    } else {
+        alert("Salve o processo antes de gerar uma petição.");
+    }
+};
+
+window.verPublicacao = function(idPublicacao) {
+    const publicacao = cachePublicacoes.find(pub => pub.id === idPublicacao);
+    if (publicacao) {
+        document.getElementById("modalTextoPub").textContent = publicacao.texto_integral || "Texto indisponível.";
+        document.getElementById("modalDataPub").textContent = publicacao.data_publicacao ? new Date(publicacao.data_publicacao).toLocaleDateString('pt-BR') : "-";
+        new bootstrap.Modal(document.getElementById("modalPublicacao")).show();
+    } else alert("Publicação não encontrada na memória.");
+};
+
+
+// --- LÓGICA DE DOCUMENTOS (ATUALIZADA) ---
+
+// Função auxiliar para formatar bytes
+function formatBytes(bytes, decimals = 2) {
+    if (!+bytes) return '0 Bytes';
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+}
+
+// Configuração do botão de upload
+function configurarUpload() {
+    const btnUpload = document.querySelector("#tab-documentos button");
+    if(btnUpload) {
+        // Cria input hidden se não existir
+        let input = document.getElementById("inputUploadProcesso");
+        if(!input) {
+            input = document.createElement("input");
+            input.type = "file";
+            input.id = "inputUploadProcesso";
+            input.style.display = "none";
+            document.body.appendChild(input);
+
+            // Evento ao selecionar arquivo
+            input.addEventListener("change", async (e) => {
+                if(e.target.files.length > 0) {
+                    await fazerUploadProcesso(e.target.files[0]);
+                    e.target.value = ""; // Limpa para permitir re-upload
+                }
+            });
+        }
+
+        // Clique no botão visual abre o input hidden
+        btnUpload.onclick = (e) => {
+            e.preventDefault(); 
+            const id = document.getElementById("IdProcesso").value;
+            const num = document.getElementById("NumProcesso").value;
+            
+            if(!id) return alert("Salve o processo antes de anexar documentos.");
+            if(!num) return alert("O processo precisa de um número para criar a pasta.");
+
+            document.getElementById("inputUploadProcesso").click();
+        };
+    }
+}
+
+// Envia o arquivo para o backend
+async function fazerUploadProcesso(file) {
+    const idProcesso = document.getElementById("IdProcesso").value;
+    const numProcesso = document.getElementById("NumProcesso").value;
+    const btnUpload = document.querySelector("#tab-documentos button");
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("processoId", idProcesso);
+    formData.append("numProcesso", numProcesso);
+
+    try {
+        const originalText = btnUpload.innerHTML;
+        btnUpload.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+        btnUpload.disabled = true;
+
+        const res = await fetch("/upload", {
+            method: "POST",
+            body: formData
+        });
+
+        if(!res.ok) throw new Error("Erro no upload");
+
+        alert("Upload realizado com sucesso!");
+        
+        // Recarrega a lista
+        carregarDocumentosDoProcesso(idProcesso);
+
+    } catch (error) {
+        console.error(error);
+        alert("Erro ao enviar arquivo.");
+    } finally {
+        if(btnUpload) {
+            btnUpload.innerHTML = '<i class="fas fa-upload"></i> Upload de Arquivos';
+            btnUpload.disabled = false;
+        }
+    }
+}
+
+// Deleta documento (Banco + Storage)
+window.deletarDocumento = async function(id) {
+    if(!confirm("Deseja realmente excluir este arquivo?")) return;
+    
+    // Feedback visual
+    const btn = document.querySelector(`button[data-doc-id="${id}"]`);
+    if(btn) btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+    try {
+        const res = await fetch(`/upload/${id}`, { method: 'DELETE' });
+        if(!res.ok) throw new Error("Erro ao excluir");
+        
+        const idProcesso = document.getElementById("IdProcesso").value;
+        carregarDocumentosDoProcesso(idProcesso);
+        
+    } catch (error) {
+        console.error(error);
+        alert("Não foi possível excluir o arquivo.");
+        if(btn) btn.innerHTML = '<i class="fas fa-trash"></i>';
+    }
+};
+
+// Lista documentos na tabela
+async function carregarDocumentosDoProcesso(idProcesso) {
+    if(!idProcesso || idProcesso === "undefined" || idProcesso === "null") return;
+    
+    const tbody = document.querySelector("#tab-documentos tbody");
+    if(!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center">Carregando...</td></tr>';
+
+    try {
+        const res = await fetch(`/upload/publicacoes?processoId=${idProcesso}`);
+        const docs = await res.json();
+
+        tbody.innerHTML = "";
+        
+        if(!docs || docs.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Nenhum documento anexado a este processo.</td></tr>';
+            return;
+        }
+
+        docs.forEach(doc => {
+            const dataUpload = doc.data_upload 
+                ? new Date(doc.data_upload).toLocaleDateString('pt-BR') 
+                : "-";
+            
+            // Ícones
+            let iconeArquivo = '<i class="far fa-file text-secondary"></i>';
+            if (doc.tipo && doc.tipo.includes('pdf')) iconeArquivo = '<i class="far fa-file-pdf text-danger"></i>';
+            else if (doc.tipo && doc.tipo.includes('image')) iconeArquivo = '<i class="far fa-file-image text-primary"></i>';
+
+            // Tamanho
+            const tamanhoFmt = doc.tamanho ? formatBytes(doc.tamanho) : "-";
+
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>
+                    <a href="${doc.url_publica}" target="_blank" class="text-decoration-none text-dark">
+                        ${iconeArquivo} ${doc.nome_arquivo}
+                    </a>
+                </td>
+                <td><small class="text-muted">${doc.tipo || 'Arquivo'}</small></td>
+                <td>${dataUpload}</td>
+                <td>${tamanhoFmt}</td>
+                <td class="text-end">
+                    <a href="${doc.url_publica}" target="_blank" class="btn btn-sm btn-outline-primary me-1" title="Visualizar">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deletarDocumento(${doc.id})" data-doc-id="${doc.id}" title="Excluir">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+    } catch (error) {
+        console.error(error);
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Erro ao carregar documentos.</td></tr>';
+    }
+}
+
+function bloquearEdicao() {
+    // 1. Muda o título visualmente
+    const titulo = document.getElementById("headerTitulo");
+    if(titulo) titulo.innerHTML = '<i class="fas fa-lock"></i> Visualizar Processo (Leitura)';
+
+    // 2. Bloqueia todos os inputs, selects e textareas
+    const campos = document.querySelectorAll("input, select, textarea");
+    campos.forEach(campo => {
+        campo.disabled = true;
+        campo.style.backgroundColor = "#e9ecef"; // Aparência visual de desabilitado
+        campo.style.cursor = "not-allowed";
+    });
+
+    // 3. Esconde botões de ação
+    const botoesParaEsconder = [
+        "btnSalvar",       
+        "btnExcluir",      
+        "btnAdicionarDoc"  
+    ];
+
+    botoesParaEsconder.forEach(id => {
+        const btn = document.getElementById(id);
+        if(btn) btn.style.display = "none";
+    });
+    
+    // Esconde botões dentro de abas
+    const botoesAbas = document.querySelectorAll("#tab-andamentos button, #tab-documentos button");
+    botoesAbas.forEach(btn => btn.style.display = "none");
+
+    const btnSalvarGenerico = document.querySelector("button[onclick='salvarProcesso()']");
+    if(btnSalvarGenerico) btnSalvarGenerico.style.display = "none";
+}

@@ -50,9 +50,9 @@ export const deletarEstado = async (id) => {
 };
 
 // --- CIDADES ---
-export const listarCidades = async (busca) => {
-  // 1. Busca todas as cidades e seus estados
-  const { data, error } = await supabase
+export const listarCidades = async (busca, idEstado) => {
+  // 1. Prepara a Query Base
+  let query = supabase
     .from("cidades")
     .select(`
       idcidade,
@@ -60,27 +60,34 @@ export const listarCidades = async (busca) => {
       idestado,
       ativo,
       estados ( uf, descricao )
-    `)
-    .order("descricao");
+    `);
+
+  // 2. Se tiver ID do Estado, filtra direto no Banco (Muito mais rápido e preciso)
+  if (idEstado && idEstado !== "undefined" && idEstado !== "") {
+    query = query.eq("idestado", idEstado);
+  }
+
+  // 3. Ordenação e AUMENTO DO LIMITE (Range)
+  // O Supabase limita a 1000 por padrão. Colocamos 9999 para garantir todas as cidades.
+  const { data, error } = await query
+    .order("descricao")
+    .range(0, 9999);
 
   if (error) throw error;
 
-  // 2. Filtragem no Backend
+  // 4. Filtragem de Texto (Busca por nome) no Backend (mantendo sua lógica original)
   if (busca) {
     const termo = busca.toLowerCase().trim();
     
     return data.filter(cidade => {
-      // Segurança para cidades sem estado
       if (!cidade.estados) return false;
 
       const nomeCidade = cidade.descricao ? cidade.descricao.toLowerCase() : "";
       const ufEstado = cidade.estados.uf ? cidade.estados.uf.toLowerCase() : "";
 
-      // Se o termo tem EXATAMENTE 2 caracteres, busca APENAS por UF
       if (termo.length === 2) {
         return ufEstado === termo;
       } else {
-        // Para termos com mais ou menos de 2 caracteres, busca APENAS no nome da cidade
         return nomeCidade.includes(termo);
       }
     });

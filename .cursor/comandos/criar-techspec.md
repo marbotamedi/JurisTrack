@@ -13,8 +13,8 @@
     ## Template e Entradas
 
     - Template Tech Spec: `templates/techspec-template.md`
-    - PRD requerido: `tasks/prd-login/prd.md`
-    - Documento de saída: `tasks/login-techspec.md`
+    - PRD requerido: `tasks/prd-mult_tenant/prd.md`
+    - Documento de saída: `tasks/tenant-techspec.md`
 
     ## Pré-requisitos
 

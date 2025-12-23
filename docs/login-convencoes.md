@@ -7,6 +7,7 @@
   - `src/repositories/userRepository.js`: `findUserByEmail`, `findUserById`, `listUsersByTenant`, `createUser`, `updateUser`.
   - `src/repositories/tenantRepository.js`: `findTenantById`, `findActiveTenantById`.
   - Utilidades: `assertEmail`, `assertRole`, `assertStatus`, `normalizeEmail`, `nowIsoString`.
+- **Autenticação (JWT)**: login gera token assinado com payload `{ sub: userId, tenantId, role }`. Configure `JWT_SECRET` (obrigatório) e, opcionalmente, `JWT_EXPIRES_IN` (default `8h`).
 - **Seed**: `npm run seed:login` usa `.env` (`SUPABASE_URL`, `SUPABASE_KEY`, `SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORD`, opcional `SEED_TENANT_NAME`). Idempotente: cria tenant padrão e usuário admin apenas se não existirem.
 - **Contratos de retorno**: repos retornam campos principais (`id, email, role, status, tenant_id, created_at, updated_at`). `password_hash` só é retornado em buscas internas, não deve ser exposto em controllers.
 

@@ -22,6 +22,7 @@ export const loginController = async (req, res) => {
       userId: result.userId,
       tenantId: result.tenantId,
       role: result.role,
+      token: result.token,
       message: messages.success,
     });
   } catch (error) {

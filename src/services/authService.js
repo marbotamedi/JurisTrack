@@ -4,6 +4,7 @@ import { normalizeEmail } from "../utils/authUtils.js";
 import { logInfo, logWarn } from "../utils/logger.js";
 import { findActiveTenantById } from "../repositories/tenantRepository.js";
 import { findUserByEmail } from "../repositories/userRepository.js";
+import { signAuthToken } from "../utils/tokenUtils.js";
 
 const GENERIC_AUTH_MESSAGE = "Credenciais inválidas ou usuário inativo";
 
@@ -89,11 +90,18 @@ export async function login({ email, senha }) {
     failures: stats.failures,
   });
 
+  const token = signAuthToken({
+    userId: user.id,
+    tenantId: user.tenant_id,
+    role: user.role,
+  });
+
   return {
     ok: true,
     userId: user.id,
     tenantId: user.tenant_id,
     role: user.role,
+    token,
   };
 }
 

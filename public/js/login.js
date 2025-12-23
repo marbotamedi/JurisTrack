@@ -5,6 +5,10 @@ const submitButton = document.getElementById("submit-button");
 const feedback = document.getElementById("feedback");
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const STORAGE_TOKEN_KEY = "juristrack_token";
+const STORAGE_USER_KEY = "juristrack_userId";
+const STORAGE_ROLE_KEY = "juristrack_role";
+const STORAGE_TENANT_KEY = "juristrack_tenantId";
 const GENERIC_MESSAGE = "Credenciais inválidas ou usuário inativo.";
 
 function setFeedback(message, state) {
@@ -77,6 +81,12 @@ async function handleSubmit(event) {
 
     if (response.ok) {
       setFeedback(data.message || "Login realizado com sucesso.", "success");
+      if (data.token) {
+        localStorage.setItem(STORAGE_TOKEN_KEY, data.token);
+        localStorage.setItem(STORAGE_USER_KEY, data.userId ?? "");
+        localStorage.setItem(STORAGE_TENANT_KEY, data.tenantId ?? "");
+        localStorage.setItem(STORAGE_ROLE_KEY, data.role ?? "");
+      }
     window.location.href = "/processos";
     return;
     }

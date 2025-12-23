@@ -57,6 +57,12 @@ app.get("/processos", (req, res) => {
   );
 });
 
+app.get("/usuarios", (req, res) => {
+  res.sendFile(
+    path.join(__dirname, "../public", "html", "usuarios.html")
+  );
+});
+
 app.get("/gerenciarPeticao", (req, res) => {
   res.sendFile(
     path.join(__dirname, "../public", "html", "gerenciarPeticao.html")

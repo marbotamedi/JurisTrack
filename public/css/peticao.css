@@ -1,0 +1,23 @@
+body {
+        background-color: #f8f9fa;
+        padding-top: 20px;
+      }
+      .container {
+        max-width: 900px;
+      }
+      /* O editor TinyMCE substituirá este textarea visualmente */
+      #resultadoFinal {
+        min-height: 400px;
+        font-family: monospace;
+        background: #e9ecef;
+      }
+      .data-item {
+        cursor: grab;
+        transition: all 0.2s;
+      }
+      .data-item:active {
+        cursor: grabbing;
+        opacity: 0.5;
+      }
+
+

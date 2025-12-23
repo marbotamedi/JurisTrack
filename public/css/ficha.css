@@ -1,0 +1,27 @@
+
+body { 
+    background-color: #f5f7fb; 
+}
+.nav-tabs .nav-link { 
+    color: #6c757d; 
+    border: none; 
+    padding-bottom: 1rem; 
+}
+.nav-tabs .nav-link.active { 
+    color: #3b82f6; 
+    border-bottom: 2px solid #3b82f6; 
+    font-weight: bold; 
+    background: transparent;
+ }
+
+.form-label { 
+    font-size: 0.85rem; 
+    color: #6c757d; 
+    font-weight: 500; 
+}
+
+.card-custom { 
+    border: none; 
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
+    border-radius: 8px; 
+}

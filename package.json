@@ -2,8 +2,10 @@
   "name": "juristrack",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "src/app.js",
   "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -13,9 +15,20 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "bugs": {
     "url": "https://github.com/marbotamedi/JurisTrack/issues"
   },
-  "homepage": "https://github.com/marbotamedi/JurisTrack#readme"
+  "homepage": "https://github.com/marbotamedi/JurisTrack#readme",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.75.0",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "moment": "^2.30.1",
+    "moment-timezone": "^0.6.0",
+    "multer": "^2.0.2"
+  },
+  "devDependencies":{
+	"nodemon": "^3.1.1"
+  }
 }

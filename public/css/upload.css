@@ -1,0 +1,80 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    /* Cuidado: Isso pode remover bordas úteis de inputs, por exemplo. */
+    border: 0; 
+}
+
+
+/* para centralizar na tela */
+body {
+        background-color: #f8f9fa; /* Um cinza claro de fundo */
+}
+.upload-container {
+    min-height: 100vh; /* container  altura total da viewport */
+}
+.form-card {
+    max-width: 500px; /* Limita a largura máxima  */
+    width: 90%; /* Ocupa 90% */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Sombra suave*/
+    margin: auto; /* Centraliza horizontalmente */
+}
+
+.card.mb-4 {
+    margin-top: 20px; /* Espaço superior */
+    margin-bottom: 20px; /* Espaço inferior */
+}
+
+/* fonte men*/
+#tablesPublicacoes.table th,
+#tablesPublicacoes.table td {
+    font-size: 0.85rem !important;
+    padding: 0.3rem; 
+}
+
+/* Adicione esta regra no final do seu upload.css */
+@media (max-width: 576px) {
+    /* Reduz a fonte do header da tabela */
+    #tablesPublicacoes.table th {
+        font-size: 0.45rem !important; /* Reduz a fonte dos títulos das colunas */
+        padding: 0.1rem; /* Reduz o padding */
+    }
+
+    /* Reduz o tamanho da fonte dos dados ainda mais se necessário */
+    #tablesPublicacoes.table td {
+        font-size: 0.45rem !important;
+        padding: 0.1rem;
+        /* Força a quebra de linha em URLs longas */
+        word-break: break-all; 
+    }
+}
+
+
+/* INÍCIO: ESTILO DO CORPO DO MODAL*/
+#modalResultadoConteudo {
+    white-space: pre-wrap;   /* Respeita espaços em branco e quebras de linha */
+    word-wrap: break-word;   /* Quebra palavras longas que transbordariam */
+    max-height: 60vh;        /* Altura máxima, caso o conteúdo seja gigante */
+    overflow-y: auto;        /* Adiciona scroll se o conteúdo for maior */
+    
+}
+/*  ESTILO DO CORPO DO MODAL TABELA*/
+#tablesResultado.table th,
+#tablesResultado.table td {
+    font-size: 0.8rem;  /* <-- ESTE É O TAMANHO DA FONTE. Ajuste (ex: 0.75rem ou 12px) */
+    padding: 0.4rem;    /* Espaçamento interno das células */
+    vertical-align: middle;
+}
+
+
+/* ESTILO PARA A CÉLULA DE TEXTO DO NOVO MODAL
+  (Usamos a classe 'texto-publicacao' que definimos no JS) 
+*/
+.texto-publicacao {
+    white-space: pre-wrap;   /* Respeita quebras de linha e espaços do texto original */
+    word-break: break-word;  /* Quebra palavras muito longas para não estourar a tabela */
+    max-width: 600px;        /* Define uma largura máxima (ajuste se necessário) */
+    font-size: 0.8rem;       /* Fonte um pouco menor para caber mais texto */
+}
+

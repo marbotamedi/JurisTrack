@@ -1,7 +1,10 @@
 import express from "express";
+import { tenantContextMiddleware } from "../middlewares/tenantContextMiddleware.js";
 import * as modelosController from "../controllers/modelosController.js";
 
 const router = express.Router();
+
+router.use(tenantContextMiddleware);
 
 router.post("/", modelosController.create);
 router.get("/", modelosController.getAll);

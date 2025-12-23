@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand",
     "seed:login": "node scripts/seed-login.js",
     "test:db": "node scripts/test-db-connection.js"
   },

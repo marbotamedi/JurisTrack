@@ -42,6 +42,16 @@ const btnConfirmDelete = document.getElementById("btnConfirmDelete");
 
 // Variável para guardar o ID ao deletar
 let deleteId = null;
+const AUTH_TOKEN_KEY = "juristrack_token";
+function authFetch(url, options = {}) {
+  const token = localStorage.getItem(AUTH_TOKEN_KEY);
+  if (!token) {
+    window.location.href = "/login";
+    return Promise.reject(new Error("Token ausente"));
+  }
+  const headers = { ...(options.headers || {}), Authorization: `Bearer ${token}` };
+  return fetch(url, { ...options, headers });
+}
 
 // --- Configuração das Variáveis (Baseado no Schema SQL) ---
 /* ATENÇÃO: O Backend deve retornar o JSON com estas chaves exatas.
@@ -169,7 +179,7 @@ async function carregarModelos() {
   try {
     tabelaBody.innerHTML =
       '<tr><td colspan="4" class="text-center">Carregando...</td></tr>';
-    const response = await fetch("/modelos");
+    const response = await authFetch("/modelos");
 
     if (!response.ok) throw new Error("Falha ao carregar modelos.");
 
@@ -242,7 +252,7 @@ function iniciarCriacao() {
  */
 async function iniciarEdicao(id) {
   try {
-    const response = await fetch(`/modelos/${id}`);
+    const response = await authFetch(`/modelos/${id}`);
     if (!response.ok) throw new Error("Erro ao buscar modelo.");
     const modelo = await response.json();
 
@@ -273,7 +283,7 @@ async function abrirModalDetalhes(id) {
     detalhesConteudo.textContent = "...";
     detalhesModal.show();
 
-    const response = await fetch(`/modelos/${id}`);
+    const response = await authFetch(`/modelos/${id}`);
     if (!response.ok) throw new Error("Falha ao buscar detalhes.");
     const modelo = await response.json();
 
@@ -350,7 +360,7 @@ async function deletarModelo() {
   if (!deleteId) return;
 
   try {
-    const response = await fetch(`/modelos/${deleteId}`, { method: "DELETE" });
+    const response = await authFetch(`/modelos/${deleteId}`, { method: "DELETE" });
     if (!response.ok) throw new Error("Falha ao deletar.");
 
     hideDeleteConfirmation();

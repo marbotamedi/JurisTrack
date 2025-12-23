@@ -1,9 +1,26 @@
 import supabase from "../config/supabase.js";
-import { generateSafeFilename, getCurrentSaoPauloTimestamp, notifyN8NWebhook } from "../utils/utils.js";
+import {
+  generateSafeFilename,
+  getCurrentSaoPauloTimestamp,
+  notifyN8NWebhook,
+} from "../utils/utils.js";
+import { injectTenant, withTenantFilter } from "../repositories/tenantScope.js";
+import { ValidationError } from "../utils/authErrors.js";
+import { logError, logInfo, logWarn } from "../utils/logger.js";
 
 const Bucket_Name = "teste";
 
-export const uploadFileToStorage = async (file, numProcesso, processoId) => {
+export const uploadFileToStorage = async (
+  file,
+  numProcesso,
+  processoId,
+  tenantId
+) => {
+  if (!tenantId) {
+    throw new ValidationError(
+      "tenantId é obrigatório para realizar upload com segregação."
+    );
+  }
   const safeName = generateSafeFilename(file.originalname);
   
   // LÓGICA DE PASTA: Cria o caminho "NUMERO/arquivo.pdf"
@@ -12,6 +29,8 @@ export const uploadFileToStorage = async (file, numProcesso, processoId) => {
       const pastaSegura = numProcesso.trim().replace(/[^a-zA-Z0-9.-]/g, "_"); 
       filePath = `${pastaSegura}/${safeName}`;
   }
+  // Prefixo por tenant para isolar arquivos
+  filePath = `${tenantId}/${filePath}`;
 
   // 1. Upload Storage
   const { error: uploadError } = await supabase.storage
@@ -23,6 +42,12 @@ export const uploadFileToStorage = async (file, numProcesso, processoId) => {
     });
 
   if (uploadError) throw uploadError;
+  logInfo("upload.storage.success", "Upload salvo no storage", {
+    tenantId,
+    filePath,
+    mimeType: file.mimetype,
+    tamanho: file.size,
+  });
 
   // 2. Get URL Pública
   const { data: publicUrlData } = supabase.storage
@@ -46,14 +71,20 @@ export const uploadFileToStorage = async (file, numProcesso, processoId) => {
 
   const { data: insertData, error: insertError } = await supabase
     .from("upload_Documentos")
-    .insert([documentData])
+    .insert([injectTenant(documentData, tenantId)])
     .select();
 
   if (insertError) throw insertError;
+  logInfo("upload.db.insert_success", "Documento registrado com tenant", {
+    tenantId,
+    processoId,
+    documentId: insertData?.[0]?.id,
+    fileName: safeName,
+  });
 
   // Webhook N8N (Opcional, mantido)
   if (insertData && insertData.length > 0) {
-    notifyN8NWebhook(insertData[0].id);
+    notifyN8NWebhook(insertData[0].id, tenantId);
   }
 
   return { fileName: safeName, publicUrl: publicUrlData.publicUrl };
@@ -61,15 +92,20 @@ export const uploadFileToStorage = async (file, numProcesso, processoId) => {
 
 
 // --- FUNÇÃO ATUALIZADA: DELETAR DO BANCO E DO STORAGE ---
-export const deleteDocument = async (id) => {
+export const deleteDocument = async (id, tenantId) => {
   // 1. Busca os dados do arquivo no banco para pegar a URL
-  const { data: doc, error: fetchError } = await supabase
-    .from("upload_Documentos")
+  const { data: doc, error: fetchError } = await withTenantFilter(
+    "upload_Documentos",
+    tenantId
+  )
     .select("*")
     .eq("id", id)
-    .single();
+    .maybeSingle();
 
   if (fetchError) throw fetchError;
+  if (!doc) {
+    throw new Error("Documento não encontrado para este tenant.");
+  }
 
   // 2. Tenta deletar do Storage (se tiver URL)
   if (doc.url_publica) {
@@ -85,39 +121,60 @@ export const deleteDocument = async (id) => {
         // Pega a parte final (o caminho) e decodifica (ex: remove %20)
         const storagePath = decodeURIComponent(urlParts[1]);
 
-        console.log(`Tentando deletar do storage: ${storagePath}`);
+        logInfo("upload.storage.delete_attempt", "Tentando deletar arquivo do storage", {
+          tenantId,
+          storagePath,
+          documentId: id,
+        });
 
         const { error: storageError } = await supabase.storage
           .from(Bucket_Name)
           .remove([storagePath]);
 
         if (storageError) {
-          console.error("Erro ao deletar arquivo do Storage:", storageError);
+          logWarn("upload.storage.delete_failed", "Erro ao deletar arquivo do storage", {
+            tenantId,
+            documentId: id,
+            storagePath,
+            error: storageError,
+          });
           // Opcional: Se quiser impedir a exclusão do banco caso falhe no storage, lance o erro aqui.
           // throw storageError; 
         }
       }
     } catch (err) {
-      console.error("Erro ao processar caminho do arquivo:", err);
+      logError("upload.storage.delete_path_error", "Erro ao processar caminho do arquivo", {
+        tenantId,
+        documentId: id,
+        error: err,
+      });
     }
   }
 
   // 3. Finalmente, deleta o registro do Banco de Dados
-  const { error: deleteError } = await supabase
-    .from("upload_Documentos")
+  const { error: deleteError } = await withTenantFilter(
+    "upload_Documentos",
+    tenantId
+  )
     .delete()
     .eq("id", id);
 
   if (deleteError) throw deleteError;
+  logInfo("upload.db.delete_success", "Documento excluído com sucesso", {
+    tenantId,
+    documentId: id,
+  });
 
   return true;
 };
 
 
 // (Mantenha as funções listDocumentsByProcess e listAllDocuments como estavam)
-export const listDocumentsByProcess = async (processoId) => {
-    const { data, error } = await supabase
-      .from("upload_Documentos")
+export const listDocumentsByProcess = async (processoId, tenantId) => {
+    const { data, error } = await withTenantFilter(
+      "upload_Documentos",
+      tenantId
+    )
       .select("*")
       .eq("processo_id", processoId)
       .order("data_upload", { ascending: false });
@@ -126,9 +183,11 @@ export const listDocumentsByProcess = async (processoId) => {
     return data;
   };
 
-export const listAllDocuments = async () => {
-  const { data, error } = await supabase
-    .from("upload_Documentos")
+export const listAllDocuments = async (tenantId) => {
+  const { data, error } = await withTenantFilter(
+    "upload_Documentos",
+    tenantId
+  )
     .select("*")
     .order("data_upload", { ascending: false });
 

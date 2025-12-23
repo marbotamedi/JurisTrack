@@ -72,13 +72,14 @@ export async function createUser({ email, password, role, tenantId, status }) {
   return { ...user, message: "Usuário criado com sucesso" };
 }
 
-export async function updateUser(id, { role, status, password, email, tenantId }) {
+export async function updateUser(
+  id,
+  { role, status, password, email, tenantId }
+) {
   if (email !== undefined) {
     throw new ValidationError("E-mail não pode ser alterado.");
   }
-  if (tenantId !== undefined) {
-    throw new ValidationError("tenantId não pode ser alterado.");
-  }
+  await ensureTenantExists(tenantId);
 
   const payload = {};
 
@@ -93,7 +94,7 @@ export async function updateUser(id, { role, status, password, email, tenantId }
     payload.passwordHash = await bcrypt.hash(validPassword, BCRYPT_COST);
   }
 
-  const user = await updateUserRepository(id, payload);
+  const user = await updateUserRepository(id, payload, tenantId);
 
   logInfo("users.update.success", "Usuário atualizado", {
     id: user.id,
@@ -106,8 +107,9 @@ export async function updateUser(id, { role, status, password, email, tenantId }
   return { ...user, message: "Usuário atualizado com sucesso" };
 }
 
-export async function inactivateUser(id) {
-  const user = await updateUserRepository(id, { status: "inativo" });
+export async function inactivateUser(id, tenantId) {
+  await ensureTenantExists(tenantId);
+  const user = await updateUserRepository(id, { status: "inativo" }, tenantId);
 
   logInfo("users.inactivate.success", "Usuário inativado", {
     id: user.id,
@@ -118,8 +120,9 @@ export async function inactivateUser(id) {
   return { id: user.id, status: user.status, message: "Usuário inativado com sucesso" };
 }
 
-export async function reactivateUser(id) {
-  const user = await updateUserRepository(id, { status: "ativo" });
+export async function reactivateUser(id, tenantId) {
+  await ensureTenantExists(tenantId);
+  const user = await updateUserRepository(id, { status: "ativo" }, tenantId);
 
   logInfo("users.reactivate.success", "Usuário reativado", {
     id: user.id,

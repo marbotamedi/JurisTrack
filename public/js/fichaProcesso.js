@@ -2,6 +2,17 @@
 // Variável global para armazenar as publicações carregadas (para o Modal de Texto)
 let cachePublicacoes = [];
 
+const AUTH_TOKEN_KEY = "juristrack_token";
+function authFetch(url, options = {}) {
+    const token = localStorage.getItem(AUTH_TOKEN_KEY);
+    if (!token) {
+        window.location.href = "/login";
+        return Promise.reject(new Error("Token ausente"));
+    }
+    const headers = { ...(options.headers || {}), Authorization: `Bearer ${token}` };
+    return fetch(url, { ...options, headers });
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
     // 1. Carrega Combos Auxiliares
     await Promise.all([
@@ -55,7 +66,7 @@ if (selReu) selReu.addEventListener("change", atualizarTabelaPartes);
 
 async function carregarPessoas() {
     try {
-        const res = await fetch("/api/pessoas");
+        const res = await authFetch("/api/pessoas");
         const pessoas = await res.json();
         ['id_autor', 'id_reu', 'id_advogado'].forEach(elemId => {
             const select = document.getElementById(elemId);
@@ -77,7 +88,7 @@ async function carregarSelect(url, elementId) {
     const select = document.getElementById(elementId);
     if (!select) return;
     try {
-        const res = await fetch(url);
+        const res = await authFetch(url);
         const lista = await res.json();
         select.innerHTML = '<option value="">Selecione...</option>';
         lista.forEach(item => {
@@ -96,7 +107,7 @@ async function carregarCidadesPorEstado(idEstado, cidadeId = null) {
     const sel = document.getElementById("IdCidade");
     if(!idEstado) { sel.innerHTML = '<option value="">Selecione Estado...</option>'; return; }
     try {
-        const res = await fetch(`/api/locais/cidades?idEstado=${idEstado}`); 
+        const res = await authFetch(`/api/locais/cidades?idEstado=${idEstado}`); 
         const listaTotal = await res.json();
         const lista = listaTotal.filter(c => c.idestado === idEstado); 
         sel.innerHTML = '<option value="">Selecione...</option>';
@@ -112,7 +123,7 @@ async function carregarCidadesPorEstado(idEstado, cidadeId = null) {
 
 async function carregarDadosProcesso(id) {
     try {
-        const res = await fetch(`/api/processos/${id}`);
+        const res = await authFetch(`/api/processos/${id}`);
         if (!res.ok) throw new Error("Erro ao buscar processo");
         const proc = await res.json();
         
@@ -213,7 +224,7 @@ window.salvarProcesso = async function() {
     const url = id ? `/api/processos/${id}` : "/api/processos";
 
     try {
-        const res = await fetch(url, {
+        const res = await authFetch(url, {
             method: method,
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(body)
@@ -233,7 +244,7 @@ window.excluirProcesso = async function() {
     if(!confirm("Tem certeza que deseja excluir este processo?")) return;
     const id = document.getElementById("IdProcesso").value;
     try {
-        const res = await fetch(`/api/processos/${id}`, { method: "DELETE" });
+        const res = await authFetch(`/api/processos/${id}`, { method: "DELETE" });
         if(res.ok) {
             alert("Processo excluído.");
             window.location.href = "/processos";
@@ -422,7 +433,7 @@ window.salvarAndamentoManual = async function() {
     const payload = { processoId: idProcesso, data_evento: data, descricao: desc, responsavelId: respId };
 
     try {
-        const res = await fetch("/api/processos/andamento", { 
+        const res = await authFetch("/api/processos/andamento", { 
             method: "POST", 
             headers: { "Content-Type": "application/json" }, 
             body: JSON.stringify(payload) 
@@ -536,7 +547,7 @@ async function fazerUploadProcesso(file) {
         btnUpload.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
         btnUpload.disabled = true;
 
-        const res = await fetch("/upload", {
+        const res = await authFetch("/upload", {
             method: "POST",
             body: formData
         });
@@ -568,7 +579,7 @@ window.deletarDocumento = async function(id) {
     if(btn) btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
     try {
-        const res = await fetch(`/upload/${id}`, { method: 'DELETE' });
+        const res = await authFetch(`/upload/${id}`, { method: 'DELETE' });
         if(!res.ok) throw new Error("Erro ao excluir");
         
         const idProcesso = document.getElementById("IdProcesso").value;
@@ -590,7 +601,7 @@ async function carregarDocumentosDoProcesso(idProcesso) {
     tbody.innerHTML = '<tr><td colspan="5" class="text-center">Carregando...</td></tr>';
 
     try {
-        const res = await fetch(`/upload/publicacoes?processoId=${idProcesso}`);
+        const res = await authFetch(`/upload/publicacoes?processoId=${idProcesso}`);
         const docs = await res.json();
 
         tbody.innerHTML = "";

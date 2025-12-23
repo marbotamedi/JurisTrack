@@ -1,5 +1,15 @@
 const API_URL = '/api/auxiliares/comarcas';
 const ID_CAMPO = 'idcomarca';
+const AUTH_TOKEN_KEY = "juristrack_token";
+function authFetch(url, options = {}) {
+    const token = localStorage.getItem(AUTH_TOKEN_KEY);
+    if (!token) {
+        window.location.href = "/login";
+        return Promise.reject(new Error("Token ausente"));
+    }
+    const headers = { ...(options.headers || {}), Authorization: `Bearer ${token}` };
+    return fetch(url, { ...options, headers });
+}
 
 document.addEventListener("DOMContentLoaded", () => {
     carregar();
@@ -9,7 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
 // Função para listar as comarcas
 async function carregar() {
     try {
-        const res = await fetch(API_URL);
+        const res = await authFetch(API_URL);
         
         // Se der erro 500, exibe alerta
         if (!res.ok) {
@@ -52,7 +62,7 @@ async function carregar() {
 // Carrega o combo de estados no modal
 async function carregarEstados() {
     try {
-        const res = await fetch("/api/locais/estados");
+        const res = await authFetch("/api/locais/estados");
         const estados = await res.json();
         const select = document.getElementById("SelectEstado");
         
@@ -115,7 +125,7 @@ window.salvar = async () => {
     if (id) body[ID_CAMPO] = id;
 
     try {
-        const res = await fetch(API_URL, {
+        const res = await authFetch(API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)

@@ -1,13 +1,14 @@
 import supabase from "../config/supabase.js";
+import { injectTenant, withTenantFilter } from "../repositories/tenantScope.js";
 
 /**
  * Cria um novo modelo no banco.
  * @param {Object} dadosModelo - Objeto contendo titulo, descricao, conteudo, tags
  */
-export const createModelo = async (dadosModelo) => {
+export const createModelo = async (dadosModelo, tenantId) => {
   const { data, error } = await supabase
     .from("Modelos_Peticao")
-    .insert([dadosModelo])
+    .insert([injectTenant(dadosModelo, tenantId)])
     .select()
     .single();
 
@@ -18,10 +19,11 @@ export const createModelo = async (dadosModelo) => {
 /**
  * Lista todos os modelos (apenas campos leves para listagem).
  */
-export const listModelos = async () => {
-  const { data, error } = await supabase
-    .from("Modelos_Peticao")
-    // Seleciona apenas o necessário para a lista (sem o conteudo pesado)
+export const listModelos = async (tenantId) => {
+  const { data, error } = await withTenantFilter(
+    "Modelos_Peticao",
+    tenantId
+  )
     .select("id, titulo, descricao, tags")
     .order("created_at", { ascending: false });
 
@@ -32,12 +34,14 @@ export const listModelos = async () => {
 /**
  * Busca um modelo completo pelo ID.
  */
-export const getModeloById = async (id) => {
-  const { data, error } = await supabase
-    .from("Modelos_Peticao")
+export const getModeloById = async (id, tenantId) => {
+  const { data, error } = await withTenantFilter(
+    "Modelos_Peticao",
+    tenantId
+  )
     .select("*")
     .eq("id", id)
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data;
@@ -46,13 +50,18 @@ export const getModeloById = async (id) => {
 /**
  * Atualiza um modelo existente.
  */
-export const updateModelo = async (id, dadosAtualizados) => {
-  const { data, error } = await supabase
-    .from("Modelos_Peticao")
-    .update(dadosAtualizados)
+export const updateModelo = async (id, dadosAtualizados, tenantId) => {
+  const payload = { ...dadosAtualizados };
+  delete payload.tenant_id;
+
+  const { data, error } = await withTenantFilter(
+    "Modelos_Peticao",
+    tenantId
+  )
+    .update(payload)
     .eq("id", id)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data;
@@ -61,13 +70,15 @@ export const updateModelo = async (id, dadosAtualizados) => {
 /**
  * Deleta um modelo.
  */
-export const deleteModelo = async (id) => {
-  const { data, error } = await supabase
-    .from("Modelos_Peticao")
+export const deleteModelo = async (id, tenantId) => {
+  const { data, error } = await withTenantFilter(
+    "Modelos_Peticao",
+    tenantId
+  )
     .delete()
     .eq("id", id)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data;

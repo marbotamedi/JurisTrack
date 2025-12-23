@@ -1,6 +1,17 @@
 import { formatarDataBR } from "/js/formatarData.js";
 import { formatarDataBR_SoData_UTC } from "/js/formatarData.js";
 
+const AUTH_TOKEN_KEY = "juristrack_token";
+function authFetch(url, options = {}) {
+  const token = localStorage.getItem(AUTH_TOKEN_KEY);
+  if (!token) {
+    window.location.href = "/login";
+    return Promise.reject(new Error("Token ausente"));
+  }
+  const headers = { ...(options.headers || {}), Authorization: `Bearer ${token}` };
+  return fetch(url, { ...options, headers });
+}
+
 const form = document.getElementById("uploadForm");
 const messageDiv = document.getElementById("message");
 let isNavigatingToModal2 = false;
@@ -15,7 +26,7 @@ form.addEventListener("submit", async (e) => {
 
   try {
     // O endpoint é a rota que criamos no Express
-    const response = await fetch("/upload", {
+    const response = await authFetch("/upload", {
       // http://localhost:3000/upload
       method: "POST",
       body: formData,
@@ -50,7 +61,7 @@ form.addEventListener("submit", async (e) => {
 
 async function carregarTabela() {
   try {
-    const response = await fetch("/upload/publicacoes");
+    const response = await authFetch("/upload/publicacoes");
     if (!response.ok) {
       throw new Error(`Erro ao buscar publicações: ${response.status}`);
     }
@@ -126,7 +137,7 @@ async function carregarResultadoModal(nome_arquivo) {
 
   try {
     // 2. Busca o resultado específico usando o nome
-    const response = await fetch(`/resultado/${nome_arquivo}`);
+    const response = await authFetch(`/resultado/${nome_arquivo}`);
 
     if (!response.ok) {
       const erro = await response.json();
@@ -282,7 +293,7 @@ if (resultadoModal) {
     detalhesModal.show();
 
     try {
-      const response = await fetch(`/publicacoes/processo/${numeroProcesso}`);
+      const response = await authFetch(`/publicacoes/processo/${numeroProcesso}`);
       if (!response.ok) throw new Error("Erro ao buscar histórico.");
 
       const publicacoes = await response.json();

@@ -32,6 +32,9 @@
 
 ## Notas
 - Coordenar com 7.0 para garantir que serviços que consomem uploads usem o mesmo path.
-
-
-
+ 
+## Estratégia para uploads legados (sem prefixo)
+- Inventariar registros em `upload_Documentos` com `tenant_id` nulo e caminhos sem `<tenantId>/`.
+- Bloquear acesso público a legados: responder 404 quando `tenant_id` estiver ausente.
+- Migrar gradualmente: mover objetos no bucket `teste` para `<tenantId>/<caminho_atual>` e atualizar `tenant_id` via script idempotente.
+- Logar movimentos e falhas para reprocessar e rastrear impactos.

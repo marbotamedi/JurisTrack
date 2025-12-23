@@ -1,5 +1,16 @@
 import { formatarDataBR } from "/js/formatarData.js";
 
+const AUTH_TOKEN_KEY = "juristrack_token";
+function authFetch(url, options = {}) {
+    const token = localStorage.getItem(AUTH_TOKEN_KEY);
+    if (!token) {
+        window.location.href = "/login";
+        return Promise.reject(new Error("Token ausente"));
+    }
+    const headers = { ...(options.headers || {}), Authorization: `Bearer ${token}` };
+    return fetch(url, { ...options, headers });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     carregarHistorico();
     inicializarTinyMCE();
@@ -23,7 +34,7 @@ function inicializarTinyMCE() {
 async function carregarHistorico() {
     const tbody = document.querySelector("#tabelaHistorico tbody");
     try {
-        const res = await fetch("/peticoes-finalizadas"); // Rota GET
+        const res = await authFetch("/peticoes-finalizadas"); // Rota GET
         if (!res.ok) throw new Error("Erro ao buscar histórico");
         
         const dados = await res.json();
@@ -93,7 +104,7 @@ document.getElementById("btnSalvarNovaVersao").addEventListener("click", async f
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
 
-        const res = await fetch("/peticoes-finalizadas", {
+        const res = await authFetch("/peticoes-finalizadas", {
             method: "POST", // POST cria novo registro
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

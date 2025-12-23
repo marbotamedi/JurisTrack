@@ -32,5 +32,11 @@
 ## Notas
 - Considerar flag `ENABLE_TENANT_SCOPE` se for usada para rollout gradual.
 
+## Implementação / Uso
+- Helpers adicionados em `src/repositories/tenantScope.js`.
+- `withTenantFilter(table, tenantId)` aplica `.eq("tenant_id", tenantId)` e lança erro se o tenant não for informado (quando `ENABLE_TENANT_SCOPE` não for `"false"`).
+- `injectTenant(payload, tenantId)` sobrescreve `tenant_id` com o do contexto e ignora o valor vindo do cliente.
+- Exemplo: `withTenantFilter("users", tenantId).select("*")`; `supabase.from("users").insert([injectTenant(body, tenantId)])`.
+
 
 

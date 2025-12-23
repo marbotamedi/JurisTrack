@@ -1,15 +1,19 @@
 import supabase from "../config/supabase.js";
+import { injectTenant, withTenantFilter } from "../repositories/tenantScope.js";
 
 // Apenas lógica de banco e negócio
-export const createLogPeticao = async (dados) => {
+export const createLogPeticao = async (dados, tenantId) => {
   const { data, error } = await supabase
     .from("Historico_Peticoes")
     .insert([
-      {
-        publicacao_id: dados.publicacao_id,
-        conteudo_html: dados.conteudo_final,
-        modelo_utilizado: dados.modelo_utilizado
-      }
+      injectTenant(
+        {
+          publicacao_id: dados.publicacao_id,
+          conteudo_html: dados.conteudo_final,
+          modelo_utilizado: dados.modelo_utilizado,
+        },
+        tenantId
+      ),
     ])
     .select()
     .single(); // .single() já retorna o objeto direto, sem ser array
@@ -18,10 +22,13 @@ export const createLogPeticao = async (dados) => {
   return data;
 };
 
-export const getHistoricoFormatado = async () => {
-  const { data, error } = await supabase
-    .from("Historico_Peticoes")
-    .select(`
+export const getHistoricoFormatado = async (tenantId) => {
+  const { data, error } = await withTenantFilter(
+    "Historico_Peticoes",
+    tenantId
+  )
+    .select(
+      `
       id,
       created_at,
       modelo_utilizado,
@@ -30,7 +37,8 @@ export const getHistoricoFormatado = async () => {
       Publicacao (
         processos ( numprocesso )
       )
-    `)
+    `
+    )
     .order("created_at", { ascending: false });
 
   if (error) throw new Error(error.message);

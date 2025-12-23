@@ -3,7 +3,7 @@ import env from 'dotenv';
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 import path from "path";
-import uploadRoute from './routes/uploadRoute.js';
+import uploadRoute from "./routes/uploadRoute.js";
 import n8nRoute from "./routes/n8nRoute.js";
 import modalRoute from "./routes/modalRoute.js";
 import modelosRoute from "./routes/modelosPeticao.js";
@@ -14,6 +14,7 @@ import auxiliarRouter from "./routes/auxiliaresRoute.js";
 import pessoasRoute from "./routes/pessoasRoute.js";
 import authRoute from "./routes/authRoute.js";
 import userRoute from "./routes/userRoute.js";
+import { tenantContextMiddleware } from "./middlewares/tenantContextMiddleware.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -29,16 +30,23 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 /* Rota */
+// Página de upload (HTML público)
+app.get("/upload", (req, res) => {
+  res.sendFile(path.join(__dirname, "../public", "html", "upload.html"));
+});
+
+// APIs de upload protegidas por middleware
 app.use("/upload", uploadRoute);
 app.use("/n8n", n8nRoute);
 app.use("/", modalRoute);
 app.use("/modelos", modelosRoute);
 app.use("/peticoes-finalizadas", peticaoRoute);
+app.use("/api/auth", authRoute);
+app.use("/api", tenantContextMiddleware);
 app.use("/api/processos", processoRoute);
 app.use("/api/locais", locaisRoute);
-app.use("/api/auxiliares",auxiliarRouter);
+app.use("/api/auxiliares", auxiliarRouter);
 app.use("/api/pessoas", pessoasRoute);
-app.use("/api/auth", authRoute);
 app.use("/api/users", userRoute);
 
 /* Rota padrão */

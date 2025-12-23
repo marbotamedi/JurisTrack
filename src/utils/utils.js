@@ -1,5 +1,7 @@
-import path from 'path';
-import moment from 'moment-timezone';
+import path from "path";
+import moment from "moment-timezone";
+
+import { logError, logInfo, logWarn } from "./logger.js";
 
 // URL Webhook N8N
 const N8N_WEBHOOK_URL = "https://agendamentoai-n8n.mapkkt.easypanel.host/webhook/processar/";
@@ -45,29 +47,51 @@ export function getCurrentSaoPauloTimestamp() {
  * Aciona o webhook do N8N de forma assíncrona para notificar o novo upload.
  * Não bloqueia a resposta ao usuário.
  * @param {string|number} uploadId - O ID do registro inserido no banco.
+ * @param {string} tenantId - Tenant do contexto (incluir na payload).
  */
-export async function notifyN8NWebhook(uploadId) {
-  console.log(`[fileUtils] Acionando webhook para o ID: ${uploadId}`);
+export async function notifyN8NWebhook(uploadId, tenantId) {
+  if (!tenantId) {
+    logError(
+      "n8n.webhook.missing_tenant",
+      "Falha ao acionar webhook: tenantId ausente no payload.",
+      { uploadId }
+    );
+    return;
+  }
+
+  logInfo("n8n.webhook.dispatch", "Acionando webhook do n8n", {
+    uploadId,
+    tenantId,
+  });
   try {
-    // Note: Não usamos 'await' na chamada desta função no router
-    // para que ela rode em background.
+    // Nota: chamada permanece assíncrona em background
     const webhookResponse = await fetch(N8N_WEBHOOK_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: uploadId }),
+      body: JSON.stringify({ id: uploadId, tenant_id: tenantId }),
     });
 
     if (webhookResponse.ok) {
-      console.log("[fileUtils] Webhook do n8n acionado com sucesso!");
+      logInfo("n8n.webhook.success", "Webhook do n8n acionado com sucesso", {
+        uploadId,
+        tenantId,
+      });
     } else {
-      console.error(
-        `[fileUtils] Falha ao acionar Webhook do n8n: Status ${webhookResponse.status}`
+      logWarn(
+        "n8n.webhook.failure",
+        "Falha ao acionar Webhook do n8n",
+        {
+          uploadId,
+          tenantId,
+          status: webhookResponse.status,
+        }
       );
     }
   } catch (webhookError) {
-    console.error(
-      "[fileUtils] Erro de rede ao tentar acionar o Webhook do n8n:",
-      webhookError
+    logError(
+      "n8n.webhook.network_error",
+      "Erro de rede ao acionar o Webhook do n8n",
+      { uploadId, tenantId, error: webhookError }
     );
   }
 }

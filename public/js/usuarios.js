@@ -25,6 +25,17 @@ const els = {
   salvarBtn: document.getElementById("salvarUsuarioBtn"),
 };
 
+const AUTH_TOKEN_KEY = "juristrack_token";
+function authFetch(url, options = {}) {
+  const token = localStorage.getItem(AUTH_TOKEN_KEY);
+  if (!token) {
+    window.location.href = "/login";
+    return Promise.reject(new Error("Token ausente"));
+  }
+  const headers = { ...(options.headers || {}), Authorization: `Bearer ${token}` };
+  return fetch(url, { ...options, headers });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   restoreTenantFromStorage();
   bindEvents();
@@ -120,7 +131,7 @@ async function carregarUsuarios() {
   }
 
   try {
-    const response = await fetch(url);
+    const response = await authFetch(url);
     const data = await response.json().catch(() => []);
 
     if (!response.ok) {
@@ -286,7 +297,7 @@ async function salvarUsuario() {
   }
 
   try {
-    const response = await fetch(url, {
+    const response = await authFetch(url, {
       method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -323,7 +334,7 @@ async function alterarStatus(id, action) {
       : `${API_BASE}/${id}/reactivate`;
 
   try {
-    const response = await fetch(endpoint, { method: "POST" });
+    const response = await authFetch(endpoint, { method: "POST" });
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {

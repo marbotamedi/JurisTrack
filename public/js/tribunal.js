@@ -1,6 +1,17 @@
 const API_URL = '/api/auxiliares/tribunais';
 const ID_CAMPO = 'idtribunal';
 
+const AUTH_TOKEN_KEY = "juristrack_token";
+function authFetch(url, options = {}) {
+    const token = localStorage.getItem(AUTH_TOKEN_KEY);
+    if (!token) {
+        window.location.href = "/login";
+        return Promise.reject(new Error("Token ausente"));
+    }
+    const headers = { ...(options.headers || {}), Authorization: `Bearer ${token}` };
+    return fetch(url, { ...options, headers });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     carregar();
     carregarCombos(); // Função correta para esta tela
@@ -9,7 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
 // Lista os tribunais
 async function carregar() {
     try {
-        const res = await fetch(API_URL);
+        const res = await authFetch(API_URL);
         const dados = await res.json();
         const tbody = document.getElementById("tabelaCorpo");
 
@@ -45,7 +56,7 @@ async function carregar() {
 async function carregarCombos() {
     try {
         // Carrega Comarcas
-        const resComarcas = await fetch("/api/auxiliares/comarcas");
+        const resComarcas = await authFetch("/api/auxiliares/comarcas");
         const comarcas = await resComarcas.json();
         const selComarca = document.getElementById("SelectComarca");
         if(selComarca) {
@@ -59,7 +70,7 @@ async function carregarCombos() {
         }
 
         // Carrega Instâncias
-        const resInstancias = await fetch("/api/auxiliares/instancias");
+        const resInstancias = await authFetch("/api/auxiliares/instancias");
         const instancias = await resInstancias.json();
         const selInstancia = document.getElementById("SelectInstancia");
         if(selInstancia) {
@@ -127,7 +138,7 @@ window.salvar = async () => {
     if (id) body[ID_CAMPO] = id;
 
     try {
-        const res = await fetch(API_URL, {
+        const res = await authFetch(API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)

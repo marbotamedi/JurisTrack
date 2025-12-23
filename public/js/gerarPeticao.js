@@ -7,6 +7,16 @@ const btnImprimirDocumento = document.getElementById("btnImprimirDocumento");
 let dadosProcessoGlobal = {};
 let publicacaoId = null;
 let processoId = null;
+const AUTH_TOKEN_KEY = "juristrack_token";
+function authFetch(url, options = {}) {
+  const token = localStorage.getItem(AUTH_TOKEN_KEY);
+  if (!token) {
+    window.location.href = "/login";
+    return Promise.reject(new Error("Token ausente"));
+  }
+  const headers = { ...(options.headers || {}), Authorization: `Bearer ${token}` };
+  return fetch(url, { ...options, headers });
+}
 
 // --- Inicialização ---
 document.addEventListener("DOMContentLoaded", async () => {
@@ -19,7 +29,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 function configurarBotaoVoltar() {
   const params = new URLSearchParams(window.location.search);
   const arquivoParaVoltar = params.get("voltarPara");
-  const btnVoltar = document.querySelector('a[href="/"]');
+  const btnVoltar = document.querySelector('a[href="/upload"]');
   
   // Se veio da ficha do processo, o voltar deve ir para lá
   if (processoId) {
@@ -91,7 +101,7 @@ async function carregarContextoDoProcesso() {
   }
 
   try {
-    const response = await fetch(url);
+    const response = await authFetch(url);
     if (!response.ok) throw new Error("Erro ao buscar dados do processo");
 
     dadosProcessoGlobal = await response.json();
@@ -127,7 +137,7 @@ function formatarDataParaBr(dataString) {
  */
 async function carregarModelosDropdown() {
   try {
-    const r = await fetch("/modelos");
+    const r = await authFetch("/modelos");
     const m = await r.json();
 
     selectModelo.innerHTML =
@@ -158,7 +168,7 @@ async function buscarModeloCompleto(id) {
   try {
     editor.setProgressState(true);
 
-    const response = await fetch(`/modelos/${id}`);
+    const response = await authFetch(`/modelos/${id}`);
     const modelo = await response.json();
     let texto = modelo.conteudo || "";
 
@@ -230,7 +240,7 @@ if (btnSalvarDocumento) {
         modelo_utilizado: modeloTexto,
       };
 
-      const res = await fetch("/peticoes-finalizadas", {
+      const res = await authFetch("/peticoes-finalizadas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),

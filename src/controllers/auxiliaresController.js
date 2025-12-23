@@ -1,4 +1,5 @@
 import * as auxiliaresService from "../services/auxiliaresService.js";
+import { logError } from "../utils/logger.js";
 
 export const listar = (tabela) => async (req, res) => {
   try {
@@ -23,7 +24,13 @@ export const excluir = (tabela, campoId) => async (req, res) => {
     await auxiliaresService.eliminarRegisto(tabela, campoId, req.params.id);
     res.status(204).send();
   } catch (error) {
-    console.error(`Erro ao excluir em ${tabela}:`, error);
+    logError("auxiliares.controller.delete_error", `Erro ao excluir em ${tabela}`, {
+      path: req.path,
+      method: req.method,
+      tabela,
+      id: req.params?.id,
+      error,
+    });
 
     // Erro 23503: Código do Postgres para violação de chave estrangeira
     if (error.code === '23503') {

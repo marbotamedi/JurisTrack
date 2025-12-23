@@ -17,7 +17,16 @@ async function carregarProcessos(termo = "") {
         let url = `/api/processos`; 
         if(termo) url += `?busca=${encodeURIComponent(termo)}`;
         
-        const response = await fetch(url);
+        // Recupera o token salvo no login e envia no header Authorization
+        const token = localStorage.getItem("juristrack_token");
+        if (!token) {
+            window.location.href = "/login";
+            return;
+        }
+
+        const response = await fetch(url, {
+            headers: { Authorization: `Bearer ${token}` },
+        });
         
         if (!response.ok) {
             const errorText = await response.text(); 

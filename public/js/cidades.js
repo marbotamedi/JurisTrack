@@ -10,6 +10,17 @@ if (buscaInput) {
     });
 }
 
+const AUTH_TOKEN_KEY = "juristrack_token";
+function authFetch(url, options = {}) {
+    const token = localStorage.getItem(AUTH_TOKEN_KEY);
+    if (!token) {
+        window.location.href = "/login";
+        return Promise.reject(new Error("Token ausente"));
+    }
+    const headers = { ...(options.headers || {}), Authorization: `Bearer ${token}` };
+    return fetch(url, { ...options, headers });
+}
+
 // Função para listar as cidades na tabela
 async function carregarCidades() {
     const termo = buscaInput ? buscaInput.value : "";
@@ -17,7 +28,7 @@ async function carregarCidades() {
     tbody.innerHTML = '<tr><td colspan="4" class="text-center">Carregando...</td></tr>';
 
     try {
-        const res = await fetch(`/api/locais/cidades?busca=${termo}`);
+        const res = await authFetch(`/api/locais/cidades?busca=${termo}`);
         const dados = await res.json();
 
         tbody.innerHTML = "";
@@ -60,7 +71,7 @@ async function carregarCidades() {
 // Carrega o Select de Estados dentro do Modal
 async function carregarComboEstados() {
     try {
-        const res = await fetch("/api/locais/estados");
+        const res = await authFetch("/api/locais/estados");
         const estados = await res.json();
         const select = document.getElementById("IdEstado");
         const selectUF = document.getElementById("idUF"); // Se existir campo UF na tela
@@ -145,7 +156,7 @@ window.salvar = async function() {
     };
 
     try {
-        const res = await fetch("/api/locais/cidades", {
+        const res = await authFetch("/api/locais/cidades", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(body)
@@ -172,7 +183,7 @@ window.salvar = async function() {
 window.deletar = async function(id) {
     if(!confirm("Deseja realmente excluir esta cidade?")) return;
     try {
-        const res = await fetch(`/api/locais/cidades/${id}`, { method: "DELETE" });
+        const res = await authFetch(`/api/locais/cidades/${id}`, { method: "DELETE" });
         if (res.ok) {
             carregarCidades();
         } else {

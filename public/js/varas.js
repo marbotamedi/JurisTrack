@@ -2,6 +2,17 @@ const API_URL = '/api/auxiliares/varas';
 // Tenta ler o ID da vara de várias formas para evitar erro
 const ID_CAMPO_PREF = 'idvara'; 
 
+const AUTH_TOKEN_KEY = "juristrack_token";
+function authFetch(url, options = {}) {
+    const token = localStorage.getItem(AUTH_TOKEN_KEY);
+    if (!token) {
+        window.location.href = "/login";
+        return Promise.reject(new Error("Token ausente"));
+    }
+    const headers = { ...(options.headers || {}), Authorization: `Bearer ${token}` };
+    return fetch(url, { ...options, headers });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     carregar();
     carregarCombos();
@@ -10,7 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
 // Lista as Varas
 async function carregar() {
     try {
-        const res = await fetch(API_URL);
+        const res = await authFetch(API_URL);
         const dados = await res.json();
         
         // LOG PARA DEBUG: Veja no console (F12) como os dados estão chegando
@@ -52,7 +63,7 @@ async function carregar() {
 // Carrega o Combo de Tribunais
 async function carregarCombos() {
     try {
-        const resTribunal = await fetch("/api/auxiliares/tribunais");
+        const resTribunal = await authFetch("/api/auxiliares/tribunais");
         const tribunais = await resTribunal.json();
         
         // LOG PARA DEBUG
@@ -142,7 +153,7 @@ window.salvar = async () => {
     if (id) body['idvara'] = id;
 
     try {
-        const res = await fetch(API_URL, {
+        const res = await authFetch(API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)

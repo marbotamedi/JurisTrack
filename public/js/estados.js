@@ -5,13 +5,24 @@ buscaInput.addEventListener("keyup", (e) => {
     if(e.key === "Enter") carregarEstados();
 });
 
+const AUTH_TOKEN_KEY = "juristrack_token";
+function authFetch(url, options = {}) {
+    const token = localStorage.getItem(AUTH_TOKEN_KEY);
+    if (!token) {
+        window.location.href = "/login";
+        return Promise.reject(new Error("Token ausente"));
+    }
+    const headers = { ...(options.headers || {}), Authorization: `Bearer ${token}` };
+    return fetch(url, { ...options, headers });
+}
+
 async function carregarEstados() {
     const termo = buscaInput.value;
     const tbody = document.getElementById("tabelaCorpo");
     tbody.innerHTML = '<tr><td colspan="3" class="text-center">Carregando...</td></tr>';
 
     try {
-        const res = await fetch(`/api/locais/estados?busca=${termo}`);
+        const res = await authFetch(`/api/locais/estados?busca=${termo}`);
         const dados = await res.json();
      
         tbody.innerHTML = "";
@@ -75,7 +86,7 @@ window.salvar = async function() {
         ativo: document.getElementById("Ativo").checked // Envia o valor
     };
     try {
-        const res = await fetch("/api/locais/estados", {
+        const res = await authFetch("/api/locais/estados", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(body)
@@ -95,7 +106,7 @@ window.salvar = async function() {
 window.deletar = async function(id) {
     if(!confirm("Deseja realmente excluir este estado?")) return;
     try {
-        await fetch(`/api/locais/estados/${id}`, { method: "DELETE" });
+        await authFetch(`/api/locais/estados/${id}`, { method: "DELETE" });
         carregarEstados();
     } catch (error) {
         alert("Erro ao deletar. Verifique se não há cidades vinculadas.");

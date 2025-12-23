@@ -11,6 +11,7 @@ import {
   assertStatus,
   nowIsoString,
 } from "../utils/authUtils.js";
+import { injectTenant, withTenantFilter } from "./tenantScope.js";
 
 const BASE_COLUMNS =
   "id, email, role, status, tenant_id, created_at, updated_at, password_hash";
@@ -60,10 +61,8 @@ export async function findUserById(id) {
 export async function listUsersByTenant({ tenantId, status }) {
   if (!tenantId) throw new ValidationError("tenantId é obrigatório.");
 
-  let query = supabase
-    .from("users")
+  let query = withTenantFilter("users", tenantId)
     .select("id, email, role, status, tenant_id, created_at, updated_at")
-    .eq("tenant_id", tenantId)
     .order("created_at", { ascending: false });
 
   if (status) {
@@ -113,15 +112,17 @@ export async function createUser({
   const { data, error } = await supabase
     .from("users")
     .insert([
-      {
-        email: normalizedEmail,
-        password_hash: passwordHash,
-        role: normalizedRole,
-        status: normalizedStatus,
-        tenant_id: tenantId,
-        created_at: timestamp,
-        updated_at: timestamp,
-      },
+      injectTenant(
+        {
+          email: normalizedEmail,
+          password_hash: passwordHash,
+          role: normalizedRole,
+          status: normalizedStatus,
+          created_at: timestamp,
+          updated_at: timestamp,
+        },
+        tenantId
+      ),
     ])
     .select("id, email, role, status, tenant_id, created_at, updated_at")
     .single();
@@ -138,8 +139,9 @@ export async function createUser({
   return data;
 }
 
-export async function updateUser(id, { role, status, passwordHash }) {
+export async function updateUser(id, { role, status, passwordHash }, tenantId) {
   if (!id) throw new ValidationError("id do usuário é obrigatório.");
+  if (!tenantId) throw new ValidationError("tenantId é obrigatório.");
 
   const payload = {};
   if (role !== undefined) {
@@ -158,8 +160,7 @@ export async function updateUser(id, { role, status, passwordHash }) {
 
   payload.updated_at = nowIsoString();
 
-  const { data, error } = await supabase
-    .from("users")
+  const { data, error } = await withTenantFilter("users", tenantId)
     .update(payload)
     .eq("id", id)
     .select("id, email, role, status, tenant_id, created_at, updated_at")

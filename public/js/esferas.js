@@ -1,5 +1,15 @@
 const API_URL = '/api/auxiliares/esferas';
 const ID_CAMPO = 'idesfera'; 
+const AUTH_TOKEN_KEY = "juristrack_token";
+function authFetch(url, options = {}) {
+    const token = localStorage.getItem(AUTH_TOKEN_KEY);
+    if (!token) {
+        window.location.href = "/login";
+        return Promise.reject(new Error("Token ausente"));
+    }
+    const headers = { ...(options.headers || {}), Authorization: `Bearer ${token}` };
+    return fetch(url, { ...options, headers });
+}
 
 document.addEventListener("DOMContentLoaded", () => {
     carregar();
@@ -7,7 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 async function carregar() {
     try {
-        const res = await fetch(API_URL);
+        const res = await authFetch(API_URL);
         const dados = await res.json();
        
         const tbody = document.getElementById("tabelaCorpo");
@@ -82,7 +92,7 @@ window.salvar = async () => {
     if (id) body[ID_CAMPO] = id;
 
     try {
-        const res = await fetch(API_URL, {
+        const res = await authFetch(API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)

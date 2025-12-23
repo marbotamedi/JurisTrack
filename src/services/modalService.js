@@ -1,14 +1,17 @@
 import supabase from "../config/supabase.js";
+import { withTenantFilter } from "../repositories/tenantScope.js";
 
 /**
  * Busca o resultado do processamento baseado no nome do arquivo.
  */
-export const getProcessingResult = async (fileName) => {
-  const { data: uploadDoc, error: uploadError } = await supabase
-    .from("upload_Documentos")
+export const getProcessingResult = async (fileName, tenantId) => {
+  const { data: uploadDoc, error: uploadError } = await withTenantFilter(
+    "upload_Documentos",
+    tenantId
+  )
     .select("id")
     .eq("nome_arquivo", fileName)
-    .single();
+    .maybeSingle();
 
   if (uploadError || !uploadDoc) {
     throw new Error("Documento de upload não encontrado.");
@@ -16,8 +19,10 @@ export const getProcessingResult = async (fileName) => {
 
   const uploadId = uploadDoc.id;
 
-  const { data: publicacoes, error: pubError } = await supabase
-    .from("Publicacao")
+  const { data: publicacoes, error: pubError } = await withTenantFilter(
+    "Publicacao",
+    tenantId
+  )
     .select("id, data_publicacao, processoid")
     .eq("uploadid", uploadId);
 
@@ -32,25 +37,25 @@ export const getProcessingResult = async (fileName) => {
   const resultadosCalculados = [];
 
   for (const pub of publicacoes) {
-    const { data: processo } = await supabase
-      .from("processos")
+    const { data: processo } = await withTenantFilter(
+      "processos",
+      tenantId
+    )
       .select("numprocesso")
       .eq("idprocesso", pub.processoid)
-      .single();
+      .maybeSingle();
 
-    const { data: prazo } = await supabase
-      .from("Prazo")
+    const { data: prazo } = await withTenantFilter("Prazo", tenantId)
       .select("dias, data_limite")
       .eq("publicacaoid", pub.id)
-      .single();
+      .maybeSingle();
 
-    const { data: andamento } = await supabase
-      .from("Andamento")
+    const { data: andamento } = await withTenantFilter("Andamento", tenantId)
       .select("data_evento")
       .eq("publicacaoid", pub.id)
       .order("data_evento", { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
     resultadosCalculados.push({
       publicacaoId: pub.id,
@@ -65,19 +70,23 @@ export const getProcessingResult = async (fileName) => {
   return resultadosCalculados;
 };
 
-export const getProcessHistory = async (numeroProcesso) => {
-  const { data: processo, error: processoError } = await supabase
-    .from("processos")
+export const getProcessHistory = async (numeroProcesso, tenantId) => {
+  const { data: processo, error: processoError } = await withTenantFilter(
+    "processos",
+    tenantId
+  )
     .select("idprocesso")
     .eq("numprocesso", numeroProcesso)
-    .single();
+    .maybeSingle();
 
   if (processoError || !processo) {
     throw new Error("Processo não encontrado.");
   }
 
-  const { data: publicacoes, error: pubError } = await supabase
-    .from("Publicacao")
+  const { data: publicacoes, error: pubError } = await withTenantFilter(
+    "Publicacao",
+    tenantId
+  )
     .select("data_publicacao, texto_integral")
     .eq("processoid", processo.idprocesso)
     .order("data_publicacao", { ascending: false });
@@ -91,11 +100,10 @@ export const getProcessHistory = async (numeroProcesso) => {
  * Busca TODOS os dados consolidados para preenchimento de petição.
  * Realiza JOINs com Tabelas Auxiliares (Cidades, Varas, etc).
  */
-export const getProcessFullData = async (pubId) => {
+export const getProcessFullData = async (pubId, tenantId) => {
   // Query principal com JOINs (!inner garante integridade, mas pode usar left join se dados forem opcionais)
   // Usaremos left joins implícitos aqui (sem !inner nas tabelas filhas) para evitar erro se faltar uma comarca
-  const { data, error } = await supabase
-    .from("Publicacao")
+  const { data, error } = await withTenantFilter("Publicacao", tenantId)
     .select(
       `
       data_publicacao,
@@ -118,6 +126,7 @@ export const getProcessFullData = async (pubId) => {
     `
     )
     .eq("id", pubId)
+    .eq("processos.tenant_id", tenantId)
     .order("data_evento", { foreignTable: "Andamento", ascending: false })
     .maybeSingle();
 

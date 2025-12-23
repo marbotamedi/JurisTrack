@@ -15,7 +15,7 @@ const configs = [
   ["esferas", "esferas", "idesfera"],
   ["fases", "fases", "idfase"],
   ["situacoes", "situacoes", "idsituacao"],
-  ["probabilidades", "probabilidades", "idprobilidade"],
+  ["probabilidades", "probabilidades", "idprobabilidade"],
   ["moedas", "moedas", "idmoeda"],
   ["pessoas", "pessoas", "idpessoa"]
 ];

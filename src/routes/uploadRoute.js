@@ -10,5 +10,7 @@ router.post("/", upload.single("file"), uploadController.uploadFile);
 
 router.get("/publicacoes", uploadController.listPublications);
 
+router.delete("/:id", uploadController.deleteFile);
+
 
 export default router;

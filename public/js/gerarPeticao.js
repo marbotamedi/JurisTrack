@@ -6,11 +6,12 @@ const btnImprimirDocumento = document.getElementById("btnImprimirDocumento");
 // --- Variáveis Globais ---
 let dadosProcessoGlobal = {};
 let publicacaoId = null;
+let processoId = null;
 
 // --- Inicialização ---
 document.addEventListener("DOMContentLoaded", async () => {
   inicializarTinyMCE();
-  await carregarContextoDoProcesso(); // 1. Baixa dados do processo para memória
+  await carregarContextoDoProcesso(); // 1. Baixa dados (Processo ou Publicação)
   carregarModelosDropdown(); // 2. Carrega lista de modelos
   configurarBotaoVoltar(); // 3. Ajusta link de voltar
 });
@@ -19,13 +20,24 @@ function configurarBotaoVoltar() {
   const params = new URLSearchParams(window.location.search);
   const arquivoParaVoltar = params.get("voltarPara");
   const btnVoltar = document.querySelector('a[href="/"]');
+  
+  // Se veio da ficha do processo, o voltar deve ir para lá
+  if (processoId) {
+      if (btnVoltar) {
+          btnVoltar.href = `/html/fichaProcesso.html?id=${processoId}`;
+          btnVoltar.innerHTML = '<i class="fas fa-arrow-left me-1"></i> Voltar ao Processo';
+      }
+      return;
+  }
+
+  // Se veio do upload
   if (btnVoltar && arquivoParaVoltar) {
     btnVoltar.href = `/?reabrirModal=${encodeURIComponent(arquivoParaVoltar)}`;
   }
 }
 
 /**
- * Configura TinyMCE (Arial 14px forçado para visualização padrão ABNT/Jurídica)
+ * Configura TinyMCE
  */
 function inicializarTinyMCE() {
   tinymce.init({
@@ -43,7 +55,7 @@ function inicializarTinyMCE() {
       }
       p { margin-bottom: 10px !important; }
     `,
-    paste_as_text: true, // Evita colar formatação externa suja
+    paste_as_text: true, 
     forced_root_block: "p",
     plugins:
       "anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount",
@@ -57,16 +69,29 @@ function inicializarTinyMCE() {
 
 /**
  * Busca os dados do processo via API e guarda em dadosProcessoGlobal.
- * Não renderiza nada na tela, apenas prepara os dados para o replace silencioso.
+ * [ATUALIZADO] Prioriza busca pelo Processo (DB) se disponivel.
  */
 async function carregarContextoDoProcesso() {
   const urlParams = new URLSearchParams(window.location.search);
   publicacaoId = urlParams.get("publicacaoId");
+  processoId = urlParams.get("idProcesso");
 
-  if (!publicacaoId) return;
+  let url = "";
+
+  // ALTERAÇÃO AQUI: Prioriza o contexto do Processo (Banco de Dados)
+  // pois ele traz dados formatados para modelo (Autor, Réu, Vara, etc)
+  if (processoId) {
+    url = `/api/processos/${processoId}/contexto-modelo`;
+  } else if (publicacaoId) {
+    // Se só tiver publicacaoId (fluxo do upload/OCR), usa a rota antiga
+    url = `/process-data/${publicacaoId}`;
+  } else {
+    console.warn("Nenhum ID (publicacao ou processo) fornecido.");
+    return;
+  }
 
   try {
-    const response = await fetch(`/process-data/${publicacaoId}`);
+    const response = await fetch(url);
     if (!response.ok) throw new Error("Erro ao buscar dados do processo");
 
     dadosProcessoGlobal = await response.json();
@@ -79,7 +104,7 @@ async function carregarContextoDoProcesso() {
       }
     });
 
-    console.log("Dados do processo prontos para uso:", dadosProcessoGlobal);
+    console.log("Dados carregados para o modelo:", dadosProcessoGlobal);
   } catch (error) {
     console.error(error);
     alert("Aviso: Não foi possível carregar os dados automáticos do processo.");
@@ -115,7 +140,6 @@ async function carregarModelosDropdown() {
       selectModelo.appendChild(opt);
     });
 
-    // Se vier ID na URL (ex: vindo de uma tela de "usar este modelo")
     const urlParams = new URLSearchParams(window.location.search);
     const modeloIdFromUrl = urlParams.get("modeloId");
     if (modeloIdFromUrl) {
@@ -127,38 +151,30 @@ async function carregarModelosDropdown() {
   }
 }
 
-/**
- * Busca o conteúdo do modelo e aplica o REPLACE automático.
- */
 async function buscarModeloCompleto(id) {
   const editor = tinymce.get("resultadoFinal");
   if (!editor || !id) return;
 
   try {
-    editor.setProgressState(true); // Mostra loader do TinyMCE
+    editor.setProgressState(true);
 
     const response = await fetch(`/modelos/${id}`);
     const modelo = await response.json();
     let texto = modelo.conteudo || "";
 
-    // 1. Limpeza básica de quebras de linha antigas
     if (!texto.includes("<p") && !texto.includes("<div")) {
       texto = texto.replace(/\n/g, "<br>");
     }
 
-    // 2. Substituição Automática (Case Insensitive)
-    // Itera sobre as chaves retornadas pelo backend (ex: NumProcesso, Cidade_Descricao)
     if (dadosProcessoGlobal && Object.keys(dadosProcessoGlobal).length > 0) {
       Object.entries(dadosProcessoGlobal).forEach(([key, valor]) => {
         if (valor) {
-          // Cria regex global e insensível a maiúsculas: {{ chave }} ou {{chave}}
           const regex = new RegExp(`{{\\s*${key}\\s*}}`, "gi");
           texto = texto.replace(regex, valor);
         }
       });
     }
 
-    // Define o conteúdo final no editor
     editor.setContent(texto);
     editor.setProgressState(false);
   } catch (error) {
@@ -168,7 +184,6 @@ async function buscarModeloCompleto(id) {
   }
 }
 
-// Gatilho de mudança do select
 selectModelo.addEventListener("change", () =>
   buscarModeloCompleto(selectModelo.value)
 );
@@ -197,10 +212,7 @@ if (btnSalvarDocumento) {
       return alert("O documento está vazio.");
     }
 
-    // Pega o elemento <select>
     const select = document.getElementById("selectModelo");
-    // Pega o texto da opção selecionada (ex: "Pedido de Dilação de Prazo")
-    // Se nada estiver selecionado, envia string vazia ou nulo
     const modeloTexto =
       select.selectedIndex >= 0
         ? select.options[select.selectedIndex].text
@@ -211,18 +223,23 @@ if (btnSalvarDocumento) {
         '<i class="fas fa-spinner fa-spin"></i> Salvando...';
       btnSalvarDocumento.disabled = true;
 
-      // Chama a rota que criamos
+      const body = {
+        publicacao_id: publicacaoId, // Será enviado se estiver na URL (mesmo com processoId)
+        processo_id: processoId,     
+        conteudo_final: conteudo,
+        modelo_utilizado: modeloTexto,
+      };
+
       const res = await fetch("/peticoes-finalizadas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          publicacao_id: publicacaoId,
-          conteudo_final: conteudo,
-          modelo_utilizado: modeloTexto, // <--- ENVIANDO O NOME AGORA
-        }),
+        body: JSON.stringify(body),
       });
 
-      if (!res.ok) throw new Error("Erro ao salvar.");
+      if (!res.ok) {
+        const errJson = await res.json();
+        throw new Error(errJson.error || "Erro ao salvar.");
+      }
 
       alert("Petição salva com sucesso!");
     } catch (e) {

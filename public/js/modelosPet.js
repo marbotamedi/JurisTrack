@@ -55,11 +55,16 @@ const mapaVariaveis = {
     { label: "Data Inicial", value: "{{DataInicial}}" }, // Tabela: processos
     { label: "Data Saída", value: "{{DataSaida}}" }, // Tabela: processos
     { label: "Observações", value: "{{Obs}}" }, // Tabela: processos
+    { label: "Valor", value: "{{ValorCausa}}" }, // Tabela: processos   
+    { label: "Classe", value: "{{Classe}}" }, // Tabela: processos 
+    { label: "Assunto", value: "{{Assunto}}" }, // Tabela: processos   
   ],
-  /* partes: [
-    { label: "Cliente/Papel", value: "{{Cliente}}" }, // Tabela: sj_papelcliente (Alias sugerido)
-    { label: "Parte Contrária", value: "{{Oposto}}" }, // Tabela: sj_papelcliente
-  ],*/
+   partes: [
+    { label: "Autor", value: "{{NOME_AUTOR}}" },
+    { label: "Réu", value: "{{NOME_REU}}" },
+    { label: "Autor Doc", value: "{{Autor_CPF}}" },
+    { label: "Réu Doc", value: "{{Reu_CPF}}" },  
+  ],
   local: [
     { label: "Cidade", value: "{{Cidade}}" }, // Tabela: cidades (Alias sugerido)
     { label: "UF (Estado)", value: "{{uf}}" }, // Tabela: estados
@@ -68,13 +73,13 @@ const mapaVariaveis = {
     { label: "Vara", value: "{{Vara}}" }, // Tabela: varas (Alias sugerido)
     { label: "Instância", value: "{{Instancia}}" }, // Tabela: instancias (Alias sugerido)
   ],
-  datas: [
+  /*datas: [
     { label: "Data Publicação", value: "{{data_publicacao}}" }, // Tabela: Publicacao
     { label: "Texto Publicação", value: "{{texto_integral}}" }, // Tabela: Publicacao
     { label: "Prazo (Dias)", value: "{{dias}}" }, // Tabela: Prazo
     { label: "Data Limite", value: "{{data_limite}}" }, // Tabela: Prazo
     { label: "Data Atual", value: "{{DATA_ATUAL}}" },
-  ],
+  ],*/
 };
 // --- Funções de Navegação e UI ---
 

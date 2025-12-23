@@ -37,13 +37,12 @@ export const deleteEstado = async (req, res) => {
 // --- Cidades ---
 export const getCidades = async (req, res) => {
   try {
-    const lista = await locaisService.listarCidades(req.query.busca);
+    const lista = await locaisService.listarCidades(req.query.busca, req.query.idEstado);
     res.json(lista);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
-
 export const postCidade = async (req, res) => {
   try {
     const resultado = await locaisService.salvarCidade(req.body);

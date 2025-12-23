@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - JurisTrack</title>
+    <link rel="stylesheet" href="/css/login.css" />
+    <link
+      rel="preconnect"
+      href="https://fonts.googleapis.com"
+    />
+    <link
+      rel="preconnect"
+      href="https://fonts.gstatic.com"
+      crossorigin
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <main class="page">
+      <section class="card">
+        <div class="card__grid">
+          <div class="card__aside">
+            <div class="brand brand--solid">
+              <span class="brand__logo">JT</span>
+              <div class="brand__text">
+                <p class="brand__title">JurisTrack</p>
+                <p class="brand__subtitle">Gestão jurídica inteligente</p>
+              </div>
+            </div>
+
+            <div class="aside__badge">Acesso seguro para equipes jurídicas</div>
+
+            <h2 class="aside__title">
+              Gestão de processos e publicações em um só lugar.
+            </h2>
+            <p class="aside__description">
+              Centralize andamentos, modelos e publicações com segurança,
+              colaboração e rastreabilidade para todo o time.
+            </p>
+
+            <div class="aside__cta">
+              <p class="aside__cta-title">Destaques</p>
+              <ul class="aside__points">
+                <li>Fluxo de publicações controlado e auditável</li>
+                <li>Modelos compartilhados e organizados por tenant</li>
+                <li>Histórico e andamento de processos centralizados</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="card__body">
+            <header class="card__header">
+              <div class="brand">
+                <span class="brand__logo">JT</span>
+                <div class="brand__text">
+                  <p class="brand__title">JurisTrack</p>
+                  <p class="brand__subtitle">Acesso seguro</p>
+                </div>
+              </div>
+              <p class="card__title">Entre com seu e-mail e senha</p>
+            </header>
+
+            <form id="login-form" class="form" novalidate>
+              <div class="form__group">
+                <label for="email">E-mail</label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autocomplete="email"
+                  placeholder="seuemail@exemplo.com"
+                  required
+                />
+              </div>
+
+              <div class="form__group">
+                <label for="senha">Senha</label>
+                <input
+                  id="senha"
+                  name="senha"
+                  type="password"
+                  autocomplete="current-password"
+                  placeholder="Digite sua senha"
+                  required
+                />
+              </div>
+
+              <div
+                id="feedback"
+                class="feedback"
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"
+              ></div>
+
+              <div class="form__meta">
+                <label class="checkbox">
+                  <input type="checkbox" id="remember" />
+                  <span>Lembrar-me</span>
+                </label>
+                <a class="form__link" href="#" aria-disabled="true">Esqueceu a senha?</a>
+              </div>
+
+              <button id="submit-button" type="submit" class="button">
+                Entrar
+              </button>
+
+              <p class="form__hint">
+                Precisa de acesso? Fale com o administrador do seu tenant.
+              </p>
+            </form>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="/js/login.js" defer></script>
+  </body>
+</html>
+

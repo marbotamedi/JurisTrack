@@ -12,6 +12,8 @@ import processoRoute from "./routes/processosRoute.js";
 import locaisRoute from "./routes/locaisRoute.js";
 import auxiliarRouter from "./routes/auxiliaresRoute.js";
 import pessoasRoute from "./routes/pessoasRoute.js";
+import authRoute from "./routes/authRoute.js";
+import userRoute from "./routes/userRoute.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -36,11 +38,17 @@ app.use("/api/processos", processoRoute);
 app.use("/api/locais", locaisRoute);
 app.use("/api/auxiliares",auxiliarRouter);
 app.use("/api/pessoas", pessoasRoute);
+app.use("/api/auth", authRoute);
+app.use("/api/users", userRoute);
 
 /* Rota padrão */
 
+app.get("/login", (req, res) => {
+  res.sendFile(path.join(__dirname, "../public", "html", "login.html"));
+});
+
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "../public", "html", "upload.html"));
+  res.sendFile(path.join(__dirname, "../public", "html", "login.html"));
 });
 
 app.get("/processos", (req, res) => {

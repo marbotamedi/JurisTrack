@@ -4,6 +4,7 @@ const charts = {
   tribunais: null,
 };
 
+const AUTH_TOKEN_KEY = "juristrack_token";
 const chartLoaders = {
   situacao: "loading-situacao",
   fase: "loading-fase",
@@ -86,10 +87,33 @@ function showFeedback(message, variant = "danger") {
   feedback.className = `alert alert-${variant} mb-3`;
 }
 
+function getAuthHeaders() {
+  const token = localStorage.getItem(AUTH_TOKEN_KEY);
+  if (!token) return null;
+  return { Authorization: `Bearer ${token}` };
+}
+
+function ensureAuthenticated() {
+  const headers = getAuthHeaders();
+  if (!headers) {
+    window.location.href = "/login";
+    return null;
+  }
+  return headers;
+}
+
 async function fetchJson(url) {
-  const response = await fetch(url);
+  const headers = ensureAuthenticated();
+  if (!headers) {
+    throw new Error("Sessão expirada. Faça login novamente.");
+  }
+
+  const response = await fetch(url, { headers });
   if (!response.ok) {
     const message = await response.text();
+    if (response.status === 401) {
+      window.location.href = "/login";
+    }
     throw new Error(message || `Erro ao buscar ${url}`);
   }
   return response.json();
@@ -293,6 +317,10 @@ async function loadSummaryData() {
   setKpisLoading(true);
   showFeedback(null);
   setChartsLoading(true);
+
+  if (!ensureAuthenticated()) {
+    return;
+  }
 
   try {
     const summary = await fetchJson("/api/dashboard/summary");

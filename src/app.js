@@ -15,6 +15,7 @@ import pessoasRoute from "./routes/pessoasRoute.js";
 import authRoute from "./routes/authRoute.js";
 import userRoute from "./routes/userRoute.js";
 import internalRoute from "./routes/internalRoute.js";
+import dashboardRoute from "./routes/dashboardRoute.js";
 import { tenantContextMiddleware } from "./middlewares/tenantContextMiddleware.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -45,6 +46,7 @@ app.use("/peticoes-finalizadas", peticaoRoute);
 app.use("/api/auth", authRoute);
 app.use("/api/internal", internalRoute);
 app.use("/api", tenantContextMiddleware);
+app.use("/api/dashboard", dashboardRoute);
 app.use("/api/processos", processoRoute);
 app.use("/api/locais", locaisRoute);
 app.use("/api/auxiliares", auxiliarRouter);

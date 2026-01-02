@@ -1,23 +1,13 @@
 import { ensureTenantAuthorization } from "../utils/authz.js";
 import { logError } from "../utils/logger.js";
-
-const emptySummary = {
-  totalProcessos: 0,
-  valorCausaTotal: 0,
-  prazosUrgentesCount: 0,
-  andamentosRecentesCount: 0,
-  distribuicaoSituacao: [],
-  distribuicaoFase: [],
-  topTribunais: [],
-};
-
-const emptyList = { items: [] };
+import * as dashboardService from "../services/dashboardService.js";
 
 export const getSummary = async (req, res) => {
   if (!ensureTenantAuthorization(req, res)) return;
 
   try {
-    res.status(200).json(emptySummary);
+    const summary = await dashboardService.getSummary(req.tenantId);
+    res.status(200).json(summary);
   } catch (error) {
     logError(
       "dashboard.controller.summary_error",
@@ -32,7 +22,8 @@ export const getPrazosDetalhes = async (req, res) => {
   if (!ensureTenantAuthorization(req, res)) return;
 
   try {
-    res.status(200).json(emptyList);
+    const lista = await dashboardService.getPrazosDetalhes(req.tenantId);
+    res.status(200).json(lista);
   } catch (error) {
     logError(
       "dashboard.controller.prazos_error",
@@ -47,7 +38,8 @@ export const getAndamentosDetalhes = async (req, res) => {
   if (!ensureTenantAuthorization(req, res)) return;
 
   try {
-    res.status(200).json(emptyList);
+    const lista = await dashboardService.getAndamentosDetalhes(req.tenantId);
+    res.status(200).json(lista);
   } catch (error) {
     logError(
       "dashboard.controller.andamentos_error",

@@ -106,11 +106,6 @@
                 <h5 class="mb-3 fw-bold"><i class="fas fa-filter me-2 text-primary"></i>Filtros</h5>
                 <div class="row g-3">
                     <div class="col-md-3">
-                        <label class="form-label text-muted small fw-bold">Tenant ID</label>
-                        <input type="text" id="tenantIdInput" class="form-control bg-light" placeholder="Informe o tenantId">
-                        <small class="text-muted">Obrigatório para listar e salvar.</small>
-                    </div>
-                    <div class="col-md-3">
                         <label class="form-label text-muted small fw-bold">Status</label>
                         <select class="form-select bg-light" id="filtroStatus">
                             <option value="">Todos</option>
@@ -139,13 +134,12 @@
                                 <th>Email</th>
                                 <th>Role</th>
                                 <th class="text-center">Status</th>
-                                <th>Tenant</th>
                                 <th>Criado em</th>
                                 <th class="text-end">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="tabelaUsuariosBody">
-                            <tr><td colspan="6" class="text-center text-muted py-4">Informe o tenant e clique em Atualizar.</td></tr>
+                            <tr><td colspan="5" class="text-center text-muted py-4">Clique em Atualizar para carregar.</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -185,10 +179,6 @@
                                 <option value="ativo">Ativo</option>
                                 <option value="inativo">Inativo</option>
                             </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Tenant ID</label>
-                            <input type="text" id="tenantFormInput" class="form-control" placeholder="Tenant vinculado" required>
                         </div>
                     </form>
                 </div>

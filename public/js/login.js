@@ -87,7 +87,7 @@ async function handleSubmit(event) {
         localStorage.setItem(STORAGE_TENANT_KEY, data.tenantId ?? "");
         localStorage.setItem(STORAGE_ROLE_KEY, data.role ?? "");
       }
-    window.location.href = "/processos";
+    window.location.href = "/dashboard";
     return;
     }
 

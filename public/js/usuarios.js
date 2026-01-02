@@ -1,5 +1,4 @@
 const API_BASE = "/api/users";
-const STORAGE_TENANT_KEY = "juristrack_tenantId";
 
 const state = {
   users: [],
@@ -10,7 +9,6 @@ const els = {
   total: document.getElementById("totalUsuarios"),
   busca: document.getElementById("buscaInput"),
   filtroStatus: document.getElementById("filtroStatus"),
-  tenantInput: document.getElementById("tenantIdInput"),
   alertArea: document.getElementById("alertArea"),
   btnAtualizar: document.getElementById("btnAtualizar"),
   btnNovo: document.getElementById("btnNovoUsuario"),
@@ -21,7 +19,6 @@ const els = {
   senhaInput: document.getElementById("senhaInput"),
   roleInput: document.getElementById("roleInput"),
   statusInput: document.getElementById("statusInput"),
-  tenantFormInput: document.getElementById("tenantFormInput"),
   salvarBtn: document.getElementById("salvarUsuarioBtn"),
 };
 
@@ -37,12 +34,9 @@ function authFetch(url, options = {}) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  restoreTenantFromStorage();
   bindEvents();
   renderTable();
-  if (getTenantId()) {
-    carregarUsuarios();
-  }
+  carregarUsuarios();
 });
 
 function bindEvents() {
@@ -52,7 +46,6 @@ function bindEvents() {
 
   els.filtroStatus?.addEventListener("change", carregarUsuarios);
   els.busca?.addEventListener("input", renderTable);
-  els.tenantInput?.addEventListener("change", syncTenantToModal);
 
   els.tabelaBody?.addEventListener("click", (event) => {
     const actionBtn = event.target.closest("[data-action]");
@@ -73,27 +66,9 @@ function bindEvents() {
   });
 }
 
-function restoreTenantFromStorage() {
-  const saved = localStorage.getItem(STORAGE_TENANT_KEY);
-  if (saved && els.tenantInput) {
-    els.tenantInput.value = saved;
-    syncTenantToModal();
-  }
-}
-
-function syncTenantToModal() {
-  if (els.tenantFormInput && els.tenantInput) {
-    els.tenantFormInput.value = (els.tenantInput.value || "").trim();
-  }
-}
-
-function getTenantId() {
-  return (els.tenantInput?.value || "").trim();
-}
-
 function setTableMessage(text) {
   if (els.tabelaBody) {
-    els.tabelaBody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">${text}</td></tr>`;
+    els.tabelaBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">${text}</td></tr>`;
   }
 }
 
@@ -112,22 +87,13 @@ function showAlert(type, message) {
 }
 
 async function carregarUsuarios() {
-  const tenantId = getTenantId();
-  if (!tenantId) {
-    setTableMessage("Informe o tenant e clique em Atualizar.");
-    showAlert("warning", "Tenant ID é obrigatório para listar usuários.");
-    return;
-  }
-
-  syncTenantToModal();
-  localStorage.setItem(STORAGE_TENANT_KEY, tenantId);
   setTableMessage("Carregando usuários...");
   showAlert("info", "Buscando usuários...");
 
-  let url = `${API_BASE}?tenantId=${encodeURIComponent(tenantId)}`;
+  let url = `${API_BASE}`;
   const status = els.filtroStatus?.value;
   if (status) {
-    url += `&status=${encodeURIComponent(status)}`;
+    url += `?status=${encodeURIComponent(status)}`;
   }
 
   try {
@@ -182,7 +148,6 @@ function renderTable() {
           <td>${user.email || "-"}</td>
           <td>${user.role || "-"}</td>
           <td class="text-center"><span class="badge ${badgeClass}">${statusLabel}</span></td>
-          <td>${user.tenant_id || "-"}</td>
           <td>${createdAt}</td>
           <td class="text-end table-actions">
             <button class="btn btn-sm btn-outline-primary" data-action="edit" data-id="${user.id}">
@@ -209,12 +174,10 @@ function abrirModalCriar() {
   els.modalTitle.textContent = "Novo Usuário";
   els.usuarioId.value = "";
   els.emailInput.removeAttribute("disabled");
-  els.tenantFormInput.removeAttribute("disabled");
   els.emailInput.value = "";
   els.senhaInput.value = "";
   els.roleInput.value = "advogado";
   els.statusInput.value = "ativo";
-  syncTenantToModal();
   new bootstrap.Modal(els.modalEl).show();
 }
 
@@ -227,8 +190,6 @@ function abrirModalEditar(user) {
   els.senhaInput.value = "";
   els.roleInput.value = user.role || "advogado";
   els.statusInput.value = user.status || "ativo";
-  els.tenantFormInput.value = user.tenant_id || getTenantId() || "";
-  els.tenantFormInput.setAttribute("disabled", "disabled");
 
   new bootstrap.Modal(els.modalEl).show();
 }
@@ -244,12 +205,6 @@ async function salvarUsuario() {
   const senha = els.senhaInput?.value || "";
   const role = els.roleInput?.value || "";
   const status = els.statusInput?.value || "";
-  const tenantId = (els.tenantFormInput?.value || "").trim() || getTenantId();
-
-  if (!tenantId) {
-    showAlert("warning", "Tenant ID é obrigatório.");
-    return;
-  }
 
   if (!id && !validarEmail(email)) {
     showAlert("warning", "Informe um e-mail válido.");
@@ -293,7 +248,6 @@ async function salvarUsuario() {
     payload.password = senha;
     payload.role = role;
     payload.status = status;
-    payload.tenantId = tenantId;
   }
 
   try {

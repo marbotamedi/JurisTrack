@@ -14,6 +14,8 @@ import auxiliarRouter from "./routes/auxiliaresRoute.js";
 import pessoasRoute from "./routes/pessoasRoute.js";
 import authRoute from "./routes/authRoute.js";
 import userRoute from "./routes/userRoute.js";
+import internalRoute from "./routes/internalRoute.js";
+import dashboardRoute from "./routes/dashboardRoute.js";
 import { tenantContextMiddleware } from "./middlewares/tenantContextMiddleware.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -42,7 +44,9 @@ app.use("/", modalRoute);
 app.use("/modelos", modelosRoute);
 app.use("/peticoes-finalizadas", peticaoRoute);
 app.use("/api/auth", authRoute);
+app.use("/api/internal", internalRoute);
 app.use("/api", tenantContextMiddleware);
+app.use("/api/dashboard", dashboardRoute);
 app.use("/api/processos", processoRoute);
 app.use("/api/locais", locaisRoute);
 app.use("/api/auxiliares", auxiliarRouter);
@@ -57,6 +61,10 @@ app.get("/login", (req, res) => {
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "../public", "html", "login.html"));
+});
+
+app.get("/dashboard", (req, res) => {
+  res.sendFile(path.join(__dirname, "../public", "html", "dashboard.html"));
 });
 
 app.get("/processos", (req, res) => {

@@ -252,7 +252,7 @@ async function carregarPrazos() {
   renderTableRows("tabela-prazos", null, "Carregando prazos...");
   try {
     const { items } = await fetchJson("/api/dashboard/prazos-detalhes");
-    renderTableRows("tabela-prazos", items, "Nenhum prazo urgente encontrado.");
+    renderTableRows("tabela-prazos", items, "Nenhum prazo para os próximos 7 dias.");
   } catch (error) {
     console.error(error);
     renderTableRows("tabela-prazos", null, "Erro ao carregar prazos.");
@@ -288,21 +288,45 @@ async function loadSummaryData() {
   setKpisLoading(false);
 }
 
-function setupModalListeners() {
-  const prazosModal = document.getElementById("modalPrazos");
-  const andamentosModal = document.getElementById("modalAndamentos");
+function openPrazosModal() {
+  const modalElement = document.getElementById("modalPrazos");
+  if (!modalElement) return;
+  renderTableRows("tabela-prazos", null, "Carregando prazos...");
+  carregarPrazos();
+  const instance = bootstrap.Modal.getOrCreateInstance(modalElement);
+  instance.show();
+}
 
-  if (prazosModal) {
-    prazosModal.addEventListener("show.bs.modal", carregarPrazos);
+function openAndamentosModal() {
+  const modalElement = document.getElementById("modalAndamentos");
+  if (!modalElement) return;
+  renderTableRows("tabela-andamentos", null, "Carregando andamentos...");
+  carregarAndamentos();
+  const instance = bootstrap.Modal.getOrCreateInstance(modalElement);
+  instance.show();
+}
+
+function setupCardListeners() {
+  const prazosCard = document.querySelector('[data-bs-target="#modalPrazos"]');
+  const andamentosCard = document.querySelector('[data-bs-target="#modalAndamentos"]');
+
+  if (prazosCard) {
+    prazosCard.addEventListener("click", (event) => {
+      event.preventDefault();
+      openPrazosModal();
+    });
   }
 
-  if (andamentosModal) {
-    andamentosModal.addEventListener("show.bs.modal", carregarAndamentos);
+  if (andamentosCard) {
+    andamentosCard.addEventListener("click", (event) => {
+      event.preventDefault();
+      openAndamentosModal();
+    });
   }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   loadSummaryData();
-  setupModalListeners();
+  setupCardListeners();
 });
 

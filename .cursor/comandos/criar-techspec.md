@@ -13,13 +13,13 @@
     ## Template e Entradas
 
     - Template Tech Spec: `templates/techspec-template.md`
-    - PRD requerido: `tasks/prd-mult_tenant/prd.md`
-    - Documento de saída: `tasks/tenant-techspec.md`
+    - PRD requerido: `tasks/prd-dashboard/prd.md`
+    - Documento de saída: `tasks/prd-dashboard/techspec.md`
 
     ## Pré-requisitos
 
     - Revisar padrões do projeto em @.cursor/rules
-    - Confirmar que o PRD existe em `tasks/prd-login/prd.md`
+    - Confirmar que o PRD existe em `tasks/prd-dashboard/prd.md`
 
     ## Fluxo de Trabalho
 

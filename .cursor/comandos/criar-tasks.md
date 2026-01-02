@@ -5,8 +5,8 @@
 
     A funcionalidade em que você trabalhará é identificada por este slug:
     
-    - PRD requerido: `tasks/prd-mult_tenant/prd.md`
-    - Tech Spec requerido: `tasks/prd-mult_tenant/techspec.md`
+    - PRD requerido: `tasks/prd-dashboard/prd.md`
+    - Tech Spec requerido: `tasks/prd-dashboard/techspec.md`
 
     ## Etapas do Processo
 
@@ -34,11 +34,11 @@
     ## Especificações de Saída
 
     ### Localização dos Arquivos
-    - Pasta da funcionalidade: `./tasks/prd-mult_tenant/`
+    - Pasta da funcionalidade: `./tasks/prd-dashboard/`
     - Template para a lista de tarefas: `./templates/tasks-template.md`
-    - Lista de tarefas: `./tasks/prd-mult_tenant/tasks.md`
+    - Lista de tarefas: `./tasks/prd-dashboard/tasks.md`
     - Template para cada tarefa individual: `./templates/task-template.md`
-    - Tarefas individuais: `./tasks/prd-mult_tenant/[num]_task.md`
+    - Tarefas individuais: `./tasks/prd-dashboard/[num]_task.md`
 
 
     ### Formato do Resumo de Tarefas (tasks.md)

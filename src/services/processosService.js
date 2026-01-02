@@ -129,13 +129,13 @@ export const obterContextoParaModelo = async (idProcesso, tenantId) => {
       varas ( descricao ),
       instancias ( descricao ),
       autor:pessoas!fk_processos_autor ( nome, cpf_cnpj ),
-      reu:pessoas!fk_processos_reu ( nome, cpf_cnpj )
-      advogado:pessoas!fk_processos_advogado ( idpessoa, nome ),
+      reu:pessoas!fk_processos_reu ( nome, cpf_cnpj ),
+      advogado:pessoas!fk_processos_advogado ( nome,cpf_cnpj)
     `
     )
     .eq("idprocesso", idProcesso)
     .maybeSingle();
-
+    
   if (error) throw error;
   if (!data) return null;
 
@@ -170,6 +170,6 @@ export const obterContextoParaModelo = async (idProcesso, tenantId) => {
     NOME_ADVOGADO: data.advogado?.nome || "",
     DATA_ATUAL: new Date().toLocaleDateString("pt-BR"),
   };
-
+  
   return contexto;
 };

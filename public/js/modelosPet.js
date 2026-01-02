@@ -325,7 +325,7 @@ async function salvarModelo() {
   hideError();
 
   try {
-    const response = await fetch(url, {
+    const response = await authFetch(url, {
       method: method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),

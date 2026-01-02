@@ -7,61 +7,21 @@ body {
 }
 
 .kpi-card {
-    border: 0;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.kpi-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-}
-
-.kpi-clickable {
-    cursor: pointer;
-}
-
-.kpi-icon {
-    width: 52px;
-    height: 52px;
-    border-radius: 12px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    font-size: 1.2rem;
-}
-
-.kpi-primary { background: linear-gradient(135deg, #3b82f6, #2563eb); }
-.kpi-success { background: linear-gradient(135deg, #22c55e, #16a34a); }
-.kpi-warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
-.kpi-info    { background: linear-gradient(135deg, #06b6d4, #0284c7); }
-
-canvas {
-    width: 100% !important;
-}
-
-@media (max-width: 767.98px) {
-    .sidebar {
-        position: relative !important;
-        width: 100% !important;
-        min-height: auto !important;
-    }
-
-    .main-area {
-        padding: 1.5rem 1rem;
-    }
-}
-body {
-    background-color: #f8f9fa;
-}
-
-.kpi-card {
     border: none;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .kpi-card .card-body {
     padding: 18px;
+}
+
+.kpi-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+
+.kpi-clickable {
+    cursor: pointer;
 }
 
 .kpi-label {
@@ -76,8 +36,8 @@ body {
 }
 
 .kpi-icon {
-    width: 46px;
-    height: 46px;
+    width: 48px;
+    height: 48px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -101,13 +61,8 @@ body {
     background: linear-gradient(135deg, #22c55e, #16a34a);
 }
 
-.kpi-clickable {
-    cursor: pointer;
-}
-
-.kpi-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+canvas {
+    width: 100% !important;
 }
 
 .card-header h6 {
@@ -116,6 +71,18 @@ body {
 
 .card-header .text-muted {
     font-size: 0.8rem;
+}
+
+@media (max-width: 767.98px) {
+    .sidebar {
+        position: relative !important;
+        width: 100% !important;
+        min-height: auto !important;
+    }
+
+    .main-area {
+        padding: 1.5rem 1rem;
+    }
 }
 
 @media (max-width: 575.98px) {

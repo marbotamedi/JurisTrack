@@ -4,6 +4,13 @@ const charts = {
   tribunais: null,
 };
 
+const KPI_ELEMENT_IDS = [
+  "kpi-total-processos",
+  "kpi-valor-causa",
+  "kpi-prazos-urgentes",
+  "kpi-andamentos-recentes",
+];
+
 const palette = [
   "#2563eb",
   "#0ea5e9",
@@ -37,6 +44,42 @@ function formatDate(value) {
   return date.toLocaleDateString("pt-BR");
 }
 
+function setKpisLoading(isLoading) {
+  const placeholder = '<span class="placeholder-glow"><span class="placeholder col-8"></span></span>';
+
+  KPI_ELEMENT_IDS.forEach((id) => {
+    const element = document.getElementById(id);
+    if (!element) return;
+
+    if (isLoading) {
+      element.dataset.loading = "true";
+      element.innerHTML = placeholder;
+    } else {
+      if (element.dataset.loading) {
+        delete element.dataset.loading;
+      }
+
+      if (element.querySelector(".placeholder")) {
+        element.textContent = "--";
+      }
+    }
+  });
+}
+
+function showFeedback(message, variant = "danger") {
+  const feedback = document.getElementById("dashboard-feedback");
+  if (!feedback) return;
+
+  if (!message) {
+    feedback.classList.add("d-none");
+    feedback.textContent = "";
+    return;
+  }
+
+  feedback.textContent = message;
+  feedback.className = `alert alert-${variant} mb-3`;
+}
+
 async function fetchJson(url) {
   const response = await fetch(url);
   if (!response.ok) {
@@ -48,17 +91,17 @@ async function fetchJson(url) {
 
 function updateKpis(summary) {
   const {
-    totalProcessos = 0,
-    valorCausaTotal = 0,
-    prazosUrgentesCount = 0,
-    andamentosRecentesCount = 0,
+    totalProcessos,
+    valorCausaTotal,
+    prazosUrgentesCount,
+    andamentosRecentesCount,
   } = summary || {};
 
   const map = {
-    "kpi-total-processos": totalProcessos,
-    "kpi-valor-causa": formatCurrencyBRL(valorCausaTotal),
-    "kpi-prazos-urgentes": prazosUrgentesCount,
-    "kpi-andamentos-recentes": andamentosRecentesCount,
+    "kpi-total-processos": totalProcessos ?? "--",
+    "kpi-valor-causa": valorCausaTotal != null ? formatCurrencyBRL(valorCausaTotal) : "--",
+    "kpi-prazos-urgentes": prazosUrgentesCount ?? "--",
+    "kpi-andamentos-recentes": andamentosRecentesCount ?? "--",
   };
 
   Object.entries(map).forEach(([id, value]) => {
@@ -74,6 +117,10 @@ function destroyChart(key) {
     charts[key].destroy();
     charts[key] = null;
   }
+}
+
+function resetCharts() {
+  Object.keys(charts).forEach(destroyChart);
 }
 
 function renderCharts(distribuicoes = {}) {
@@ -223,7 +270,10 @@ async function carregarAndamentos() {
   }
 }
 
-async function carregarResumo() {
+async function loadSummaryData() {
+  setKpisLoading(true);
+  showFeedback(null);
+
   try {
     const summary = await fetchJson("/api/dashboard/summary");
     updateKpis(summary);
@@ -231,7 +281,11 @@ async function carregarResumo() {
   } catch (error) {
     console.error(error);
     updateKpis({});
+    resetCharts();
+    showFeedback("Não foi possível carregar os dados do dashboard. Tente novamente.", "warning");
   }
+
+  setKpisLoading(false);
 }
 
 function setupModalListeners() {
@@ -248,7 +302,7 @@ function setupModalListeners() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  carregarResumo();
+  loadSummaryData();
   setupModalListeners();
 });
 

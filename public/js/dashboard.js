@@ -4,6 +4,12 @@ const charts = {
   tribunais: null,
 };
 
+const chartLoaders = {
+  situacao: "loading-situacao",
+  fase: "loading-fase",
+  tribunais: "loading-tribunais",
+};
+
 const KPI_ELEMENT_IDS = [
   "kpi-total-processos",
   "kpi-valor-causa",
@@ -248,13 +254,27 @@ function renderTableRows(targetId, items, emptyMessage) {
     .join("");
 }
 
+function toggleChartLoading(key, isLoading) {
+  const loaderId = chartLoaders[key];
+  if (!loaderId) return;
+
+  const loader = document.getElementById(loaderId);
+  if (!loader) return;
+
+  loader.classList.toggle("d-none", !isLoading);
+  loader.setAttribute("aria-hidden", (!isLoading).toString());
+}
+
+function setChartsLoading(isLoading) {
+  Object.keys(chartLoaders).forEach((key) => toggleChartLoading(key, isLoading));
+}
+
 async function carregarPrazos() {
   renderTableRows("tabela-prazos", null, "Carregando prazos...");
   try {
     const { items } = await fetchJson("/api/dashboard/prazos-detalhes");
     renderTableRows("tabela-prazos", items, "Nenhum prazo para os próximos 7 dias.");
   } catch (error) {
-    console.error(error);
     renderTableRows("tabela-prazos", null, "Erro ao carregar prazos.");
   }
 }
@@ -265,7 +285,6 @@ async function carregarAndamentos() {
     const { items } = await fetchJson("/api/dashboard/andamentos-detalhes");
     renderTableRows("tabela-andamentos", items, "Nenhum andamento recente encontrado.");
   } catch (error) {
-    console.error(error);
     renderTableRows("tabela-andamentos", null, "Erro ao carregar andamentos.");
   }
 }
@@ -273,16 +292,18 @@ async function carregarAndamentos() {
 async function loadSummaryData() {
   setKpisLoading(true);
   showFeedback(null);
+  setChartsLoading(true);
 
   try {
     const summary = await fetchJson("/api/dashboard/summary");
     updateKpis(summary);
     renderCharts(summary);
   } catch (error) {
-    console.error(error);
     updateKpis({});
     resetCharts();
     showFeedback("Não foi possível carregar os dados do dashboard. Tente novamente.", "warning");
+  } finally {
+    setChartsLoading(false);
   }
 
   setKpisLoading(false);

@@ -2,6 +2,19 @@ body {
     background-color: #f8f9fa;
 }
 
+.layout-wrapper {
+    min-height: 100vh;
+    background-color: #f8f9fa;
+}
+
+.sidebar {
+    width: 260px;
+    min-height: 100vh;
+    position: sticky;
+    top: 0;
+    flex-shrink: 0;
+}
+
 .main-area {
     background-color: #f8f9fa;
 }
@@ -9,10 +22,12 @@ body {
 .kpi-card {
     border: none;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
+    background: linear-gradient(180deg, #ffffff 0%, #f9fafb 100%);
 }
 
 .kpi-card .card-body {
     padding: 18px;
+    display: flex;
 }
 
 .kpi-card:hover {
@@ -22,6 +37,16 @@ body {
 
 .kpi-clickable {
     cursor: pointer;
+}
+
+.kpi-clickable:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 32px rgba(37, 99, 235, 0.12);
+}
+
+.kpi-clickable:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 4px;
 }
 
 .kpi-label {
@@ -43,6 +68,7 @@ body {
     justify-content: center;
     color: #fff;
     font-size: 1.2rem;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
 }
 
 .kpi-primary .kpi-icon {
@@ -73,11 +99,25 @@ canvas {
     font-size: 0.8rem;
 }
 
+.chart-wrapper {
+    position: relative;
+    min-height: 240px;
+    display: flex;
+    align-items: center;
+}
+
+.chart-loading {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.7);
+    z-index: 2;
+}
+
 @media (max-width: 767.98px) {
     .sidebar {
         position: relative !important;
-        width: 100% !important;
-        min-height: auto !important;
+        width: 100%;
+        min-height: auto;
     }
 
     .main-area {
@@ -85,10 +125,40 @@ canvas {
     }
 }
 
+@media (max-width: 991.98px) {
+    .kpi-card .card-body {
+        flex-direction: row;
+        gap: 12px;
+    }
+
+    .chart-wrapper {
+        min-height: 220px;
+    }
+}
+
 @media (max-width: 575.98px) {
     .kpi-card .card-body {
         flex-direction: row;
         gap: 12px;
+        align-items: center;
+    }
+
+    .kpi-value {
+        font-size: 1.4rem;
+    }
+
+    .kpi-label {
+        font-size: 0.85rem;
+    }
+
+    .kpi-icon {
+        width: 42px;
+        height: 42px;
+        font-size: 1rem;
+    }
+
+    .chart-wrapper {
+        min-height: 200px;
     }
 }
 

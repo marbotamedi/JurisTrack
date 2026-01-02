@@ -10,6 +10,21 @@ function datePlusDays(days) {
   return d.toISOString().slice(0, 10);
 }
 
+function applyPagination(query, { limit, offset } = {}) {
+  const parsedLimit = Number.isInteger(limit) && limit > 0 ? limit : null;
+  const parsedOffset = Number.isInteger(offset) && offset >= 0 ? offset : null;
+
+  if (parsedLimit && parsedOffset !== null) {
+    return query.range(parsedOffset, parsedOffset + parsedLimit - 1);
+  }
+
+  if (parsedLimit) {
+    return query.limit(parsedLimit);
+  }
+
+  return query;
+}
+
 async function countProcessosAtivos(tenantId) {
   const { count, error } = await withTenantFilter("processos", tenantId)
     .select("*", { count: "exact", head: true })
@@ -125,22 +140,30 @@ export async function getSummary(tenantId) {
   };
 }
 
-export async function getPrazosDetalhes(tenantId) {
+export async function getPrazosDetalhes(tenantId, options = {}) {
   const start = todayDate();
   const end = datePlusDays(7);
 
-  const { data: prazos, error } = await withTenantFilter("Prazo", tenantId)
+  let prazosQuery = withTenantFilter("Prazo", tenantId)
     .select("id, descricao, data_limite, publicacaoid")
     .gte("data_limite", start)
     .lte("data_limite", end)
     .order("data_limite", { ascending: true });
 
+  prazosQuery = applyPagination(prazosQuery, options);
+
+  const { data: prazos, error } = await prazosQuery;
+
   if (error) throw error;
   if (!prazos || prazos.length === 0) return { items: [] };
 
-  const publicacaoIds = prazos
-    .map((p) => p.publicacaoid)
-    .filter(Boolean);
+  const publicacaoIds = Array.from(
+    new Set(
+      prazos
+        .map((p) => p.publicacaoid)
+        .filter(Boolean)
+    )
+  );
 
   let publicacoes = [];
   if (publicacaoIds.length > 0) {
@@ -154,9 +177,13 @@ export async function getPrazosDetalhes(tenantId) {
     publicacoes = pubs || [];
   }
 
-  const processIds = publicacoes
-    .map((p) => p.processoid)
-    .filter(Boolean);
+  const processIds = Array.from(
+    new Set(
+      publicacoes
+        .map((p) => p.processoid)
+        .filter(Boolean)
+    )
+  );
 
   let processos = [];
   if (processIds.length > 0) {
@@ -165,7 +192,8 @@ export async function getPrazosDetalhes(tenantId) {
       tenantId
     )
       .select("idprocesso, numprocesso")
-      .in("idprocesso", processIds);
+      .in("idprocesso", processIds)
+      .is("deleted_at", null);
     if (procError) throw procError;
     processos = procs || [];
   }
@@ -177,37 +205,46 @@ export async function getPrazosDetalhes(tenantId) {
     publicacoes.map((pub) => [pub.id, pub.processoid])
   );
 
-  const items = prazos.map((p) => {
-    const procId = pubById.get(p.publicacaoid);
-    return {
-      numeroProcesso: procById.get(procId) || null,
-      descricao: p.descricao || null,
-      data_limite: p.data_limite || null,
-    };
-  });
+  const items = prazos
+    .map((p) => {
+      const procId = pubById.get(p.publicacaoid);
+      const numeroProcesso = procById.get(procId);
+      if (!numeroProcesso) return null;
+      return {
+        numeroProcesso,
+        descricao: p.descricao || null,
+        data_limite: p.data_limite || null,
+      };
+    })
+    .filter(Boolean);
 
   return { items };
 }
 
-export async function getAndamentosDetalhes(tenantId) {
+export async function getAndamentosDetalhes(tenantId, options = {}) {
   const end = todayDate();
   const start = datePlusDays(-7);
 
-  const { data: andamentos, error } = await withTenantFilter(
-    "Andamento",
-    tenantId
-  )
-    .select("id, processoId, descricao, data_evento")
+  let andamentosQuery = withTenantFilter("Andamento", tenantId)
+    .select("id, processoId, processoid, descricao, data_evento")
     .gte("data_evento", start)
     .lte("data_evento", end)
     .order("data_evento", { ascending: false });
 
+  andamentosQuery = applyPagination(andamentosQuery, options);
+
+  const { data: andamentos, error } = await andamentosQuery;
+
   if (error) throw error;
   if (!andamentos || andamentos.length === 0) return { items: [] };
 
-  const processIds = andamentos
-    .map((a) => a.processoId || a.processoid)
-    .filter(Boolean);
+  const processIds = Array.from(
+    new Set(
+      andamentos
+        .map((a) => a.processoId || a.processoid)
+        .filter(Boolean)
+    )
+  );
 
   let processos = [];
   if (processIds.length > 0) {
@@ -216,7 +253,8 @@ export async function getAndamentosDetalhes(tenantId) {
       tenantId
     )
       .select("idprocesso, numprocesso")
-      .in("idprocesso", processIds);
+      .in("idprocesso", processIds)
+      .is("deleted_at", null);
     if (procError) throw procError;
     processos = procs || [];
   }
@@ -225,14 +263,18 @@ export async function getAndamentosDetalhes(tenantId) {
     processos.map((proc) => [proc.idprocesso, proc.numprocesso])
   );
 
-  const items = andamentos.map((a) => {
-    const procId = a.processoId || a.processoid;
-    return {
-      numeroProcesso: procById.get(procId) || null,
-      descricao: a.descricao || null,
-      data_evento: a.data_evento || null,
-    };
-  });
+  const items = andamentos
+    .map((a) => {
+      const procId = a.processoId || a.processoid;
+      const numeroProcesso = procById.get(procId);
+      if (!numeroProcesso) return null;
+      return {
+        numeroProcesso,
+        descricao: a.descricao || null,
+        data_evento: a.data_evento || null,
+      };
+    })
+    .filter(Boolean);
 
   return { items };
 }

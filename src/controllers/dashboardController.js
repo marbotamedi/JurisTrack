@@ -2,6 +2,16 @@ import { ensureTenantAuthorization } from "../utils/authz.js";
 import { logError } from "../utils/logger.js";
 import * as dashboardService from "../services/dashboardService.js";
 
+function buildPaginationParams(query = {}) {
+  const limit = Number.parseInt(query.limit, 10);
+  const offset = Number.parseInt(query.offset, 10);
+
+  return {
+    limit: Number.isInteger(limit) && limit > 0 ? limit : undefined,
+    offset: Number.isInteger(offset) && offset >= 0 ? offset : undefined,
+  };
+}
+
 export const getSummary = async (req, res) => {
   if (!ensureTenantAuthorization(req, res)) return;
 
@@ -22,7 +32,10 @@ export const getPrazosDetalhes = async (req, res) => {
   if (!ensureTenantAuthorization(req, res)) return;
 
   try {
-    const lista = await dashboardService.getPrazosDetalhes(req.tenantId);
+    const lista = await dashboardService.getPrazosDetalhes(
+      req.tenantId,
+      buildPaginationParams(req.query)
+    );
     res.status(200).json(lista);
   } catch (error) {
     logError(
@@ -38,7 +51,10 @@ export const getAndamentosDetalhes = async (req, res) => {
   if (!ensureTenantAuthorization(req, res)) return;
 
   try {
-    const lista = await dashboardService.getAndamentosDetalhes(req.tenantId);
+    const lista = await dashboardService.getAndamentosDetalhes(
+      req.tenantId,
+      buildPaginationParams(req.query)
+    );
     res.status(200).json(lista);
   } catch (error) {
     logError(

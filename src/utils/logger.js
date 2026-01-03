@@ -27,7 +27,8 @@ function resolveActorContext(context = {}) {
 }
 
 function logBase(level, action, message, context = {}) {
-  const timestamp = new Date().toISOString();
+  /*const timestamp = new Date().toISOString();*/
+  const timestamp = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
   const actorContext = resolveActorContext(context);
   const payload = sanitizeContext({ timestamp, action, ...context, ...actorContext });
   const text = message ? `[${action}] ${message}` : `[${action}]`;

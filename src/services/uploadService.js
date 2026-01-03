@@ -61,12 +61,11 @@ export const uploadFileToStorage = async (
     nome_arquivo: safeName,
     url_publica: publicUrlData.publicUrl,
     data_upload: localDateString,
-    // REQUISITO: Status fixo para documentos da ficha
     status: "doc_processo", 
     processo_id: processoId,
-    // REQUISITO: Salvar tipo e tamanho
-    tipo: file.mimetype, 
-    tamanho: file.size   
+    // --- AQUI ESTÁ A INFORMAÇÃO QUE VOCÊ QUER ---
+    tipo: file.mimetype, // Salva 'application/pdf', 'text/plain', etc.
+    tamanho: file.size   // Salva o tamanho em bytes
   };
 
   const { data: insertData, error: insertError } = await supabase
@@ -75,11 +74,13 @@ export const uploadFileToStorage = async (
     .select();
 
   if (insertError) throw insertError;
+  
   logInfo("upload.db.insert_success", "Documento registrado com tenant", {
     tenantId,
     processoId,
     documentId: insertData?.[0]?.id,
     fileName: safeName,
+    tipo: file.mimetype
   });
 
   // Webhook N8N (Opcional, mantido)
@@ -90,8 +91,7 @@ export const uploadFileToStorage = async (
   return { fileName: safeName, publicUrl: publicUrlData.publicUrl };
 };
 
-
-// --- FUNÇÃO ATUALIZADA: DELETAR DO BANCO E DO STORAGE ---
+// --- FUNÇÃO DELETAR (MANTIDA IGUAL) ---
 export const deleteDocument = async (id, tenantId) => {
   // 1. Busca os dados do arquivo no banco para pegar a URL
   const { data: doc, error: fetchError } = await withTenantFilter(
@@ -110,15 +110,10 @@ export const deleteDocument = async (id, tenantId) => {
   // 2. Tenta deletar do Storage (se tiver URL)
   if (doc.url_publica) {
     try {
-      // A URL pública é algo como: .../storage/v1/object/public/teste/1234_2024/arquivo.pdf
-      // Precisamos extrair apenas: 1234_2024/arquivo.pdf
-      
-      // Divide a URL usando o nome do bucket como separador
       const bucketUrlPart = `/${Bucket_Name}/`;
       const urlParts = doc.url_publica.split(bucketUrlPart);
 
       if (urlParts.length > 1) {
-        // Pega a parte final (o caminho) e decodifica (ex: remove %20)
         const storagePath = decodeURIComponent(urlParts[1]);
 
         logInfo("upload.storage.delete_attempt", "Tentando deletar arquivo do storage", {
@@ -138,8 +133,6 @@ export const deleteDocument = async (id, tenantId) => {
             storagePath,
             error: storageError,
           });
-          // Opcional: Se quiser impedir a exclusão do banco caso falhe no storage, lance o erro aqui.
-          // throw storageError; 
         }
       }
     } catch (err) {
@@ -168,8 +161,7 @@ export const deleteDocument = async (id, tenantId) => {
   return true;
 };
 
-
-// (Mantenha as funções listDocumentsByProcess e listAllDocuments como estavam)
+// (Funções de listagem mantidas)
 export const listDocumentsByProcess = async (processoId, tenantId) => {
     const { data, error } = await withTenantFilter(
       "upload_Documentos",

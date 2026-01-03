@@ -40,4 +40,45 @@ router.post("/", async (req, res) => {
   }
 });
 
+// Obter pessoa por ID
+router.get("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { data, error } = await withTenantFilter("pessoas", req.tenantId)
+      .select("*")
+      .eq("idpessoa", id)
+      .single();
+
+    if (error) throw error;
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Atualizar pessoa
+router.put("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const payload = req.body;
+    
+    // Segurança: garantir que tenant_id não seja alterado e filtrar pelo tenant atual
+    delete payload.idpessoa;
+    delete payload.tenant_id;
+    delete payload.created_at;
+
+    const { data, error } = await supabase
+      .from("pessoas")
+      .update(payload)
+      .eq("idpessoa", id)
+      .eq("tenant_id", req.tenantId)
+      .select();
+
+    if (error) throw error;
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;

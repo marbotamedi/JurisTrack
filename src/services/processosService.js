@@ -4,7 +4,6 @@ import { injectTenant, withTenantFilter } from "../repositories/tenantScope.js";
 function sanitizeUpdatePayload(dados) {
   if (!dados || typeof dados !== "object") return {};
   const payload = { ...dados };
-  // Nunca permitir troca de tenant via payload do cliente
   delete payload.tenant_id;
   return payload;
 }
@@ -14,12 +13,12 @@ export const listarProcessos = async (filtros, tenantId) => {
     .select(`
     idprocesso,
     numprocesso,
+    datainicial,
     assunto,
-    situacao:situacoes ( descricao ),
+    situacao:situacoes (idsituacao, descricao ),
     cidades ( descricao, estados ( uf ) ),
-    comarcas ( descricao ),
-    autor:pessoas!fk_processos_autor ( nome ),
-    reu:pessoas!fk_processos_reu ( nome )
+    comarcas (idcomarca, descricao ),
+    partes:processo_partes ( tipo_parte, pessoas ( nome ) )
   `)
     .is("deleted_at", null);
 
@@ -28,6 +27,17 @@ export const listarProcessos = async (filtros, tenantId) => {
       `numprocesso.ilike.%${filtros.busca}%,assunto.ilike.%${filtros.busca}%`
     );
   }
+
+  if (filtros.situacao) {
+    query = query.eq("idsituacao", filtros.situacao);
+  }
+
+  if (filtros.comarca) {
+    query = query.eq("idcomarca", filtros.comarca);
+  }
+
+  // Ordena por Data Inicial (Decrescente) e Limita a 50 resultados
+  query = query.order("datainicial", { ascending: false }).limit(50);
 
   const { data, error } = await query;
   if (error) throw error;
@@ -49,8 +59,7 @@ export const obterProcessoCompleto = async (id, tenantId) => {
       situacao:situacoes ( idsituacao, descricao ),
       probabilidade:probabilidades ( idprobabilidade, descricao ), 
       moeda:moedas ( idmoeda, descricao ),
-      autor:pessoas!fk_processos_autor ( idpessoa, nome, cpf_cnpj ),
-      reu:pessoas!fk_processos_reu ( idpessoa, nome, cpf_cnpj ),
+      partes:processo_partes ( id, tipo_parte, pessoas ( idpessoa, nome, cpf_cnpj ) ),
       advogado:pessoas!fk_processos_advogado ( idpessoa, nome ),
 
       Publicacao (
@@ -69,7 +78,6 @@ export const obterProcessoCompleto = async (id, tenantId) => {
     `
     )
     .eq("idprocesso", id)
-    // Garantia de igualdade de tenant nos relacionamentos principais
     .eq("Publicacao.tenant_id", tenantId)
     .maybeSingle();
 
@@ -78,24 +86,58 @@ export const obterProcessoCompleto = async (id, tenantId) => {
 };
 
 export const criarProcesso = async (dados, tenantId) => {
-  const payload = injectTenant(dados, tenantId);
+  const { partes, ...dadosProcesso } = dados;
+  const payload = injectTenant(dadosProcesso, tenantId);
   const { data, error } = await supabase
     .from("processos")
     .insert([payload])
     .select()
     .single();
+
   if (error) throw error;
+
+  if (partes && partes.length > 0) {
+    const partesPayload = partes.map((p) => ({
+      idprocesso: data.idprocesso,
+      idpessoa: p.idpessoa,
+      tipo_parte: p.tipo,
+      tenant_id: tenantId,
+    }));
+    await supabase.from("processo_partes").insert(partesPayload);
+  }
+
   return data;
 };
 
 export const atualizarProcesso = async (id, dados, tenantId) => {
-  const payload = sanitizeUpdatePayload(dados);
+  const { partes, ...dadosProcesso } = dados;
+  const payload = sanitizeUpdatePayload(dadosProcesso);
+
   const { data, error } = await withTenantFilter("processos", tenantId)
     .update(payload)
     .eq("idprocesso", id)
     .select()
     .maybeSingle();
+
   if (error) throw error;
+
+  if (partes) {
+    // Remove partes existentes para substituir (Estratégia Full Sync)
+    await withTenantFilter("processo_partes", tenantId)
+      .delete()
+      .eq("idprocesso", id);
+
+    if (partes.length > 0) {
+      const partesPayload = partes.map((p) => ({
+        idprocesso: id,
+        idpessoa: p.idpessoa,
+        tipo_parte: p.tipo,
+        tenant_id: tenantId,
+      }));
+      await supabase.from("processo_partes").insert(partesPayload);
+    }
+  }
+
   return data;
 };
 
@@ -107,11 +149,7 @@ export const excluirProcesso = async (id, tenantId) => {
   return true;
 };
 
-/**
- * Busca dados do processo e formata para preenchimento de templates (Placeholders)
- */
 export const obterContextoParaModelo = async (idProcesso, tenantId) => {
-  // Busca os dados fazendo os Joins com as tabelas auxiliares
   const { data, error } = await withTenantFilter("processos", tenantId)
     .select(
       `
@@ -128,16 +166,19 @@ export const obterContextoParaModelo = async (idProcesso, tenantId) => {
       tribunais ( descricao ),
       varas ( descricao ),
       instancias ( descricao ),
-      autor:pessoas!fk_processos_autor ( nome, cpf_cnpj ),
-      reu:pessoas!fk_processos_reu ( nome, cpf_cnpj ),
+      partes:processo_partes ( tipo_parte, pessoas ( nome, cpf_cnpj ) ),
       advogado:pessoas!fk_processos_advogado ( nome,cpf_cnpj)
     `
     )
     .eq("idprocesso", idProcesso)
     .maybeSingle();
-    
+
   if (error) throw error;
   if (!data) return null;
+
+  // Helper para formatar lista de nomes
+  const getNomes = (tipo) => data.partes?.filter(p => p.tipo_parte === tipo).map(p => p.pessoas?.nome).join(", ") || "";
+  const getCPFs = (tipo) => data.partes?.filter(p => p.tipo_parte === tipo).map(p => p.pessoas?.cpf_cnpj).join(", ") || "";
 
   const contexto = {
     NumProcesso: data.numprocesso || "S/N",
@@ -151,9 +192,10 @@ export const obterContextoParaModelo = async (idProcesso, tenantId) => {
     Obs: data.obs || "",
     ValorCausa: data.valor_causa
       ? new Intl.NumberFormat("pt-BR", {
-          style: "currency",
-          currency: "BRL",
-        }).format(data.valor_causa)
+        style: "currency",
+        currency: "BRL",
+        currencyDisplay: "symbol"
+      }).format(data.valor_causa)
       : "",
     Classe: data.classe_processual || "",
     Assunto: data.assunto || "",
@@ -163,13 +205,13 @@ export const obterContextoParaModelo = async (idProcesso, tenantId) => {
     Tribunal: data.tribunais?.descricao || "",
     Vara: data.varas?.descricao || "",
     Instancia: data.instancias?.descricao || "",
-    NOME_AUTOR: data.autor?.nome || "",
-    Autor_CPF: data.autor?.cpf_cnpj || "",
-    NOME_REU: data.reu?.nome || "",
-    Reu_CPF: data.reu?.cpf_cnpj || "",
+    NOME_AUTOR: getNomes('Autor'),
+    Autor_CPF: getCPFs('Autor'),
+    NOME_REU: getNomes('Réu'),
+    Reu_CPF: getCPFs('Réu'),
     NOME_ADVOGADO: data.advogado?.nome || "",
     DATA_ATUAL: new Date().toLocaleDateString("pt-BR"),
   };
-  
+
   return contexto;
 };

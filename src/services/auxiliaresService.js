@@ -1,50 +1,51 @@
 import supabase from "../config/supabase.js";
 
 export const listarTabela = async (tabela) => {
-  let query = supabase
-  .from(tabela)
-  .select("*", 
-    { count: 'exact' });
+  // OTIMIZAÇÃO: Por padrão, tenta buscar count exato, mas vamos refinar as colunas abaixo
+  let query = supabase.from(tabela).select("*", { count: 'exact' });
+  
+  // --- OTIMIZAÇÕES DE PERFORMANCE PARA SELECTS ---
+  
+  if (tabela === "situacoes") {
+    // Traz apenas ID e Descrição (muito leve)
+    query = supabase.from(tabela).select("idsituacao, descricao, ativo");
+  }
 
-  // Joins específicos para trazer os nomes nas tabelas relacionadas
+  if (tabela === "comarcas") {
+     // Traz ID, Descrição e UF. Remove dados pesados.
+     query = supabase.from(tabela).select(`
+        idcomarca, 
+        descricao, 
+        estados (descricao, uf ),
+        ativo
+    `);
+  }
+
+  // --- JOINS ESPECÍFICOS OUTRAS TABELAS ---
+
   if (tabela === "tribunais") {
-    query = supabase
-    .from(tabela)
-    .select(`
-      *,
+    query = supabase.from(tabela).select(`
+      idtribunal, descricao,
       instancias ( descricao ),
-      comarcas ( descricao )
+      comarcas ( descricao ),
+      ativo
     `);
   }
 
   if (tabela === "varas") {
-    query = supabase
-    .from(tabela)
-    .select(`
-      *,
-      tribunais ( descricao )
+    query = supabase.from(tabela).select(`
+      idvara, descricao,
+      tribunais ( descricao ),
+      ativo
     `);
   }
 
-  // Se precisar de joins para comarcas (ex: estado), adicione aqui
-  if (tabela === "comarcas") {
-     // Exemplo se comarcas tiver relação com estados
-     query = supabase
-     .from(tabela)
-     .select(
-      `*, estados ( descricao, uf )`
-    );
-  }
-
-  // Se precisar de joins para pessoas , adicione aqui
+  // Ordenação
   let colunaOrdenacao = "descricao";
+  if (tabela === "pessoas") colunaOrdenacao = "nome";
 
-  // Se for pessoas, ordena por 'nome'
-  if (tabela === "pessoas") {
-    colunaOrdenacao = "nome";
-  }
-
-  // Executa a query com a ordenação correta e limite alto
+  // Executa a query
+  // Range mantido alto, mas como o payload é leve, será rápido.
   const { data, error } = await query
     .order(colunaOrdenacao, { ascending: true })
     .range(0, 9999);
@@ -60,7 +61,6 @@ export const salvarRegisto = async (tabela, campoId, dados) => {
   const id = dados[campoId];
   
   // Garante que o ativo seja respeitado (true ou false)
-  // Se vier null/undefined, assume true.
   const payload = { 
     ...dados, 
     ativo: dados.ativo ?? true 
@@ -75,9 +75,7 @@ export const salvarRegisto = async (tabela, campoId, dados) => {
     if (error) throw error;
     return data;
   } else {
-    // Removemos o campo ID do payload para inserção automática
     delete payload[campoId];
-    
     const { data, error } = await supabase
       .from(tabela)
       .insert([payload])

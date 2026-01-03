@@ -1,6 +1,9 @@
 //
 // Variável global para armazenar as publicações carregadas (para o Modal de Texto)
 let cachePublicacoes = [];
+// Variáveis para gestão de partes
+let partesProcesso = []; // [{ tipo: 'Autor'|'Réu', idpessoa: 1, nome: '', cpf: '' }]
+let listaPessoasCache = [];
 
 const AUTH_TOKEN_KEY = "juristrack_token";
 function authFetch(url, options = {}) {
@@ -47,6 +50,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (modo === 'leitura') {
             bloquearEdicao();
         }
+    } else {
+        // Modo Novo: Inicializa tabela vazia
+        renderizarTabelaPartes();
     }
 });
 
@@ -57,30 +63,25 @@ if (selectEstado) {
         carregarCidadesPorEstado(e.target.value);
     });
 }
-const selAutor = document.getElementById("id_autor");
-if (selAutor) selAutor.addEventListener("change", atualizarTabelaPartes);
-const selReu = document.getElementById("id_reu");
-if (selReu) selReu.addEventListener("change", atualizarTabelaPartes);
 
 // --- FUNÇÕES DE CARREGAMENTO ---
 
 async function carregarPessoas() {
     try {
         const res = await authFetch("/api/pessoas");
-        const pessoas = await res.json();
-        ['id_autor', 'id_reu', 'id_advogado'].forEach(elemId => {
-            const select = document.getElementById(elemId);
-            if(!select) return;
-            select.innerHTML = '<option value="">Selecione...</option>';
-            pessoas.forEach(p => {
+        listaPessoasCache = await res.json();
+
+        // Carrega apenas o select de advogado pois autor e reu sao dinamicos agora
+        const selectAdv = document.getElementById('id_advogado');
+        if (selectAdv) {
+            selectAdv.innerHTML = '<option value="">Selecione...</option>';
+            listaPessoasCache.forEach(p => {
                 const opt = document.createElement("option");
-                opt.value = p.idpessoa || p.id; 
-                opt.textContent = p.nome + (p.cpf_cnpj ? ` (${p.cpf_cnpj})` : '');
-                opt.dataset.cpf = p.cpf_cnpj || '';
-                opt.dataset.nome = p.nome;
-                select.appendChild(opt);
+                opt.value = p.idpessoa || p.id;
+                opt.textContent = p.nome;
+                selectAdv.appendChild(opt);
             });
-        });
+        }
     } catch (e) { console.error("Erro ao carregar pessoas", e); }
 }
 
@@ -105,11 +106,11 @@ async function carregarSelect(url, elementId) {
 
 async function carregarCidadesPorEstado(idEstado, cidadeId = null) {
     const sel = document.getElementById("IdCidade");
-    if(!idEstado) { sel.innerHTML = '<option value="">Selecione Estado...</option>'; return; }
+    if (!idEstado) { sel.innerHTML = '<option value="">Selecione Estado...</option>'; return; }
     try {
-        const res = await authFetch(`/api/locais/cidades?idEstado=${idEstado}`); 
+        const res = await authFetch(`/api/locais/cidades?idEstado=${idEstado}`);
         const listaTotal = await res.json();
-        const lista = listaTotal.filter(c => c.idestado === idEstado); 
+        const lista = listaTotal.filter(c => c.idestado === idEstado);
         sel.innerHTML = '<option value="">Selecione...</option>';
         lista.forEach(c => {
             const opt = document.createElement("option");
@@ -117,8 +118,8 @@ async function carregarCidadesPorEstado(idEstado, cidadeId = null) {
             opt.textContent = c.descricao;
             sel.appendChild(opt);
         });
-        if(cidadeId) sel.value = cidadeId;
-    } catch(e) { console.error("Erro ao carregar cidades", e); }
+        if (cidadeId) sel.value = cidadeId;
+    } catch (e) { console.error("Erro ao carregar cidades", e); }
 }
 
 async function carregarDadosProcesso(id) {
@@ -126,7 +127,7 @@ async function carregarDadosProcesso(id) {
         const res = await authFetch(`/api/processos/${id}`);
         if (!res.ok) throw new Error("Erro ao buscar processo");
         const proc = await res.json();
-        
+
         document.getElementById("headerNumProcesso").textContent = proc.numprocesso || "Sem Número";
         document.getElementById("IdProcesso").value = proc.idprocesso;
         document.getElementById("NumProcesso").value = proc.numprocesso || "";
@@ -134,8 +135,8 @@ async function carregarDadosProcesso(id) {
         document.getElementById("Assunto").value = proc.assunto || "";
         document.getElementById("ValorCausa").value = proc.valor_causa || "";
         document.getElementById("Obs").value = proc.obs || "";
-        
-        const setVal = (eid, val) => { const el = document.getElementById(eid); if(el) el.value = val || ""; };
+
+        const setVal = (eid, val) => { const el = document.getElementById(eid); if (el) el.value = val || ""; };
         setVal("id_tipo_acao", proc.idtipoacao);
         setVal("id_rito", proc.idrito);
         setVal("id_esfera", proc.idesfera);
@@ -144,28 +145,39 @@ async function carregarDadosProcesso(id) {
         setVal("id_probabilidade", proc.idprobabilidade);
         setVal("id_moeda", proc.idmoeda);
         setVal("IdComarca", proc.idcomarca);
-        setVal("IdVara", proc.idvara); 
-        setVal("id_autor", proc.idautor);
-        setVal("id_reu", proc.idreu);
-        setVal("id_advogado", proc.idadvogado);
-        
-        atualizarTabelaPartes(); 
+        setVal("IdVara", proc.idvara);
+        setVal("id_advogado", proc.idadvogado); // Advogado still single select for now
+
+        // Carrega Partes (Lista)
+        partesProcesso = [];
+        if (proc.partes && Array.isArray(proc.partes)) {
+            partesProcesso = proc.partes.map(p => ({
+                tipo: p.tipo_parte,
+                idpessoa: p.pessoas.idpessoa,
+                nome: p.pessoas.nome,
+                cpf: p.pessoas.cpf_cnpj
+            }));
+        } else if (proc.idautor || proc.idreu) {
+            // Fallback para migração visual caso API retorne antigo (improvável com novo service)
+            // Mas se service foi atualizado, proc.partes deve vir.
+        }
+        renderizarTabelaPartes();
 
         if (proc.data_distribuicao) document.getElementById("DataDistribuicao").value = proc.data_distribuicao.split("T")[0];
 
         if (proc.cidades && proc.cidades.idestado) {
             const elEstado = document.getElementById("selectEstado");
-            if(elEstado) {
+            if (elEstado) {
                 elEstado.value = proc.cidades.idestado;
                 await carregarCidadesPorEstado(proc.cidades.idestado, proc.idcidade);
             }
         } else if (proc.idcidade) { setVal("IdCidade", proc.idcidade); }
 
         cachePublicacoes = proc.Publicacao || [];
-        
+
         renderizarPrazos(proc.Publicacao);
-        renderizarAndamentos(proc); 
-        
+        renderizarAndamentos(proc);
+
         // Carrega documentos (usando a função correta abaixo)
         carregarDocumentosDoProcesso(id);
 
@@ -175,29 +187,179 @@ async function carregarDadosProcesso(id) {
     }
 }
 
-function atualizarTabelaPartes() {
+function renderizarTabelaPartes() {
     const tbody = document.getElementById("tabelaPartesBody");
     if (!tbody) return;
     tbody.innerHTML = "";
-    const addRow = (tipo, selectId) => {
-        const select = document.getElementById(selectId);
-        if(select && select.selectedIndex > 0) {
-            const opt = select.options[select.selectedIndex];
-            const nome = opt.dataset.nome || opt.text;
-            const cpf = opt.dataset.cpf || "-";
-            const tr = document.createElement("tr");
-            tr.innerHTML = `<td><span class="badge ${tipo === 'Autor' ? 'bg-primary' : 'bg-danger'}">${tipo}</span></td><td>${nome}</td><td>${cpf}</td><td><button type="button" class="btn btn-sm btn-outline-secondary"><i class="fas fa-pen"></i></button></td>`;
-            tbody.appendChild(tr);
+
+    partesProcesso.forEach((parte, index) => {
+        const tr = document.createElement("tr");
+
+        // Coluna Tipo
+        const tdTipo = document.createElement("td");
+        const selTipo = document.createElement("select");
+        selTipo.className = "form-select form-select-sm";
+        selTipo.innerHTML = `
+            <option value="Autor">Autor</option>
+            <option value="Réu">Réu</option>
+        `;
+        selTipo.value = parte.tipo || 'Autor';
+        selTipo.onchange = (e) => { partesProcesso[index].tipo = e.target.value; };
+        tdTipo.appendChild(selTipo);
+
+        // Coluna Nome (Pessoa)
+        const tdNome = document.createElement("td");
+        const selPessoa = document.createElement("select");
+        selPessoa.className = "form-select form-select-sm";
+        selPessoa.appendChild(new Option("Selecione...", ""));
+        listaPessoasCache.forEach(p => {
+            const label = p.nome ;
+            selPessoa.appendChild(new Option(label, p.idpessoa));
+        });
+        selPessoa.value = parte.idpessoa || "";
+        selPessoa.onchange = (e) => atualizarParte(index, e.target.value);
+        tdNome.appendChild(selPessoa);
+
+        // Coluna CPF (Readonly)
+        const tdCpf = document.createElement("td");
+        const inputCpf = document.createElement("input");
+        inputCpf.type = "text";
+        inputCpf.className = "form-control form-control-sm";
+        inputCpf.readOnly = true;
+        inputCpf.value = parte.cpf || "";
+        tdCpf.appendChild(inputCpf);
+
+        // Coluna Ações
+        const tdAcoes = document.createElement("td");
+        tdAcoes.className = "text-end";
+
+        // Botão Editar Detalhes da Pessoa (Abre Modal existente)
+        if (parte.idpessoa) {
+            const btnEdit = document.createElement("button");
+            btnEdit.className = "btn btn-sm btn-outline-secondary me-1";
+            btnEdit.innerHTML = '<i class="fas fa-pen"></i>';
+            btnEdit.title = "Editar cadastro da pessoa";
+            btnEdit.onclick = () => abrirModalPessoa('Editar', parte.idpessoa);
+            tdAcoes.appendChild(btnEdit);
         }
-    };
-    addRow("Autor", "id_autor");
-    addRow("Réu", "id_reu");
-    if(tbody.innerHTML === "") tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Nenhuma parte cadastrada</td></tr>';
+
+        // Botão Excluir Linha
+        const btnDel = document.createElement("button");
+        btnDel.className = "btn btn-sm btn-outline-danger";
+        btnDel.innerHTML = '<i class="fas fa-trash"></i>';
+        btnDel.title = "Remover parte";
+        btnDel.onclick = () => removerLinhaParte(index);
+        tdAcoes.appendChild(btnDel);
+
+        tr.appendChild(tdTipo);
+        tr.appendChild(tdNome);
+        tr.appendChild(tdCpf);
+        tr.appendChild(tdAcoes);
+        tbody.appendChild(tr);
+    });
+
+    if (partesProcesso.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Nenhuma parte adicionada. Clique em "Adicionar Parte".</td></tr>';
+    }
 }
 
-window.salvarProcesso = async function() {
+window.adicionarLinhaParte = function () {
+    partesProcesso.push({ tipo: 'Autor', idpessoa: '', nome: '', cpf: '' });
+    renderizarTabelaPartes();
+};
+
+window.removerLinhaParte = function (index) {
+    partesProcesso.splice(index, 1);
+    renderizarTabelaPartes();
+};
+
+function atualizarParte(index, idpessoa) {
+    const pessoa = listaPessoasCache.find(p => p.idpessoa == idpessoa);
+    if (pessoa) {
+        partesProcesso[index].idpessoa = pessoa.idpessoa;
+        partesProcesso[index].nome = pessoa.nome;
+        partesProcesso[index].cpf = pessoa.cpf_cnpj;
+    } else {
+        partesProcesso[index].idpessoa = "";
+        partesProcesso[index].nome = "";
+        partesProcesso[index].cpf = "";
+    }
+    renderizarTabelaPartes();
+}
+
+window.abrirModalPessoa = async function (modo, id = null) {
+    const modal = new bootstrap.Modal(document.getElementById("modalGerenciarPessoa"));
+    const form = document.getElementById("formPessoa");
+    form.reset();
+    document.getElementById("modalPessoaId").value = "";
+
+    if (modo === 'Editar' && id) {
+        document.getElementById("modalPessoaTitle").textContent = "Editar Parte";
+        try {
+            const res = await authFetch(`/api/pessoas/${id}`);
+            if (res.ok) {
+                const p = await res.json();
+                document.getElementById("modalPessoaId").value = p.idpessoa;
+                document.getElementById("modalPessoaNome").value = p.nome;
+                document.getElementById("modalPessoaCPF").value = p.cpf_cnpj || "";
+                document.getElementById("modalPessoaEmail").value = p.email || "";
+                document.getElementById("modalPessoaTelefone").value = p.telefone || "";
+                console.log(p);
+            }
+            
+        } catch (e) { console.error("Erro ao carregar pessoa", e); }
+    } else {
+        document.getElementById("modalPessoaTitle").textContent = "Adicionar Nova Parte";
+    }
+
+    modal.show();
+};
+
+window.salvarPessoaModal = async function () {
+    const id = document.getElementById("modalPessoaId").value;
+    const nome = document.getElementById("modalPessoaNome").value;
+    const cpf = document.getElementById("modalPessoaCPF").value;
+    const email = document.getElementById("modalPessoaEmail").value;
+    const telefone = document.getElementById("modalPessoaTelefone").value;
+
+    if (!nome) return alert("Nome é obrigatório");
+
+    const body = { nome, cpf_cnpj: cpf, email, telefone };
+    const method = id ? "PUT" : "POST";
+    const url = id ? `/api/pessoas/${id}` : "/api/pessoas";
+
+    try {
+        const res = await authFetch(url, {
+            method,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body)
+        });
+
+        if (res.ok) {
+            alert("Pessoa salva com sucesso!");
+            const modalEl = document.getElementById("modalGerenciarPessoa");
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            modal.hide();
+            await carregarPessoas(); // Recarrega os selects
+
+            // Se foi edição, atualiza a tabela visualmente (recarregando selects já faz isso se o valor mantiver)
+            // Se foi criação, usuário precisa selecionar no combo manual por enquanto.
+            // O ideal seria auto-selecionar se fosse criação vinda de um botão específico de "Novo Autor", mas o botão é genérico.
+        } else {
+            alert("Erro ao salvar pessoa.");
+        }
+    } catch (e) { console.error(e); alert("Erro de conexão"); }
+};
+
+window.salvarProcesso = async function () {
     const id = document.getElementById("IdProcesso").value;
     const val = (eid) => { const el = document.getElementById(eid); return el ? el.value : null; };
+
+    // Filtra partes validas
+    const partesEnviar = partesProcesso
+        .filter(p => p.idpessoa && p.tipo)
+        .map(p => ({ idpessoa: p.idpessoa, tipo: p.tipo }));
+
     const body = {
         numprocesso: val("NumProcesso"),
         classe_processual: val("ClasseProcessual"),
@@ -215,9 +377,8 @@ window.salvarProcesso = async function() {
         idcomarca: val("IdComarca"),
         idvara: val("IdVara"),
         idcidade: val("IdCidade"),
-        idautor: val("id_autor"),
-        idreu: val("id_reu"),
-        idadvogado: val("id_advogado")
+        idadvogado: val("id_advogado"),
+        partes: partesEnviar
     };
 
     const method = id ? "PUT" : "POST";
@@ -232,7 +393,8 @@ window.salvarProcesso = async function() {
         if (res.ok) {
             const data = await res.json();
             alert("Processo salvo com sucesso!");
-            if(!id) window.location.href = `/html/fichaProcesso.html?id=${data[0].idprocesso}`; 
+            if (!id) window.location.href = `/html/fichaProcesso.html?id=${data.idprocesso || data[0]?.idprocesso}`;
+            else window.location.reload();
         } else {
             const err = await res.json();
             alert("Erro ao salvar: " + (err.error || "Desconhecido"));
@@ -240,18 +402,18 @@ window.salvarProcesso = async function() {
     } catch (e) { alert("Erro de conexão"); console.error(e); }
 };
 
-window.excluirProcesso = async function() {
-    if(!confirm("Tem certeza que deseja excluir este processo?")) return;
+window.excluirProcesso = async function () {
+    if (!confirm("Tem certeza que deseja excluir este processo?")) return;
     const id = document.getElementById("IdProcesso").value;
     try {
         const res = await authFetch(`/api/processos/${id}`, { method: "DELETE" });
-        if(res.ok) {
+        if (res.ok) {
             alert("Processo excluído.");
             window.location.href = "/processos";
         } else {
             alert("Erro ao excluir.");
         }
-    } catch(e) { console.error(e); }
+    } catch (e) { console.error(e); }
 };
 
 // --- RENDERIZA PRAZOS ---
@@ -264,7 +426,7 @@ function renderizarPrazos(listaPublicacoes) {
         listaPublicacoes.forEach(pub => {
             if (pub.Prazo && pub.Prazo.length > 0) {
                 pub.Prazo.forEach(prazo => {
-                    prazo.publicacaoid = pub.id; 
+                    prazo.publicacaoid = pub.id;
                     prazosEncontrados.push(prazo);
                 });
             }
@@ -373,7 +535,7 @@ function renderizarAndamentos(proc) {
     // 3. Coletar Manuais (Tabela Andamento na Raiz) -> Responsável = NOME DA PESSOA
     if (proc.Andamento && Array.isArray(proc.Andamento)) {
         proc.Andamento.forEach(and => {
-            if (and.publicacaoid) return; 
+            if (and.publicacaoid) return;
 
             let nomeResponsavel = "Usuário";
             if (and.responsavel && and.responsavel.nome) {
@@ -392,10 +554,10 @@ function renderizarAndamentos(proc) {
         tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Nenhum andamento encontrado.</td></tr>';
     } else {
         listaEventos.sort((a, b) => new Date(b.data) - new Date(a.data));
-        
+
         listaEventos.forEach(evt => {
             const dataFmt = evt.data ? new Date(evt.data).toLocaleDateString('pt-BR') : "-";
-            
+
             let badgeResp = `<span class="badge bg-secondary">${evt.responsavel}</span>`;
             if (evt.responsavel !== "Sistema") {
                 badgeResp = `<span class="badge bg-info text-dark">${evt.responsavel}</span>`;
@@ -412,17 +574,17 @@ function renderizarAndamentos(proc) {
         });
     }
 }
-window.abrirModalAndamento = function() {
-    const selectOrigem = document.getElementById("id_advogado"); 
+window.abrirModalAndamento = function () {
+    const selectOrigem = document.getElementById("id_advogado");
     const selectDestino = document.getElementById("respAndamentoManual");
     if (selectOrigem && selectDestino) selectDestino.innerHTML = selectOrigem.innerHTML;
-    
+
     document.getElementById("dataAndamentoManual").valueAsDate = new Date();
     const modal = new bootstrap.Modal(document.getElementById("modalNovoAndamento"));
     modal.show();
 };
 
-window.salvarAndamentoManual = async function() {
+window.salvarAndamentoManual = async function () {
     const idProcesso = document.getElementById("IdProcesso").value;
     const data = document.getElementById("dataAndamentoManual").value;
     const desc = document.getElementById("descAndamentoManual").value;
@@ -433,16 +595,16 @@ window.salvarAndamentoManual = async function() {
     const payload = { processoId: idProcesso, data_evento: data, descricao: desc, responsavelId: respId };
 
     try {
-        const res = await authFetch("/api/processos/andamento", { 
-            method: "POST", 
-            headers: { "Content-Type": "application/json" }, 
-            body: JSON.stringify(payload) 
+        const res = await authFetch("/api/processos/andamento", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
         });
         if (res.ok) {
             alert("Andamento registrado!");
             const modal = bootstrap.Modal.getInstance(document.getElementById("modalNovoAndamento"));
             modal.hide();
-            await carregarDadosProcesso(idProcesso); 
+            await carregarDadosProcesso(idProcesso);
         } else {
             const err = await res.json().catch(() => ({}));
             alert("Erro ao salvar: " + (err.error || "Desconhecido"));
@@ -450,21 +612,21 @@ window.salvarAndamentoManual = async function() {
     } catch (e) { console.error(e); alert("Erro de conexão"); }
 };
 
-window.irParaGerarPeticao = function() {
+window.irParaGerarPeticao = function () {
     const idProcesso = document.getElementById("IdProcesso").value;
     if (idProcesso) {
         let params = `idProcesso=${idProcesso}`;
-        
+
         if (cachePublicacoes && cachePublicacoes.length > 0) {
-             const pubsOrdenadas = [...cachePublicacoes].sort((a, b) => {
-                 const dA = a.data_publicacao ? new Date(a.data_publicacao) : new Date(0);
-                 const dB = b.data_publicacao ? new Date(b.data_publicacao) : new Date(0);
-                 return dB - dA;
-             });
-             const ultimaPub = pubsOrdenadas[0];
-             if (ultimaPub && ultimaPub.id) {
-                 params += `&publicacaoId=${ultimaPub.id}`;
-             }
+            const pubsOrdenadas = [...cachePublicacoes].sort((a, b) => {
+                const dA = a.data_publicacao ? new Date(a.data_publicacao) : new Date(0);
+                const dB = b.data_publicacao ? new Date(b.data_publicacao) : new Date(0);
+                return dB - dA;
+            });
+            const ultimaPub = pubsOrdenadas[0];
+            if (ultimaPub && ultimaPub.id) {
+                params += `&publicacaoId=${ultimaPub.id}`;
+            }
         }
 
         window.location.href = `/gerarPeticao?${params}`;
@@ -473,7 +635,7 @@ window.irParaGerarPeticao = function() {
     }
 };
 
-window.verPublicacao = function(idPublicacao) {
+window.verPublicacao = function (idPublicacao) {
     const publicacao = cachePublicacoes.find(pub => pub.id === idPublicacao);
     if (publicacao) {
         document.getElementById("modalTextoPub").textContent = publicacao.texto_integral || "Texto indisponível.";
@@ -498,10 +660,10 @@ function formatBytes(bytes, decimals = 2) {
 // Configuração do botão de upload
 function configurarUpload() {
     const btnUpload = document.querySelector("#tab-documentos button");
-    if(btnUpload) {
+    if (btnUpload) {
         // Cria input hidden se não existir
         let input = document.getElementById("inputUploadProcesso");
-        if(!input) {
+        if (!input) {
             input = document.createElement("input");
             input.type = "file";
             input.id = "inputUploadProcesso";
@@ -510,7 +672,7 @@ function configurarUpload() {
 
             // Evento ao selecionar arquivo
             input.addEventListener("change", async (e) => {
-                if(e.target.files.length > 0) {
+                if (e.target.files.length > 0) {
                     await fazerUploadProcesso(e.target.files[0]);
                     e.target.value = ""; // Limpa para permitir re-upload
                 }
@@ -519,12 +681,12 @@ function configurarUpload() {
 
         // Clique no botão visual abre o input hidden
         btnUpload.onclick = (e) => {
-            e.preventDefault(); 
+            e.preventDefault();
             const id = document.getElementById("IdProcesso").value;
             const num = document.getElementById("NumProcesso").value;
-            
-            if(!id) return alert("Salve o processo antes de anexar documentos.");
-            if(!num) return alert("O processo precisa de um número para criar a pasta.");
+
+            if (!id) return alert("Salve o processo antes de anexar documentos.");
+            if (!num) return alert("O processo precisa de um número para criar a pasta.");
 
             document.getElementById("inputUploadProcesso").click();
         };
@@ -552,10 +714,10 @@ async function fazerUploadProcesso(file) {
             body: formData
         });
 
-        if(!res.ok) throw new Error("Erro no upload");
+        if (!res.ok) throw new Error("Erro no upload");
 
         alert("Upload realizado com sucesso!");
-        
+
         // Recarrega a lista
         carregarDocumentosDoProcesso(idProcesso);
 
@@ -563,7 +725,7 @@ async function fazerUploadProcesso(file) {
         console.error(error);
         alert("Erro ao enviar arquivo.");
     } finally {
-        if(btnUpload) {
+        if (btnUpload) {
             btnUpload.innerHTML = '<i class="fas fa-upload"></i> Upload de Arquivos';
             btnUpload.disabled = false;
         }
@@ -571,33 +733,33 @@ async function fazerUploadProcesso(file) {
 }
 
 // Deleta documento (Banco + Storage)
-window.deletarDocumento = async function(id) {
-    if(!confirm("Deseja realmente excluir este arquivo?")) return;
-    
+window.deletarDocumento = async function (id) {
+    if (!confirm("Deseja realmente excluir este arquivo?")) return;
+
     // Feedback visual
     const btn = document.querySelector(`button[data-doc-id="${id}"]`);
-    if(btn) btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    if (btn) btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
     try {
         const res = await authFetch(`/upload/${id}`, { method: 'DELETE' });
-        if(!res.ok) throw new Error("Erro ao excluir");
-        
+        if (!res.ok) throw new Error("Erro ao excluir");
+
         const idProcesso = document.getElementById("IdProcesso").value;
         carregarDocumentosDoProcesso(idProcesso);
-        
+
     } catch (error) {
         console.error(error);
         alert("Não foi possível excluir o arquivo.");
-        if(btn) btn.innerHTML = '<i class="fas fa-trash"></i>';
+        if (btn) btn.innerHTML = '<i class="fas fa-trash"></i>';
     }
 };
 
 // Lista documentos na tabela
 async function carregarDocumentosDoProcesso(idProcesso) {
-    if(!idProcesso || idProcesso === "undefined" || idProcesso === "null") return;
-    
+    if (!idProcesso || idProcesso === "undefined" || idProcesso === "null") return;
+
     const tbody = document.querySelector("#tab-documentos tbody");
-    if(!tbody) return;
+    if (!tbody) return;
     tbody.innerHTML = '<tr><td colspan="5" class="text-center">Carregando...</td></tr>';
 
     try {
@@ -605,17 +767,17 @@ async function carregarDocumentosDoProcesso(idProcesso) {
         const docs = await res.json();
 
         tbody.innerHTML = "";
-        
-        if(!docs || docs.length === 0) {
+
+        if (!docs || docs.length === 0) {
             tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Nenhum documento anexado a este processo.</td></tr>';
             return;
         }
 
         docs.forEach(doc => {
-            const dataUpload = doc.data_upload 
-                ? new Date(doc.data_upload).toLocaleDateString('pt-BR') 
+            const dataUpload = doc.data_upload
+                ? new Date(doc.data_upload).toLocaleDateString('pt-BR')
                 : "-";
-            
+
             // Ícones
             let iconeArquivo = '<i class="far fa-file text-secondary"></i>';
             if (doc.tipo && doc.tipo.includes('pdf')) iconeArquivo = '<i class="far fa-file-pdf text-danger"></i>';
@@ -655,7 +817,7 @@ async function carregarDocumentosDoProcesso(idProcesso) {
 function bloquearEdicao() {
     // 1. Muda o título visualmente
     const titulo = document.getElementById("headerTitulo");
-    if(titulo) titulo.innerHTML = '<i class="fas fa-lock"></i> Visualizar Processo (Leitura)';
+    if (titulo) titulo.innerHTML = '<i class="fas fa-lock"></i> Visualizar Processo (Leitura)';
 
     // 2. Bloqueia todos os inputs, selects e textareas
     const campos = document.querySelectorAll("input, select, textarea");
@@ -667,20 +829,20 @@ function bloquearEdicao() {
 
     // 3. Esconde botões de ação
     const botoesParaEsconder = [
-        "btnSalvar",       
-        "btnExcluir",      
-        "btnAdicionarDoc"  
+        "btnSalvar",
+        "btnExcluir",
+        "btnAdicionarDoc"
     ];
 
     botoesParaEsconder.forEach(id => {
         const btn = document.getElementById(id);
-        if(btn) btn.style.display = "none";
+        if (btn) btn.style.display = "none";
     });
-    
+
     // Esconde botões dentro de abas
     const botoesAbas = document.querySelectorAll("#tab-andamentos button, #tab-documentos button");
     botoesAbas.forEach(btn => btn.style.display = "none");
 
     const btnSalvarGenerico = document.querySelector("button[onclick='salvarProcesso()']");
-    if(btnSalvarGenerico) btnSalvarGenerico.style.display = "none";
+    if (btnSalvarGenerico) btnSalvarGenerico.style.display = "none";
 }

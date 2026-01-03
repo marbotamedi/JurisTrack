@@ -9,67 +9,7 @@
 </head>
 <body>
     <div class="d-flex">
-        <div class="bg-white p-3 border-end d-flex flex-column" style="width: 250px; min-height: 100vh; position: sticky; top: 0;">
-            <h4 class="mb-4 text-dark px-2"><i class="fas fa-scale-balanced me-2"></i>Juris Track</h4>
-            <nav class="nav flex-column flex-grow-1">
-                <small class="text-muted text-uppercase fw-bold mb-2 px-2" style="font-size: 0.75rem;">Principal</small>
-                <a class="nav-link" href="/dashboard"><i class="fas fa-chart-line"></i> Dashboard</a>
-                <a class="nav-link" href="/upload"><i class="fas fa-cloud-upload-alt"></i> Upload / Inicio</a>
-                <a class="nav-link" href="/processos"><i class="fas fa-gavel"></i> Processos</a>
-                <small class="text-muted text-uppercase fw-bold mt-4 mb-2 px-2" style="font-size: 0.75rem;">Cadastros</small>
-                <a class="nav-link" href="/gerenciarPeticao">
-                    <i class="fas fa-file-contract"></i> Modelos
-                </a>
-                <a class="nav-link" href="/historico">
-                    <i class="fas fa-history"></i> Histórico
-                </a>
-                <a class="nav-link" href="/cidades">
-                    <i class="fas fa-city"></i> Cidades
-                </a>
-                <a class="nav-link" href="/estados">
-                    <i class="fas  fa-map-marker-alt"></i> Estados
-                </a>
-                <a class="nav-link" href="/comarcas">
-                    <i class="fas fa-map-signs"></i> Comarcas
-                </a>
-                <a class="nav-link" href="/tribunais">
-                    <i class="fas fa-landmark"></i> Tribunais
-                </a>
-                <a class="nav-link" href="/varas">
-                    <i class="fas fa-balance-scale"></i> Varas
-                </a>
-                <a class="nav-link" href="/instancias">
-                    <i class="fas fa-layer-group"></i> Instâncias
-                </a>
-                <a class="nav-link" href="/esferas">
-                    <i class="fas fa-globe"></i> Esferas
-                </a>
-                <a class="nav-link active" href="/fases">
-                    <i class="fas fa-clock"></i> Fases
-                </a>
-                 <a class="nav-link" href="/moedas">
-                    <i class="fa-solid fa-money-bill"></i> Moedas
-                </a>
-                <a class="nav-link" href="/pessoas">
-                    <i class="fa-duotone fa-regular fa-user"></i> Pessoas
-                </a>
-                <a class="nav-link" href="/ritos">
-                    <i class="fa-solid fa-inbox"></i> Ritos
-                </a>
-                <a class="nav-link" href="/situacoes">
-                    <i class="fa-brands fa-stack-overflow"></i> Situações
-                </a>
-                <a class="nav-link" href="/tipoAcao">
-                    <i class="fa-solid fa-align-right"></i> Tipo de Ações
-                </a>
-                <!---- <a class="nav-link" href="/decisoes">
-                <i class="fas fa-gavel"></i> Decisões
-            </a>--->
-            </nav>
-            <div class="mt-auto pt-3 border-top">
-                 <a class="nav-link text-danger" href="#"><i class="fas fa-sign-out-alt"></i> Sair</a>
-            </div>
-        </div>
+        <app-sidebar style="display: contents;"></app-sidebar>
 
         <div class="flex-grow-1 p-4">
             <div class="card p-4 shadow-sm">
@@ -124,6 +64,8 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/js/Fases.js"></script>
+    <script src="/js/components/sidebar.js"></script>
+
 </body>
 </html>
 

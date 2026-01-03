@@ -92,12 +92,13 @@ export const excluirProcesso = async (req, res) => {
   }
 };
 
-// --- FUNÇÃO DE ANDAMENTO MANUAL ---
+/// --- FUNÇÃO DE ANDAMENTO MANUAL ---
 export const criarAndamentoManual = async (req, res) => {
   if (!ensureTenantAuthorization(req, res)) return;
   try {
     const { processoId, data_evento, descricao, responsavelId } = req.body;
     
+    // Validação básica
     if (!processoId || !descricao) {
       logWarn("processos.controller.invalid_andamento", "Processo e descrição são obrigatórios.", {
         tenantId: req.tenantId,
@@ -107,19 +108,24 @@ export const criarAndamentoManual = async (req, res) => {
       return res.status(400).json({ error: "Processo e Descrição são obrigatórios." });
     }
 
-    // Insere na tabela Andamento respeitando as colunas com aspas
+    // Montagem do Payload (Exatamente como no Schema)
+    const payload = {
+        "processoId": processoId,      // <--- Igual ao banco "processoId"
+        "responsavelId": responsavelId,// <--- Igual ao banco "responsavelId"
+        "data_evento": data_evento,
+        "descricao": descricao,
+        "tenant_id": req.tenantId      // <--- OBRIGATÓRIO (NOT NULL no schema)
+    };
+
+    // Insere na tabela "Andamento"
     const { data, error } = await supabase
       .from("Andamento") 
-      .insert([{
-          "processoId": processoId,
-          "data_evento": data_evento,
-          "descricao": descricao,
-          "responsavelId": responsavelId
-      }])
+      .insert([payload])
       .select();
 
     if (error) throw error;
     res.status(201).json(data);
+
   } catch (error) {
     logError("processos.controller.create_andamento_error", "Erro ao criar andamento", {
       tenantId: req.tenantId,
@@ -127,7 +133,11 @@ export const criarAndamentoManual = async (req, res) => {
       processoId: req.body?.processoId,
       error,
     });
-    res.status(500).json({ error: "Erro ao salvar andamento." });
+    
+    res.status(500).json({ 
+        error: "Erro ao salvar andamento.", 
+        details: error.message 
+    });
   }
 };
 

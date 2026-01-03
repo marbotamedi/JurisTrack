@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <title>Ficha do Processo - JurisTrack</title>
@@ -8,27 +9,33 @@
     <link rel="stylesheet" href="/css/ficha.css">
     <link rel="stylesheet" href="/css/menu.css">
 </head>
+
 <body>
     <div class="d-flex">
-        <div class="bg-white p-3 border-end d-flex flex-column" style="width: 250px; min-height: 100vh; position: sticky; top: 0;">
+        <div class="bg-white p-3 border-end d-flex flex-column"
+            style="width: 250px; min-height: 100vh; position: sticky; top: 0;">
             <h4 class="mb-4 text-dark px-2"><i class="fas fa-scale-balanced me-2"></i>Juris Track</h4>
             <nav class="nav flex-column flex-grow-1">
                 <a class="nav-link" href="/processos"><i class="fas fa-arrow-left"></i> Voltar à Lista</a>
             </nav>
         </div>
-    
+
         <div class="flex-grow-1 p-4 bg-light">
             <div class="card border-0 shadow-sm mb-3">
                 <div class="card-body d-flex justify-content-between align-items-center">
                     <div>
                         <!--<a href="/processos" class="text-decoration-none text-secondary mb-1 d-block"><i class="fas fa-arrow-left me-1"></i> Voltar à Lista</a>--->
                         <h4 class="mb-0 fw-bold" id="headerTitulo">Ficha do Processo</h4>
-                        <small class="text-muted"id="headerNumProcesso" style="color: rgba(0, 132, 255, 0.397) !important; font-size:20px; font-weight: bold">Novo Processo</small>
+                        <small class="text-muted" id="headerNumProcesso"
+                            style="color: rgba(0, 132, 255, 0.397) !important; font-size:20px; font-weight: bold">Novo
+                            Processo</small>
                     </div>
                     <div class="d-flex gap-2">
                         <!---<button class="btn btn-outline-secondary" id="btnEditar"><i class="fas fa-edit me-1"></i> Editar</button>--->
-                        <button class="btn btn-primary bg-primary border-0" onclick="salvarProcesso()"><i class="fas fa-save me-1"></i> Salvar</button>
-                        <button class="btn btn-danger" onclick="excluirProcesso()" id="btnExcluir" style="display:none;"><i class="fas fa-trash me-1"></i> Excluir</button>
+                        <button class="btn btn-primary bg-primary border-0" onclick="salvarProcesso()"><i
+                                class="fas fa-save me-1"></i> Salvar</button>
+                        <button class="btn btn-danger" onclick="excluirProcesso()" id="btnExcluir"
+                            style="display:none;"><i class="fas fa-trash me-1"></i> Excluir</button>
                     </div>
                 </div>
             </div>
@@ -36,39 +43,55 @@
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white border-bottom pt-3 pb-0">
                     <ul class="nav nav-tabs border-bottom-0" id="processoTabs" role="tablist">
-                        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-basicos"><i class="far fa-file-alt me-2"></i>Dados Básicos</button></li>
-                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-partes"><i class="fas fa-users me-2"></i>Partes</button></li>
-                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-andamentos"><i class="fas fa-history me-2"></i>Andamentos</button></li>
-                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-prazos"><i class="far fa-calendar-alt me-2"></i>Prazos</button></li>
-                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-documentos"><i class="fas fa-upload me-2"></i>Documentos</button></li>
-                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-notas"><i class="fas fa-sticky-note me-2"></i>Notas Internas</button></li>
+                        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab"
+                                data-bs-target="#tab-basicos"><i class="far fa-file-alt me-2"></i>Dados Básicos</button>
+                        </li>
+                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab"
+                                data-bs-target="#tab-partes"><i class="fas fa-users me-2"></i>Partes</button></li>
+                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab"
+                                data-bs-target="#tab-andamentos"><i class="fas fa-history me-2"></i>Andamentos</button>
+                        </li>
+                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab"
+                                data-bs-target="#tab-prazos"><i class="far fa-calendar-alt me-2"></i>Prazos</button>
+                        </li>
+                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab"
+                                data-bs-target="#tab-documentos"><i class="fas fa-upload me-2"></i>Documentos</button>
+                        </li>
+                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab"
+                                data-bs-target="#tab-notas"><i class="fas fa-sticky-note me-2"></i>Notas
+                                Internas</button></li>
                     </ul>
                 </div>
 
                 <div class="card-body p-4">
                     <form id="formProcesso">
                         <input type="hidden" id="IdProcesso">
-                        
+
                         <div class="tab-content" id="processoTabsContent">
-                            
+
                             <div class="tab-pane fade show active" id="tab-basicos">
                                 <h6 class="text-muted fw-bold mb-3">Informações Gerais</h6>
                                 <div class="row g-3 mb-4">
                                     <div class="col-md-4">
                                         <label class="form-label fw-bold">Número do Processo</label>
-                                        <input type="text" class="form-control" id="NumProcesso" placeholder="0000000-00.0000.0.00.0000">
+                                        <input type="text" class="form-control" id="NumProcesso"
+                                            placeholder="0000000-00.0000.0.00.0000">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-bold">Tipo de Ação</label>
                                         <div class="input-group">
-                                            <select class="form-select" id="id_tipo_acao"><option value="">Selecione...</option></select>
+                                            <select class="form-select" id="id_tipo_acao">
+                                                <option value="">Selecione...</option>
+                                            </select>
                                             <button class="btn btn-outline-secondary" type="button">+</button>
                                         </div>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-bold">Estado (UF)</label>
                                         <div class="input-group">
-                                            <select class="form-select" id="selectEstado"><option value="">Selecione...</option></select>
+                                            <select class="form-select" id="selectEstado">
+                                                <option value="">Selecione...</option>
+                                            </select>
                                             <button class="btn btn-outline-secondary" type="button">+</button>
                                         </div>
                                     </div>
@@ -78,21 +101,27 @@
                                     <div class="col-md-4">
                                         <label class="form-label fw-bold">Cidade</label>
                                         <div class="input-group">
-                                            <select class="form-select" id="IdCidade"><option value="">Selecione Estado...</option></select>
+                                            <select class="form-select" id="IdCidade">
+                                                <option value="">Selecione Estado...</option>
+                                            </select>
                                             <button class="btn btn-outline-secondary" type="button">+</button>
                                         </div>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-bold">Comarca</label>
                                         <div class="input-group">
-                                            <select class="form-select" id="IdComarca"><option value="">Selecione...</option></select>
+                                            <select class="form-select" id="IdComarca">
+                                                <option value="">Selecione...</option>
+                                            </select>
                                             <button class="btn btn-outline-secondary" type="button">+</button>
                                         </div>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-bold">Moeda</label>
                                         <div class="input-group">
-                                            <select class="form-select" id="id_moeda"><option value="">R$</option></select>
+                                            <select class="form-select" id="id_moeda">
+                                                <option value="">R$</option>
+                                            </select>
                                             <button class="btn btn-outline-secondary" type="button">+</button>
                                         </div>
                                     </div>
@@ -102,21 +131,27 @@
                                     <div class="col-md-4">
                                         <label class="form-label fw-bold">Probabilidade</label>
                                         <div class="input-group">
-                                            <select class="form-select" id="id_probabilidade"><option value="">Selecione...</option></select>
+                                            <select class="form-select" id="id_probabilidade">
+                                                <option value="">Selecione...</option>
+                                            </select>
                                             <button class="btn btn-outline-secondary" type="button">+</button>
                                         </div>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-bold">Rito</label>
                                         <div class="input-group">
-                                            <select class="form-select" id="id_rito"><option value="">Selecione...</option></select>
+                                            <select class="form-select" id="id_rito">
+                                                <option value="">Selecione...</option>
+                                            </select>
                                             <button class="btn btn-outline-secondary" type="button">+</button>
                                         </div>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-bold">Esfera</label>
                                         <div class="input-group">
-                                            <select class="form-select" id="id_esfera"><option value="">Selecione...</option></select>
+                                            <select class="form-select" id="id_esfera">
+                                                <option value="">Selecione...</option>
+                                            </select>
                                             <button class="btn btn-outline-secondary" type="button">+</button>
                                         </div>
                                     </div>
@@ -126,27 +161,33 @@
                                     <div class="col-md-4">
                                         <label class="form-label fw-bold">Fase</label>
                                         <div class="input-group">
-                                            <select class="form-select" id="id_fase"><option value="">Selecione...</option></select>
+                                            <select class="form-select" id="id_fase">
+                                                <option value="">Selecione...</option>
+                                            </select>
                                             <button class="btn btn-outline-secondary" type="button">+</button>
                                         </div>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-bold">Vara</label>
                                         <div class="input-group">
-                                            <select class="form-select" id="IdVara"><option value="">Selecione...</option></select>
+                                            <select class="form-select" id="IdVara">
+                                                <option value="">Selecione...</option>
+                                            </select>
                                             <button class="btn btn-outline-secondary" type="button">+</button>
                                         </div>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-bold">Classe Processual</label>
-                                        <input type="text" class="form-control" id="ClasseProcessual" placeholder="Ex: Ação de Cobrança">
+                                        <input type="text" class="form-control" id="ClasseProcessual"
+                                            placeholder="Ex: Ação de Cobrança">
                                     </div>
                                 </div>
 
                                 <div class="row g-3 mb-4">
                                     <div class="col-md-4">
                                         <label class="form-label fw-bold">Assunto</label>
-                                        <input type="text" class="form-control" id="Assunto" placeholder="Assunto principal">
+                                        <input type="text" class="form-control" id="Assunto"
+                                            placeholder="Assunto principal">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-bold">Valor da Causa</label>
@@ -161,11 +202,15 @@
                                 <div class="row g-3">
                                     <div class="col-md-4">
                                         <label class="form-label fw-bold">Situação</label>
-                                        <select class="form-select" id="id_situacao"><option value="">Selecione...</option></select>
+                                        <select class="form-select" id="id_situacao">
+                                            <option value="">Selecione...</option>
+                                        </select>
                                     </div>
                                     <div class="col-md-8">
                                         <label class="form-label fw-bold">Advogado Responsável</label>
-                                        <select class="form-select" id="id_advogado"><option value="">Selecione...</option></select>
+                                        <select class="form-select" id="id_advogado">
+                                            <option value="">Selecione...</option>
+                                        </select>
                                     </div>
                                 </div>
                             </div>
@@ -173,41 +218,31 @@
                             <div class="tab-pane fade" id="tab-partes">
                                 <div class="d-flex justify-content-between mb-3">
                                     <h6 class="fw-bold">Partes do Processo</h6>
-                                    <button type="button" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Adicionar Parte</button>
+                                    <button type="button" class="btn btn-primary btn-sm"
+                                        onclick="adicionarLinhaParte()"><i class="fas fa-plus"></i>
+                                        Adicionar Parte</button>
                                 </div>
                                 <div class="table-responsive">
-                                    <table class="table table-bordered">
+                                    <table class="table table-bordered align-middle">
                                         <thead class="table-light">
                                             <tr>
-                                                <th>Tipo</th>
-                                                <th>Nome</th>
-                                                <th>CPF/CNPJ</th>
-                                                <th>Ações</th>
+                                                <th style="width: 150px;">Tipo</th>
+                                                <th>Nome (Pessoa)</th>
+                                                <th style="width: 150px;">CPF/CNPJ</th>
+                                                <th style="width: 100px;">Ações</th>
                                             </tr>
                                         </thead>
                                         <tbody id="tabelaPartesBody">
-                                            </tbody>
+                                        </tbody>
                                     </table>
-                                </div>
-                                <div class="mt-4 p-3 bg-light rounded border">
-                                    <label class="form-label fw-bold small">Selecione as Partes (Base de Dados):</label>
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <label>Autor / Cliente:</label>
-                                            <select class="form-select" id="id_autor"><option value="">Selecione...</option></select>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label>Réu / Parte Contrária:</label>
-                                            <select class="form-select" id="id_reu"><option value="">Selecione...</option></select>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
 
                             <div class="tab-pane fade" id="tab-andamentos">
                                 <div class="d-flex justify-content-between mb-3">
                                     <h6 class="fw-bold">Andamentos do Processo</h6>
-                                    <button type="button" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Novo Andamento</button>
+                                    <button type="button" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i>
+                                        Novo Andamento</button>
                                 </div>
                                 <div class="table-responsive">
                                     <table class="table table-hover border">
@@ -220,7 +255,10 @@
                                             </tr>
                                         </thead>
                                         <tbody id="tabelaAndamentos">
-                                            <tr><td colspan="4" class="text-center text-muted">Nenhum andamento registrado</td></tr>
+                                            <tr>
+                                                <td colspan="4" class="text-center text-muted">Nenhum andamento
+                                                    registrado</td>
+                                            </tr>
                                         </tbody>
                                     </table>
                                 </div>
@@ -243,7 +281,10 @@
                                             </tr>
                                         </thead>
                                         <tbody id="tabelaPrazos">
-                                            <tr><td colspan="5" class="text-center text-muted">Nenhum prazo cadastrado</td></tr>
+                                            <tr>
+                                                <td colspan="5" class="text-center text-muted">Nenhum prazo cadastrado
+                                                </td>
+                                            </tr>
                                         </tbody>
                                     </table>
                                 </div>
@@ -252,7 +293,8 @@
                             <div class="tab-pane fade" id="tab-documentos">
                                 <div class="d-flex justify-content-between mb-3">
                                     <h6 class="fw-bold">Documentos Anexos</h6>
-                                    <button type="button" class="btn btn-primary btn-sm"><i class="fas fa-upload"></i> Upload de Arquivos</button>
+                                    <button type="button" class="btn btn-primary btn-sm"><i class="fas fa-upload"></i>
+                                        Upload de Arquivos</button>
                                 </div>
                                 <div class="table-responsive">
                                     <table class="table table-hover border">
@@ -266,7 +308,10 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <tr><td colspan="5" class="text-center text-muted">Nenhum documento anexado</td></tr>
+                                            <tr>
+                                                <td colspan="5" class="text-center text-muted">Nenhum documento anexado
+                                                </td>
+                                            </tr>
                                         </tbody>
                                     </table>
                                 </div>
@@ -276,9 +321,11 @@
                                 <h6 class="fw-bold mb-3">Notas e Observações Internas</h6>
                                 <div class="mb-3">
                                     <label class="form-label text-muted">Anotações Livres</label>
-                                    <textarea class="form-control" id="Obs" rows="10" placeholder="Digite suas anotações internas sobre o processo..."></textarea>
+                                    <textarea class="form-control" id="Obs" rows="10"
+                                        placeholder="Digite suas anotações internas sobre o processo..."></textarea>
                                 </div>
-                                <small class="text-muted">Estas anotações são apenas para uso interno e não aparecerão em relatórios ou documentos oficiais.</small>
+                                <small class="text-muted">Estas anotações são apenas para uso interno e não aparecerão
+                                    em relatórios ou documentos oficiais.</small>
                             </div>
 
                         </div>
@@ -288,26 +335,66 @@
         </div>
     </div>
     <div class="modal fade" id="modalPublicacao" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Texto da Publicação</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p class="text-muted mb-2">
-                    <strong>Data:</strong> <span id="modalDataPub"></span>
-                </p>
-                <div id="modalTextoPub" class="p-3 bg-light border rounded" style="white-space: pre-wrap; font-family: monospace; max-height: 60vh; overflow-y: auto;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Texto da Publicação</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-2">
+                        <strong>Data:</strong> <span id="modalDataPub"></span>
+                    </p>
+                    <div id="modalTextoPub" class="p-3 bg-light border rounded"
+                        style="white-space: pre-wrap; font-family: monospace; max-height: 60vh; overflow-y: auto;">
                     </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
+
+    <!-- Modal Gerenciar Pessoa -->
+    <div class="modal fade" id="modalGerenciarPessoa" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalPessoaTitle">Adicionar Parte</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formPessoa">
+                        <input type="hidden" id="modalPessoaId">
+                        <input type="hidden" id="modalPessoaTipo">
+                        <div class="mb-3">
+                            <label class="form-label">Nome Completo</label>
+                            <input type="text" class="form-control" id="modalPessoaNome" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">CPF / CNPJ</label>
+                            <input type="text" class="form-control" id="modalPessoaCPF">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" id="modalPessoaEmail">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Telefone</label>
+                            <input type="text" class="form-control" id="modalPessoaTelefone">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="salvarPessoaModal()">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/js/fichaProcesso.js" type="module"></script>
 </body>
+
 </html>

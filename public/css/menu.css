@@ -18,3 +18,20 @@ body {
 .nav-link i { 
     width: 25px; 
 }
+
+/* Sidebar Styles Standardized */
+.sidebar {
+    width: 250px;
+    min-height: 100vh;
+    position: sticky;
+    top: 0;
+    flex-shrink: 0;
+}
+
+@media (max-width: 767.98px) {
+    .sidebar {
+        position: relative !important;
+        width: 100%;
+        min-height: auto;
+    }
+}

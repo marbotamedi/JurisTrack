@@ -3,6 +3,8 @@ import env from 'dotenv';
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 import path from "path";
+import { requestLogger } from "./middlewares/requestLogger.js";
+import { tenantContextMiddleware } from "./middlewares/tenantContextMiddleware.js";
 import uploadRoute from "./routes/uploadRoute.js";
 import n8nRoute from "./routes/n8nRoute.js";
 import modalRoute from "./routes/modalRoute.js";
@@ -16,7 +18,6 @@ import authRoute from "./routes/authRoute.js";
 import userRoute from "./routes/userRoute.js";
 import internalRoute from "./routes/internalRoute.js";
 import dashboardRoute from "./routes/dashboardRoute.js";
-import { tenantContextMiddleware } from "./middlewares/tenantContextMiddleware.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -30,6 +31,8 @@ app.use(express.static(path.join(__dirname, "../public")));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.use(requestLogger);
 
 /* Rota */
 // Página de upload (HTML público)

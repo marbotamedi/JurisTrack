@@ -1,6 +1,6 @@
 import multer from "multer";
 
-// Tipos de arquivos permitidos
+// Tipos de arquivos permitidos (Geral)
 const ALLOWED_MIME_TYPES = [
   "image/jpeg",
   "image/png",
@@ -8,38 +8,39 @@ const ALLOWED_MIME_TYPES = [
   "application/pdf",
   "application/DOCx",
   "application/XLSx",
-  "text/plain", //(.txt)  
-  "application/msword", //(.doc)
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document", //(.docx)
-  "application/vnd.ms-excel", // (.xls)
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" // (.xlsx)
+  "text/plain", 
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 ];
 
-//Armazenamento (continua na memória)
 const storage = multer.memoryStorage();
 
-
+// Middleware Geral (usado em fichaProcesso e outros)
 const upload = multer({
   storage: storage,
-  // filtro de arquivo
   fileFilter: (req, file, cb) => {
-    //
     if (ALLOWED_MIME_TYPES.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(
-        new Error(
-          "Tipo de arquivo inválido. Apenas imagens (JPEG, PNG, GIF, PDF, DOCx, XLSx) são permitidas."
-        ),
-        false
-      );
+      cb(new Error("Tipo de arquivo inválido. Apenas imagens e documentos suportados."), false);
     }
   },
-  // tamanho de arquivo (Ex: 12MB)
-  limits: {
-    fileSize: 12 * 1024 * 1024, // 12 MB em bytes
-  },
+  limits: { fileSize: 12 * 1024 * 1024 },
 });
 
+// NOVO: Middleware Exclusivo para Upload de PDF (usado na página upload.html)
+const uploadPdf = multer({
+  storage: storage,
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === "application/pdf") {
+      cb(null, true);
+    } else {
+      cb(new Error("Tipo de arquivo inválido. Apenas arquivos PDF são permitidos nesta rota."), false);
+    }
+  },
+  limits: { fileSize: 12 * 1024 * 1024 },
+});
 
-export { upload };
+export { upload, uploadPdf };

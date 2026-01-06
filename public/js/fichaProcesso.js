@@ -1,8 +1,6 @@
-//
-// Variável global para armazenar as publicações carregadas (para o Modal de Texto)
+// Variável global para armazenar as publicações carregadas
 let cachePublicacoes = [];
-// Variáveis para gestão de partes
-let partesProcesso = []; // [{ tipo: 'Autor'|'Réu', idpessoa: 1, nome: '', cpf: '' }]
+let partesProcesso = []; 
 let listaPessoasCache = [];
 
 const AUTH_TOKEN_KEY = "juristrack_token";
@@ -17,7 +15,7 @@ function authFetch(url, options = {}) {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-    // 1. Carrega Combos Auxiliares
+    // 1. Carrega Combos
     await Promise.all([
         carregarSelect("/api/locais/estados", "selectEstado"),
         carregarSelect("/api/auxiliares/comarcas", "IdComarca"),
@@ -34,12 +32,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         carregarPessoas()
     ]);
 
-    // 2. Verifica se tem ID na URL para editar
+    // 2. Verifica ID na URL
     const params = new URLSearchParams(window.location.search);
     const id = params.get("id");
     const modo = params.get("modo");
 
-    // Configuração do Upload ao carregar a página
+    // Configuração do Upload na aba documentos
     configurarUpload();
 
     if (id) {
@@ -51,12 +49,10 @@ document.addEventListener("DOMContentLoaded", async () => {
             bloquearEdicao();
         }
     } else {
-        // Modo Novo: Inicializa tabela vazia
         renderizarTabelaPartes();
     }
 });
 
-// Listener para mudar Cidades ao mudar Estado
 const selectEstado = document.getElementById("selectEstado");
 if (selectEstado) {
     selectEstado.addEventListener("change", (e) => {
@@ -70,8 +66,6 @@ async function carregarPessoas() {
     try {
         const res = await authFetch("/api/pessoas");
         listaPessoasCache = await res.json();
-
-        // Carrega apenas o select de advogado pois autor e reu sao dinamicos agora
         const selectAdv = document.getElementById('id_advogado');
         if (selectAdv) {
             selectAdv.innerHTML = '<option value="">Selecione...</option>';
@@ -146,9 +140,9 @@ async function carregarDadosProcesso(id) {
         setVal("id_moeda", proc.idmoeda);
         setVal("IdComarca", proc.idcomarca);
         setVal("IdVara", proc.idvara);
-        setVal("id_advogado", proc.idadvogado); // Advogado still single select for now
+        setVal("id_advogado", proc.idadvogado); 
 
-        // Carrega Partes (Lista)
+        // Carrega Partes
         partesProcesso = [];
         if (proc.partes && Array.isArray(proc.partes)) {
             partesProcesso = proc.partes.map(p => ({
@@ -157,10 +151,7 @@ async function carregarDadosProcesso(id) {
                 nome: p.pessoas.nome,
                 cpf: p.pessoas.cpf_cnpj
             }));
-        } else if (proc.idautor || proc.idreu) {
-            // Fallback para migração visual caso API retorne antigo (improvável com novo service)
-            // Mas se service foi atualizado, proc.partes deve vir.
-        }
+        } 
         renderizarTabelaPartes();
 
         if (proc.data_distribuicao) document.getElementById("DataDistribuicao").value = proc.data_distribuicao.split("T")[0];
@@ -178,7 +169,7 @@ async function carregarDadosProcesso(id) {
         renderizarPrazos(proc.Publicacao);
         renderizarAndamentos(proc);
 
-        // Carrega documentos (usando a função correta abaixo)
+        // Carrega documentos
         carregarDocumentosDoProcesso(id);
 
     } catch (error) {
@@ -195,32 +186,25 @@ function renderizarTabelaPartes() {
     partesProcesso.forEach((parte, index) => {
         const tr = document.createElement("tr");
 
-        // Coluna Tipo
         const tdTipo = document.createElement("td");
         const selTipo = document.createElement("select");
         selTipo.className = "form-select form-select-sm";
-        selTipo.innerHTML = `
-            <option value="Autor">Autor</option>
-            <option value="Réu">Réu</option>
-        `;
+        selTipo.innerHTML = `<option value="Autor">Autor</option><option value="Réu">Réu</option>`;
         selTipo.value = parte.tipo || 'Autor';
         selTipo.onchange = (e) => { partesProcesso[index].tipo = e.target.value; };
         tdTipo.appendChild(selTipo);
 
-        // Coluna Nome (Pessoa)
         const tdNome = document.createElement("td");
         const selPessoa = document.createElement("select");
         selPessoa.className = "form-select form-select-sm";
         selPessoa.appendChild(new Option("Selecione...", ""));
         listaPessoasCache.forEach(p => {
-            const label = p.nome ;
-            selPessoa.appendChild(new Option(label, p.idpessoa));
+            selPessoa.appendChild(new Option(p.nome, p.idpessoa));
         });
         selPessoa.value = parte.idpessoa || "";
         selPessoa.onchange = (e) => atualizarParte(index, e.target.value);
         tdNome.appendChild(selPessoa);
 
-        // Coluna CPF (Readonly)
         const tdCpf = document.createElement("td");
         const inputCpf = document.createElement("input");
         inputCpf.type = "text";
@@ -229,25 +213,20 @@ function renderizarTabelaPartes() {
         inputCpf.value = parte.cpf || "";
         tdCpf.appendChild(inputCpf);
 
-        // Coluna Ações
         const tdAcoes = document.createElement("td");
         tdAcoes.className = "text-end";
 
-        // Botão Editar Detalhes da Pessoa (Abre Modal existente)
         if (parte.idpessoa) {
             const btnEdit = document.createElement("button");
             btnEdit.className = "btn btn-sm btn-outline-secondary me-1";
             btnEdit.innerHTML = '<i class="fas fa-pen"></i>';
-            btnEdit.title = "Editar cadastro da pessoa";
             btnEdit.onclick = () => abrirModalPessoa('Editar', parte.idpessoa);
             tdAcoes.appendChild(btnEdit);
         }
 
-        // Botão Excluir Linha
         const btnDel = document.createElement("button");
         btnDel.className = "btn btn-sm btn-outline-danger";
         btnDel.innerHTML = '<i class="fas fa-trash"></i>';
-        btnDel.title = "Remover parte";
         btnDel.onclick = () => removerLinhaParte(index);
         tdAcoes.appendChild(btnDel);
 
@@ -259,7 +238,7 @@ function renderizarTabelaPartes() {
     });
 
     if (partesProcesso.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Nenhuma parte adicionada. Clique em "Adicionar Parte".</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Nenhuma parte adicionada.</td></tr>';
     }
 }
 
@@ -304,9 +283,7 @@ window.abrirModalPessoa = async function (modo, id = null) {
                 document.getElementById("modalPessoaCPF").value = p.cpf_cnpj || "";
                 document.getElementById("modalPessoaEmail").value = p.email || "";
                 document.getElementById("modalPessoaTelefone").value = p.telefone || "";
-                console.log(p);
             }
-            
         } catch (e) { console.error("Erro ao carregar pessoa", e); }
     } else {
         document.getElementById("modalPessoaTitle").textContent = "Adicionar Nova Parte";
@@ -337,25 +314,18 @@ window.salvarPessoaModal = async function () {
 
         if (res.ok) {
             alert("Pessoa salva com sucesso!");
-            const modalEl = document.getElementById("modalGerenciarPessoa");
-            const modal = bootstrap.Modal.getInstance(modalEl);
-            modal.hide();
-            await carregarPessoas(); // Recarrega os selects
-
-            // Se foi edição, atualiza a tabela visualmente (recarregando selects já faz isso se o valor mantiver)
-            // Se foi criação, usuário precisa selecionar no combo manual por enquanto.
-            // O ideal seria auto-selecionar se fosse criação vinda de um botão específico de "Novo Autor", mas o botão é genérico.
+            bootstrap.Modal.getInstance(document.getElementById("modalGerenciarPessoa")).hide();
+            await carregarPessoas(); 
         } else {
             alert("Erro ao salvar pessoa.");
         }
-    } catch (e) { console.error(e); alert("Erro de conexão"); }
+    } catch (e) { alert("Erro de conexão"); }
 };
 
 window.salvarProcesso = async function () {
     const id = document.getElementById("IdProcesso").value;
     const val = (eid) => { const el = document.getElementById(eid); return el ? el.value : null; };
 
-    // Filtra partes validas
     const partesEnviar = partesProcesso
         .filter(p => p.idpessoa && p.tipo)
         .map(p => ({ idpessoa: p.idpessoa, tipo: p.tipo }));
@@ -453,12 +423,11 @@ function renderizarPrazos(listaPublicacoes) {
     });
 }
 
-// --- RENDERIZA ANDAMENTOS (Aba Unificada) ---
+// --- RENDERIZA ANDAMENTOS ---
 function renderizarAndamentos(proc) {
     const tabAndamentos = document.getElementById("tab-andamentos");
     if (!tabAndamentos) return;
 
-    // 1. Injeta o HTML da Aba (Tabela + Botões + Modal Oculto)
     tabAndamentos.innerHTML = `
         <div class="d-flex justify-content-between align-items-center mb-3 mt-3">
             <h5 class="mb-0">Histórico de Movimentações</h5>
@@ -504,10 +473,8 @@ function renderizarAndamentos(proc) {
     const tbody = document.getElementById("tabelaAndamentosBody");
     let listaEventos = [];
 
-    // 2. Coletar Automáticos (Vindos de Publicação) -> Responsável = SISTEMA
     if (proc.Publicacao) {
         proc.Publicacao.forEach(pub => {
-            // Andamentos vinculados à publicação
             if (pub.Andamento) {
                 pub.Andamento.forEach(and => {
                     listaEventos.push({
@@ -518,7 +485,6 @@ function renderizarAndamentos(proc) {
                     });
                 });
             }
-            // Petições geradas pelo sistema
             if (pub.Historico_Peticoes) {
                 pub.Historico_Peticoes.forEach(pet => {
                     listaEventos.push({
@@ -532,11 +498,9 @@ function renderizarAndamentos(proc) {
         });
     }
 
-    // 3. Coletar Manuais (Tabela Andamento na Raiz) -> Responsável = NOME DA PESSOA
     if (proc.Andamento && Array.isArray(proc.Andamento)) {
         proc.Andamento.forEach(and => {
             if (and.publicacaoid) return;
-
             let nomeResponsavel = "Usuário";
             if (and.responsavel && and.responsavel.nome) {
                 nomeResponsavel = and.responsavel.nome;
@@ -554,34 +518,24 @@ function renderizarAndamentos(proc) {
         tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Nenhum andamento encontrado.</td></tr>';
     } else {
         listaEventos.sort((a, b) => new Date(b.data) - new Date(a.data));
-
         listaEventos.forEach(evt => {
             const dataFmt = evt.data ? new Date(evt.data).toLocaleDateString('pt-BR') : "-";
-
             let badgeResp = `<span class="badge bg-secondary">${evt.responsavel}</span>`;
-            if (evt.responsavel !== "Sistema") {
-                badgeResp = `<span class="badge bg-info text-dark">${evt.responsavel}</span>`;
-            }
-
+            if (evt.responsavel !== "Sistema") badgeResp = `<span class="badge bg-info text-dark">${evt.responsavel}</span>`;
+            
             const tr = document.createElement("tr");
-            tr.innerHTML = `
-                <td>${dataFmt}</td>
-                <td>${evt.descricao}</td>
-                <td>${badgeResp}</td>
-                <td><small class="text-muted">${evt.tipo}</small></td>
-            `;
+            tr.innerHTML = `<td>${dataFmt}</td><td>${evt.descricao}</td><td>${badgeResp}</td><td><small class="text-muted">${evt.tipo}</small></td>`;
             tbody.appendChild(tr);
         });
     }
 }
+
 window.abrirModalAndamento = function () {
     const selectOrigem = document.getElementById("id_advogado");
     const selectDestino = document.getElementById("respAndamentoManual");
     if (selectOrigem && selectDestino) selectDestino.innerHTML = selectOrigem.innerHTML;
-
     document.getElementById("dataAndamentoManual").valueAsDate = new Date();
-    const modal = new bootstrap.Modal(document.getElementById("modalNovoAndamento"));
-    modal.show();
+    new bootstrap.Modal(document.getElementById("modalNovoAndamento")).show();
 };
 
 window.salvarAndamentoManual = async function () {
@@ -602,33 +556,23 @@ window.salvarAndamentoManual = async function () {
         });
         if (res.ok) {
             alert("Andamento registrado!");
-            const modal = bootstrap.Modal.getInstance(document.getElementById("modalNovoAndamento"));
-            modal.hide();
+            bootstrap.Modal.getInstance(document.getElementById("modalNovoAndamento")).hide();
             await carregarDadosProcesso(idProcesso);
         } else {
-            const err = await res.json().catch(() => ({}));
+            const err = await res.json();
             alert("Erro ao salvar: " + (err.error || "Desconhecido"));
         }
-    } catch (e) { console.error(e); alert("Erro de conexão"); }
+    } catch (e) { alert("Erro de conexão"); }
 };
 
 window.irParaGerarPeticao = function () {
     const idProcesso = document.getElementById("IdProcesso").value;
     if (idProcesso) {
         let params = `idProcesso=${idProcesso}`;
-
-        if (cachePublicacoes && cachePublicacoes.length > 0) {
-            const pubsOrdenadas = [...cachePublicacoes].sort((a, b) => {
-                const dA = a.data_publicacao ? new Date(a.data_publicacao) : new Date(0);
-                const dB = b.data_publicacao ? new Date(b.data_publicacao) : new Date(0);
-                return dB - dA;
-            });
-            const ultimaPub = pubsOrdenadas[0];
-            if (ultimaPub && ultimaPub.id) {
-                params += `&publicacaoId=${ultimaPub.id}`;
-            }
+        if (cachePublicacoes.length > 0) {
+            const pubsOrdenadas = [...cachePublicacoes].sort((a, b) => new Date(b.data_publicacao) - new Date(a.data_publicacao));
+            if (pubsOrdenadas[0]?.id) params += `&publicacaoId=${pubsOrdenadas[0].id}`;
         }
-
         window.location.href = `/gerarPeticao?${params}`;
     } else {
         alert("Salve o processo antes de gerar uma petição.");
@@ -644,10 +588,8 @@ window.verPublicacao = function (idPublicacao) {
     } else alert("Publicação não encontrada na memória.");
 };
 
+// --- LÓGICA DE DOCUMENTOS (ATUALIZADA PARA IGNORAR N8N) ---
 
-// --- LÓGICA DE DOCUMENTOS (ATUALIZADA) ---
-
-// Função auxiliar para formatar bytes
 function formatBytes(bytes, decimals = 2) {
     if (!+bytes) return '0 Bytes';
     const k = 1024;
@@ -657,11 +599,9 @@ function formatBytes(bytes, decimals = 2) {
     return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
 }
 
-// Configuração do botão de upload
 function configurarUpload() {
     const btnUpload = document.querySelector("#tab-documentos button");
     if (btnUpload) {
-        // Cria input hidden se não existir
         let input = document.getElementById("inputUploadProcesso");
         if (!input) {
             input = document.createElement("input");
@@ -670,30 +610,25 @@ function configurarUpload() {
             input.style.display = "none";
             document.body.appendChild(input);
 
-            // Evento ao selecionar arquivo
             input.addEventListener("change", async (e) => {
                 if (e.target.files.length > 0) {
                     await fazerUploadProcesso(e.target.files[0]);
-                    e.target.value = ""; // Limpa para permitir re-upload
+                    e.target.value = ""; 
                 }
             });
         }
 
-        // Clique no botão visual abre o input hidden
         btnUpload.onclick = (e) => {
             e.preventDefault();
             const id = document.getElementById("IdProcesso").value;
             const num = document.getElementById("NumProcesso").value;
-
             if (!id) return alert("Salve o processo antes de anexar documentos.");
             if (!num) return alert("O processo precisa de um número para criar a pasta.");
-
             document.getElementById("inputUploadProcesso").click();
         };
     }
 }
 
-// Envia o arquivo para o backend
 async function fazerUploadProcesso(file) {
     const idProcesso = document.getElementById("IdProcesso").value;
     const numProcesso = document.getElementById("NumProcesso").value;
@@ -703,11 +638,15 @@ async function fazerUploadProcesso(file) {
     formData.append("file", file);
     formData.append("processoId", idProcesso);
     formData.append("numProcesso", numProcesso);
+    
+    // ALTERAÇÃO IMPORTANTE: Flag para ignorar N8N
+    formData.append("ignorarN8N", "true");
 
     try {
-        const originalText = btnUpload.innerHTML;
-        btnUpload.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
-        btnUpload.disabled = true;
+        if(btnUpload) {
+            btnUpload.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+            btnUpload.disabled = true;
+        }
 
         const res = await authFetch("/upload", {
             method: "POST",
@@ -717,8 +656,6 @@ async function fazerUploadProcesso(file) {
         if (!res.ok) throw new Error("Erro no upload");
 
         alert("Upload realizado com sucesso!");
-
-        // Recarrega a lista
         carregarDocumentosDoProcesso(idProcesso);
 
     } catch (error) {
@@ -732,32 +669,23 @@ async function fazerUploadProcesso(file) {
     }
 }
 
-// Deleta documento (Banco + Storage)
 window.deletarDocumento = async function (id) {
     if (!confirm("Deseja realmente excluir este arquivo?")) return;
-
-    // Feedback visual
     const btn = document.querySelector(`button[data-doc-id="${id}"]`);
     if (btn) btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
     try {
         const res = await authFetch(`/upload/${id}`, { method: 'DELETE' });
         if (!res.ok) throw new Error("Erro ao excluir");
-
-        const idProcesso = document.getElementById("IdProcesso").value;
-        carregarDocumentosDoProcesso(idProcesso);
-
+        carregarDocumentosDoProcesso(document.getElementById("IdProcesso").value);
     } catch (error) {
-        console.error(error);
         alert("Não foi possível excluir o arquivo.");
         if (btn) btn.innerHTML = '<i class="fas fa-trash"></i>';
     }
 };
 
-// Lista documentos na tabela
 async function carregarDocumentosDoProcesso(idProcesso) {
     if (!idProcesso || idProcesso === "undefined" || idProcesso === "null") return;
-
     const tbody = document.querySelector("#tab-documentos tbody");
     if (!tbody) return;
     tbody.innerHTML = '<tr><td colspan="5" class="text-center">Carregando...</td></tr>';
@@ -765,84 +693,53 @@ async function carregarDocumentosDoProcesso(idProcesso) {
     try {
         const res = await authFetch(`/upload/publicacoes?processoId=${idProcesso}`);
         const docs = await res.json();
-
         tbody.innerHTML = "";
 
         if (!docs || docs.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Nenhum documento anexado a este processo.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Nenhum documento anexado.</td></tr>';
             return;
         }
 
         docs.forEach(doc => {
-            const dataUpload = doc.data_upload
-                ? new Date(doc.data_upload).toLocaleDateString('pt-BR')
-                : "-";
-
-            // Ícones
+            const dataUpload = doc.data_upload ? new Date(doc.data_upload).toLocaleDateString('pt-BR') : "-";
             let iconeArquivo = '<i class="far fa-file text-secondary"></i>';
             if (doc.tipo && doc.tipo.includes('pdf')) iconeArquivo = '<i class="far fa-file-pdf text-danger"></i>';
             else if (doc.tipo && doc.tipo.includes('image')) iconeArquivo = '<i class="far fa-file-image text-primary"></i>';
-
-            // Tamanho
             const tamanhoFmt = doc.tamanho ? formatBytes(doc.tamanho) : "-";
 
             const tr = document.createElement("tr");
             tr.innerHTML = `
-                <td>
-                    <a href="${doc.url_publica}" target="_blank" class="text-decoration-none text-dark">
-                        ${iconeArquivo} ${doc.nome_arquivo}
-                    </a>
-                </td>
+                <td><a href="${doc.url_publica}" target="_blank" class="text-decoration-none text-dark">${iconeArquivo} ${doc.nome_arquivo}</a></td>
                 <td><small class="text-muted">${doc.tipo || 'Arquivo'}</small></td>
                 <td>${dataUpload}</td>
                 <td>${tamanhoFmt}</td>
                 <td class="text-end">
-                    <a href="${doc.url_publica}" target="_blank" class="btn btn-sm btn-outline-primary me-1" title="Visualizar">
-                        <i class="fas fa-eye"></i>
-                    </a>
-                    <button class="btn btn-sm btn-outline-danger" onclick="deletarDocumento(${doc.id})" data-doc-id="${doc.id}" title="Excluir">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
-            `;
+                    <a href="${doc.url_publica}" target="_blank" class="btn btn-sm btn-outline-primary me-1" title="Visualizar"><i class="fas fa-eye"></i></a>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deletarDocumento(${doc.id})" data-doc-id="${doc.id}" title="Excluir"><i class="fas fa-trash"></i></button>
+                </td>`;
             tbody.appendChild(tr);
         });
-
     } catch (error) {
-        console.error(error);
         tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Erro ao carregar documentos.</td></tr>';
     }
 }
 
 function bloquearEdicao() {
-    // 1. Muda o título visualmente
     const titulo = document.getElementById("headerTitulo");
     if (titulo) titulo.innerHTML = '<i class="fas fa-lock"></i> Visualizar Processo (Leitura)';
-
-    // 2. Bloqueia todos os inputs, selects e textareas
-    const campos = document.querySelectorAll("input, select, textarea");
-    campos.forEach(campo => {
+    
+    document.querySelectorAll("input, select, textarea").forEach(campo => {
         campo.disabled = true;
-        campo.style.backgroundColor = "#e9ecef"; // Aparência visual de desabilitado
+        campo.style.backgroundColor = "#e9ecef";
         campo.style.cursor = "not-allowed";
     });
 
-    // 3. Esconde botões de ação
-    const botoesParaEsconder = [
-        "btnSalvar",
-        "btnExcluir",
-        "btnAdicionarDoc"
-    ];
-
-    botoesParaEsconder.forEach(id => {
+    ["btnSalvar", "btnExcluir", "btnAdicionarDoc"].forEach(id => {
         const btn = document.getElementById(id);
         if (btn) btn.style.display = "none";
     });
 
-    // Esconde botões dentro de abas
-    const botoesAbas = document.querySelectorAll("#tab-andamentos button, #tab-documentos button");
-    botoesAbas.forEach(btn => btn.style.display = "none");
-
+    document.querySelectorAll("#tab-andamentos button, #tab-documentos button").forEach(btn => btn.style.display = "none");
     const btnSalvarGenerico = document.querySelector("button[onclick='salvarProcesso()']");
     if (btnSalvarGenerico) btnSalvarGenerico.style.display = "none";
 }

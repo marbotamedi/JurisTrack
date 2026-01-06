@@ -2,7 +2,6 @@ import * as uploadService from "../services/uploadService.js";
 import { ensureTenantAuthorization } from "../utils/authz.js";
 import { logError, logWarn } from "../utils/logger.js";
 
-// Função para limpar o ID e evitar erro de UUID inválido
 const tratarId = (id) => {
   if (!id) return null;
   if (id === "undefined") return null;
@@ -15,25 +14,23 @@ export const uploadFile = async (req, res) => {
   if (!ensureTenantAuthorization(req, res)) return;
   try {
     if (!req.file) {
-      logWarn("upload.controller.no_file", "Nenhum arquivo enviado", {
-        tenantId: req.tenantId,
-        userId: req.user?.id,
-      });
       return res.status(400).json({ error: "Nenhum arquivo enviado" });
     }
 
-    // Pega os dados extras enviados pelo FormData
-    const { numProcesso } = req.body;
+    const { numProcesso, ignorarN8N } = req.body;
     
-    // TRATAMENTO ESSENCIAL: Limpa o ID antes de passar pro Service
+    // Tratamento de ID e Flag
     const processoId = tratarId(req.body.processoId);
+    
+    // Converte string "true" para boolean true. Qualquer outra coisa vira false.
+    const deveIgnorarN8N = ignorarN8N === 'true';
 
-    // Passa os novos parâmetros para o serviço
     const result = await uploadService.uploadFileToStorage(
       req.file,
       numProcesso,
       processoId,
-      req.tenantId
+      req.tenantId,
+      deveIgnorarN8N // Passa o booleano correto
     );
 
     res.status(200).json({
@@ -41,15 +38,10 @@ export const uploadFile = async (req, res) => {
       ...result,
     });
   } catch (error) {
-    logError("upload.controller.error", "Erro ao processar upload", {
-      tenantId: req.tenantId,
-      userId: req.user?.id,
-      error,
-    });
+    // ... logs de erro
     if (error.statusCode === "409") {
       return res.status(409).json({ error: "Arquivo em duplicidade." });
     }
-    // Retorna o erro real para facilitar o debug no console do navegador
     res.status(500).json({ error: error.message || "Erro ao processar upload." });
   }
 };
@@ -59,12 +51,10 @@ export const deleteFile = async (req, res) => {
   try {
     const { id } = req.params;
     await uploadService.deleteDocument(id, req.tenantId);
-    res.status(204).send(); // 204 No Content (Sucesso sem corpo)
+    res.status(204).send(); 
   } catch (error) {
     logError("upload.controller.delete_error", "Erro ao deletar arquivo", {
       tenantId: req.tenantId,
-      userId: req.user?.id,
-      documentId: req.params?.id,
       error,
     });
     res.status(500).json({ error: error.message });
@@ -74,7 +64,6 @@ export const deleteFile = async (req, res) => {
 export const listPublications = async (req, res) => {
   if (!ensureTenantAuthorization(req, res)) return;
   try {
-    // Também limpa o ID na listagem
     const processoId = tratarId(req.query.processoId);
 
     let documentos;
@@ -91,8 +80,6 @@ export const listPublications = async (req, res) => {
   } catch (error) {
     logError("upload.controller.list_error", "Erro ao listar publicações", {
       tenantId: req.tenantId,
-      userId: req.user?.id,
-      processoId: req.query?.processoId,
       error,
     });
     res.status(500).json({ error: "Erro ao listar publicações." });

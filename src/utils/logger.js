@@ -1,3 +1,5 @@
+import { captureException, captureMessage } from "../infra/observability/sentry.js";
+
 function sanitizeContext(context = {}) {
   return Object.fromEntries(
     Object.entries(context).filter(
@@ -23,24 +25,50 @@ function resolveActorContext(context = {}) {
     context?.req?.user?.id ??
     context?.req?.userId;
 
-  return sanitizeContext({ tenantId, userId });
+  const traceId =
+    context.traceId ??
+    context?.req?.traceId;
+
+  return sanitizeContext({ tenantId, userId, traceId });
+}
+
+function shouldCapture(level, context = {}) {
+  if (context.sendToSentry === false) return false;
+  return true;
 }
 
 function logBase(level, action, message, context = {}) {
-  /*const timestamp = new Date().toISOString();*/
-  const timestamp = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
-  const actorContext = resolveActorContext(context);
-  const payload = sanitizeContext({ timestamp, action, ...context, ...actorContext });
-  const text = message ? `[${action}] ${message}` : `[${action}]`;
+  const { error, sendToSentry, ...restContext } = context;
+  const timestamp = new Date().toLocaleString("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+  });
+  const actorContext = resolveActorContext(restContext);
+  const payload = sanitizeContext({
+    timestamp,
+    action,
+    ...restContext,
+    ...actorContext,
+  });
+  const traceId = payload.traceId;
+  const consolePrefix = traceId ? `[trace:${traceId}]` : `[${action}]`;
+  const consoleText = message ? `${consolePrefix} ${message}` : `${consolePrefix}`;
+  const sentryText = message ? `[${action}] ${message}` : `[${action}]`;
 
-  const error = context.error;
   if (error instanceof Error) {
     payload.error = error.message;
     payload.stack = error.stack;
   }
 
   // eslint-disable-next-line no-console
-  console[level](text, payload);
+  console[level](consoleText, payload);
+
+  if (shouldCapture(level, context)) {
+    if (error instanceof Error) {
+      captureException(error, { ...payload, level });
+    } else {
+      captureMessage(sentryText, level, { ...payload, level });
+    }
+  }
 }
 
 export function logInfo(action, message, context) {

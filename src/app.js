@@ -3,8 +3,17 @@ import env from 'dotenv';
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 import path from "path";
+import { traceMiddleware } from "./middlewares/traceMiddleware.js";
 import { requestLogger } from "./middlewares/requestLogger.js";
 import { tenantContextMiddleware } from "./middlewares/tenantContextMiddleware.js";
+import {
+  bindUnhandledRejections,
+  initSentry,
+  sentryErrorMiddleware,
+  sentryRequestMiddleware,
+  sentryTracingMiddleware,
+} from "./infra/observability/sentry.js";
+import { logError } from "./utils/logger.js";
 import uploadRoute from "./routes/uploadRoute.js";
 import n8nRoute from "./routes/n8nRoute.js";
 import modalRoute from "./routes/modalRoute.js";
@@ -25,13 +34,18 @@ const __dirname = dirname(__filename);
 env.config({ path: path.join(__dirname, "../.env") });
 
 const app = express();
-const PORT = process.env.PORT;
+initSentry(app);
+bindUnhandledRejections();
+const PORT = process.env.PORT || 3000;
 
+app.use(sentryRequestMiddleware());
+app.use(sentryTracingMiddleware());
 app.use(express.static(path.join(__dirname, "../public")));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.use(traceMiddleware);
 app.use(requestLogger);
 
 /* Rota */
@@ -179,6 +193,17 @@ app.get("/tipoAcao", (req, res) =>{
   res.sendFile(
     (path.join(__dirname, "../public","html", "tipoAcao.html"))
   );
+});
+
+app.use(sentryErrorMiddleware());
+app.use((err, req, res, next) => {
+  logError("app.unhandled_error", "Erro não tratado", {
+    path: req.path,
+    method: req.method,
+    error: err,
+  });
+  if (res.headersSent) return next(err);
+  return res.status(500).json({ message: "Erro interno" });
 });
 
 

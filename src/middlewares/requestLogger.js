@@ -15,6 +15,7 @@ export function requestLogger(req, res, next) {
       statusCode: res.statusCode,
       tenantId: req.tenantId,
       userId: req.user?.id,
+      traceId: req.traceId,
       duration_ms: durationMs,
     });
   };

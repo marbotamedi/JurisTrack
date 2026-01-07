@@ -4,8 +4,8 @@ import moment from "moment-timezone";
 import { logError, logInfo, logWarn } from "./logger.js";
 
 // URL Webhook N8N
-//const N8N_WEBHOOK_URL = "https://agendamentoai-n8n.mapkkt.easypanel.host/webhook/processar/";
-const N8N_WEBHOOK_URL = "http://localhost:5678/webhook/processar";
+const N8N_WEBHOOK_URL = "https://agendamentoai-n8n.mapkkt.easypanel.host/webhook/processar/";
+//const N8N_WEBHOOK_URL = "http://localhost:5678/webhook/processar";
 
 
 /**
@@ -59,9 +59,19 @@ export async function notifyN8NWebhook(uploadId, tenantId) {
     return;
   }
 
+  if (!N8N_WEBHOOK_URL) {
+    logError(
+      "n8n.webhook.missing_url",
+      "Falha ao acionar webhook: N8N_WEBHOOK_URL ausente",
+      { uploadId, tenantId }
+    );
+    return;
+  }
+
   logInfo("n8n.webhook.dispatch", "Acionando webhook do n8n", {
     uploadId,
     tenantId,
+    webhookUrl: N8N_WEBHOOK_URL,
   });
   try {
     // Nota: chamada permanece assíncrona em background

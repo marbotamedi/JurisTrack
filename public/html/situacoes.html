@@ -15,12 +15,12 @@
             <div class="card p-4 shadow-sm">
                 <div class="d-flex justify-content-between mb-4">
                     <h4>Gerir Situações</h4>
-                    <button class="btn btn-primary" onclick="abrirModal()"><i class="fas fa-plus"></i> Nova Situações</button>
+                    <button class="btn btn-primary" onclick="abrirModal()"><i class="fas fa-plus"></i> Nova Situação</button>
                 </div>
                 <table class="table table-hover align-middle">
                     <thead class="table-light">
                         <tr>
-                            <th>Descrição (Situações)</th>
+                            <th>Descrição</th>
                             <th>Status</th>
                             <th class="text-end">Ações</th>
                         </tr>
@@ -43,9 +43,15 @@
                         <input type="hidden" id="IdRegisto">
                         
                         <div class="mb-3">
-                            <label class="form-label">Nome da Situação</label>
+                            <label class="form-label">Descrição</label>
                             <input type="text" class="form-control" id="Descricao" required>
                         </div>
+                        
+                        <!---<div class="mb-3">
+                            <label class="form-label">Símbolo</label>
+                            <input type="text" class="form-control" id="Simbolo">
+                        </div>--->
+
                         <div class="mb-3">
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" id="Ativo" checked>
@@ -67,5 +73,3 @@
     <script src="/js/components/sidebar.js"></script>
 </body>
 </html>
-
-

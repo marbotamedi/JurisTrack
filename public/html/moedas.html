@@ -21,7 +21,7 @@
                     <thead class="table-light">
                         <tr>
                             <th>Descrição (Moedas)</th>
-                            <th>Simbolo</th>
+                            <th>Símbolo</th>
                             <th>Status</th>
                             <th class="text-end">Ações</th>
                         </tr>
@@ -36,7 +36,7 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Cadastro da Moedas</h5>
+                    <h5 class="modal-title">Cadastro de Moedas</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
@@ -44,9 +44,15 @@
                         <input type="hidden" id="IdRegisto">
                         
                         <div class="mb-3">
-                            <label class="form-label">Nome da Moedas</label>
+                            <label class="form-label">Nome da Moeda</label>
                             <input type="text" class="form-control" id="Descricao" required>
                         </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Símbolo (ex: R$, $)</label>
+                            <input type="text" class="form-control" id="Simbolo" required>
+                        </div>
+
                         <div class="mb-3">
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" id="Ativo" checked>
@@ -68,5 +74,3 @@
     <script src="/js/components/sidebar.js"></script>
 </body>
 </html>
-
-

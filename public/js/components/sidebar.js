@@ -57,6 +57,9 @@ class AppSidebar extends HTMLElement {
             <a class="nav-link" href="/ritos">
                 <i class="fa-solid fa-inbox"></i> Ritos
             </a>
+            <a class="nav-link" href="/probabilidades">
+                <i class="fa-solid fa-rotate"></i> Probabilidades
+            </a>
             <a class="nav-link" href="/situacoes">
                 <i class="fa-brands fa-stack-overflow"></i> Situações
             </a>

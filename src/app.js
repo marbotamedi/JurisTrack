@@ -112,6 +112,11 @@ app.get("/historico", (req, res) => {
     path.join(__dirname, "../public", "html", "historicoPeticoes.html"));
 });
 
+app.get("/probabilidades", (req, res) => {
+  res.sendFile(
+    path.join(__dirname, "../public", "html", "probabilidade.html"));
+});
+
 app.get("/estados", (req, res) => {
   res.sendFile(
     path.join(__dirname,"../public", "html", "estados.html"));

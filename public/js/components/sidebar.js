@@ -5,8 +5,15 @@ class AppSidebar extends HTMLElement {
 
     connectedCallback() {
         this.innerHTML = `
-      <div class="bg-white p-3 border-end d-flex flex-column sidebar">
-        <h4 class="mb-4 text-dark px-2"><i class="fas fa-scale-balanced me-2"></i>Juris Track</h4>
+<div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+      <button class="mobile-menu-toggle d-md-none" id="sidebarToggle">
+          <i class="fas fa-bars"></i>
+      </button>
+      <div class="bg-white p-3 border-end d-flex flex-column sidebar" id="appSidebar">
+        <h4 class="mb-4 text-dark px-2 d-flex justify-content-between align-items-center">
+            <span><i class="fas fa-scale-balanced me-2"></i>Juris Track</span>
+            <button type="button" class="btn-close d-md-none" id="sidebarClose" aria-label="Close"></button>
+        </h4>
         <nav class="nav flex-column flex-grow-1">
             <small class="text-muted text-uppercase fw-bold mb-2 px-2" style="font-size: 0.75rem;">Principal</small>
             <a class="nav-link" href="/dashboard"><i class="fas fa-chart-line"></i> Dashboard</a>
@@ -69,12 +76,56 @@ class AppSidebar extends HTMLElement {
         </nav>
         
         <div class="mt-auto pt-3 border-top">
-             <a class="nav-link text-danger" href="#"><i class="fas fa-sign-out-alt"></i> Sair</a>
+             <a class="nav-link text-danger" href="#" id="btnLogout"><i class="fas fa-sign-out-alt"></i> Sair</a>
         </div>
       </div>
     `;
 
         this.highlightActiveLink();
+        this.initMobileToggle();
+        this.initLogout();
+    }
+
+    initLogout() {
+        const btnLogout = this.querySelector("#btnLogout");
+        if (btnLogout) {
+            btnLogout.addEventListener("click", (e) => {
+                e.preventDefault();
+                // Limpa todos os dados de sessão
+                localStorage.removeItem("juristrack_token");
+                localStorage.removeItem("juristrack_userId");
+                localStorage.removeItem("juristrack_role");
+                localStorage.removeItem("juristrack_tenantId");
+
+                // Redireciona para login
+                window.location.href = "/login";
+            });
+        }
+    }
+
+    initMobileToggle() {
+        const toggleBtn = this.querySelector('#sidebarToggle');
+        const closeBtn = this.querySelector('#sidebarClose');
+        const sidebar = this.querySelector('#appSidebar');
+        const backdrop = this.querySelector('#sidebarBackdrop');
+
+        if (toggleBtn && sidebar && backdrop) {
+            const toggleMenu = () => {
+                sidebar.classList.toggle('show');
+                backdrop.classList.toggle('show');
+            };
+
+            toggleBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleMenu();
+            });
+
+            if (closeBtn) {
+                closeBtn.addEventListener('click', toggleMenu);
+            }
+
+            backdrop.addEventListener('click', toggleMenu);
+        }
     }
 
     highlightActiveLink() {

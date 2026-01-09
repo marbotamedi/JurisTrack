@@ -7,7 +7,7 @@ class AppSidebar extends HTMLElement {
         this.innerHTML = `
 <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
       <button class="mobile-menu-toggle d-md-none" id="sidebarToggle">
-          <i class="fas fa-bars"></i>
+          <i class="fas fa-bars"></i> <span class="ms-1 fw-bold">Menu</span>
       </button>
       <div class="bg-white p-3 border-end d-flex flex-column sidebar" id="appSidebar">
         <h4 class="mb-4 text-dark px-2 d-flex justify-content-between align-items-center">

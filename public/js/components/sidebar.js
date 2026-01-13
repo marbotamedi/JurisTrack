@@ -25,6 +25,9 @@ class AppSidebar extends HTMLElement {
             <a class="nav-link" href="/usuarios">
                 <i class="fas fa-users"></i> Usuários
             </a>
+            <a class="nav-link" href="/importar-feriados">
+                <i class="fas fa-calendar-alt"></i> Cadastros de Feriados
+            </a>
             <a class="nav-link" href="/gerenciarPeticao">
                 <i class="fas fa-file-contract"></i> Modelos
             </a>

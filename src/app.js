@@ -27,6 +27,7 @@ import authRoute from "./routes/authRoute.js";
 import userRoute from "./routes/userRoute.js";
 import internalRoute from "./routes/internalRoute.js";
 import dashboardRoute from "./routes/dashboardRoute.js";
+import feriadoRoute from "./routes/feriadoRoute.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -69,6 +70,7 @@ app.use("/api/locais", locaisRoute);
 app.use("/api/auxiliares", auxiliarRouter);
 app.use("/api/pessoas", pessoasRoute);
 app.use("/api/users", userRoute);
+app.use("/api/feriados", feriadoRoute);
 
 /* Rota padrão */
 
@@ -119,21 +121,21 @@ app.get("/probabilidades", (req, res) => {
 
 app.get("/estados", (req, res) => {
   res.sendFile(
-    path.join(__dirname,"../public", "html", "estados.html"));
+    path.join(__dirname, "../public", "html", "estados.html"));
 });
 
 
-app.get("/cidades", (req, res) =>{
+app.get("/cidades", (req, res) => {
   res.sendFile(
     path.join(__dirname, "../public", "html", "cidades.html"));
 });
 
-app.get("/comarcas", (req, res) =>{
+app.get("/comarcas", (req, res) => {
   res.sendFile
-  (path.join(__dirname,"../public", "html", "comarcas.html"));
+    (path.join(__dirname, "../public", "html", "comarcas.html"));
 });
 
-app.get("/tribunais", (req, res) =>{
+app.get("/tribunais", (req, res) => {
   res.sendFile(
     (path.join(__dirname, "../public", "html", "tribunais.html"))
   );
@@ -151,53 +153,57 @@ app.get("/instancias", (req, res) => {
   );
 });
 
-app.get("/decisoes", (req, res) =>{
+app.get("/decisoes", (req, res) => {
   res.sendFile(
     (path.join(__dirname, "../public", "html", "decisoes.html"))
   );
 });
 
 
-app.get("/esferas", (req, res) =>{
+app.get("/esferas", (req, res) => {
   res.sendFile(
-    (path.join(__dirname, "../public","html", "esferas.html"))
+    (path.join(__dirname, "../public", "html", "esferas.html"))
   );
 });
 
-app.get("/fases", (req, res) =>{
+app.get("/fases", (req, res) => {
   res.sendFile(
-    (path.join(__dirname, "../public","html", "fases.html"))
+    (path.join(__dirname, "../public", "html", "fases.html"))
   );
 });
 
-app.get("/moedas", (req, res) =>{
+app.get("/moedas", (req, res) => {
   res.sendFile(
-    (path.join(__dirname, "../public","html", "moedas.html"))
+    (path.join(__dirname, "../public", "html", "moedas.html"))
   );
 });
 
-app.get("/pessoas", (req, res) =>{
+app.get("/pessoas", (req, res) => {
   res.sendFile(
-    (path.join(__dirname, "../public","html", "pessoas.html"))
+    (path.join(__dirname, "../public", "html", "pessoas.html"))
   );
 });
 
-app.get("/ritos", (req, res) =>{
+app.get("/ritos", (req, res) => {
   res.sendFile(
-    (path.join(__dirname, "../public","html", "ritos.html"))
+    (path.join(__dirname, "../public", "html", "ritos.html"))
   );
 });
 
-app.get("/situacoes", (req, res) =>{
+app.get("/situacoes", (req, res) => {
   res.sendFile(
-    (path.join(__dirname, "../public","html", "situacoes.html"))
+    (path.join(__dirname, "../public", "html", "situacoes.html"))
   );
 });
 
-app.get("/tipoAcao", (req, res) =>{
+app.get("/tipoAcao", (req, res) => {
   res.sendFile(
-    (path.join(__dirname, "../public","html", "tipoAcao.html"))
+    (path.join(__dirname, "../public", "html", "tipoAcao.html"))
   );
+});
+
+app.get("/importar-feriados", (req, res) => {
+  res.sendFile(path.join(__dirname, "../public", "html", "importarFeriados.html"));
 });
 
 app.use(sentryErrorMiddleware());

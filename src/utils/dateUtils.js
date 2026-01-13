@@ -77,7 +77,7 @@ function getHolidays(year) {
       const { data, error } = await supabase
         .from("Feriado")
         .select("data")
-        .eq("tipo", "national")
+        .in("tipo", ["national", "manual"])
         .gte("data", `${year}-01-01`)
         .lte("data", `${year}-12-31`);
 
